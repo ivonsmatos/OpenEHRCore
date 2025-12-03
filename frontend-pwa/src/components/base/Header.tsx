@@ -1,5 +1,5 @@
 import React from "react";
-import { colors, typography, spacing } from "../theme/colors";
+import { colors, typography, spacing } from "../../theme/colors";
 
 interface HeaderProps {
   title: string;

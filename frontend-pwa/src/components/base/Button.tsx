@@ -1,5 +1,5 @@
 import React from "react";
-import { colors, spacing, borderRadius, transitions } from "../theme/colors";
+import { colors, spacing, borderRadius, transitions } from "../../theme/colors";
 
 interface ButtonProps {
   variant?: "primary" | "secondary" | "danger" | "ghost";
