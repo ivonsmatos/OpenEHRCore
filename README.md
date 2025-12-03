@@ -1,0 +1,148 @@
+# OpenEHRCore — Sistema de Gestão de Prontuários Eletrônicos (EHR) Seguro com FHIR
+
+Um sistema EHR enterprise-grade baseado no padrão **HL7 FHIR R4** para clínicas e hospitais.
+
+## 🏗️ Arquitetura FHIR-First
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  FRONTEND PWA (React + TypeScript)                              │
+│  - UI/UX limpo e moderno (Design System)                        │
+│  - Consumo seguro de JSON FHIR                                  │
+│  - Offline-first com Service Workers                            │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────────┐
+│  BFF - Backend (Django + Python)                                │
+│  - fhirclient para manipulação segura de recursos FHIR          │
+│  - Keycloak integration (OAuth2/OIDC)                           │
+│  - Validação de dados antes de persistir                        │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────────┐
+│  HAPI FHIR Server (JPA + PostgreSQL)                            │
+│  - Autoridade absoluta dos dados clínicos                       │
+│  - CapabilityStatement FHIR R4 completo                         │
+│  - RESTful API /fhir/Patient, /fhir/Encounter, etc              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 🚀 Quick Start
+
+### 1. Levantar infraestrutura (Docker Compose)
+
+```bash
+cd docker
+docker-compose up -d
+```
+
+Validar stack:
+
+```bash
+curl http://localhost:8080/fhir/metadata
+```
+
+### 2. Backend Django
+
+```bash
+cd backend-django
+python -m venv venv
+source venv/bin/activate  # ou venv\Scripts\activate no Windows
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+### 3. Frontend React PWA
+
+```bash
+cd frontend-pwa
+npm install
+npm run dev
+```
+
+## 📁 Estrutura do Projeto
+
+```
+OpenEHRCore/
+├── backend-django/
+│   ├── manage.py
+│   ├── requirements.txt
+│   ├── openehrcore/
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   ├── fhir_api/
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   └── services/
+│   │       └── fhir_core.py
+│   └── venv/
+├── frontend-pwa/
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   ├── src/
+│   │   ├── theme/
+│   │   │   └── colors.ts
+│   │   ├── components/
+│   │   │   ├── base/
+│   │   │   │   ├── Button.tsx
+│   │   │   │   ├── Card.tsx
+│   │   │   │   └── Header.tsx
+│   │   │   └── PatientDetail.tsx
+│   │   └── App.tsx
+│   └── node_modules/
+├── docker/
+│   └── docker-compose.yml
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── SETUP.md
+│   └── DESIGN_SYSTEM.md
+├── scripts/
+│   └── validate-stack.sh
+├── .gitignore
+└── README.md
+```
+
+## 🎨 Design System
+
+**Paleta Institucional:**
+
+- **Primary Dark:** `#0339A6` (Menu/Header)
+- **Primary Medium:** `#0468BF` (Botões/Ações)
+- **Secondary/Accent:** `#79ACD9` (Destaques)
+- **Alert/Critical:** `#D91A1A` (Erros/Alertas médicos)
+- **Background/Surface:** `#F2F2F2` (Fundo geral)
+
+**Princípios:** Clean design, whitespace generoso, tipografia sans-serif moderna, bordas suaves.
+
+## 🔐 Segurança
+
+- **Zero-Trust:** Keycloak para autenticação/autorização
+- **LGPD/HIPAA:** Conformidade de dados clínicos
+- **BFF Pattern:** Django protege HAPI FHIR do acesso direto
+- **Validação FHIR:** fhirclient valida estrutura antes de persistir
+
+## 📚 Documentação
+
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — Decisões arquiteturais e padrões
+- [SETUP.md](docs/SETUP.md) — Instruções de setup detalhadas
+- [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) — Guia de componentes e tokens
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS
+- **Backend:** Django 4.x + Python 3.10+
+- **FHIR:** HAPI FHIR Server (JPA) + fhirclient
+- **Database:** PostgreSQL 14+
+- **Auth:** Keycloak 20+
+- **Containerization:** Docker + Docker Compose
+
+## 📝 Licença
+
+Copyright © 2025. Todos os direitos reservados.
+
+---
+
+**Status:** 🟢 Scaffolding inicial. Desenvolvimento em progresso.

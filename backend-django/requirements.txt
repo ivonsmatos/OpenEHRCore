@@ -1,0 +1,11 @@
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+psycopg2-binary==2.9.9
+requests==2.31.0
+fhirclient==4.2.1
+python-decouple==3.8
+gunicorn==21.2.0
+celery==5.3.4
+redis==5.0.1
+cryptography==41.0.7
