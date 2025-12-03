@@ -7,8 +7,8 @@ services:
     container_name: openehr_postgres
     environment:
       POSTGRES_DB: hapi_fhir
-      POSTGRES_USER: fhir_user
-      POSTGRES_PASSWORD: fhir_secure_password_123
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -30,8 +30,8 @@ services:
     environment:
       server.servlet.context-path: /fhir
       spring.datasource.url: jdbc:postgresql://postgres:5432/hapi_fhir
-      spring.datasource.username: fhir_user
-      spring.datasource.password: fhir_secure_password_123
+      spring.datasource.username: ${POSTGRES_USER}
+      spring.datasource.password: ${POSTGRES_PASSWORD}
       spring.datasource.driver-class-name: org.postgresql.Driver
       spring.jpa.database-platform: org.hibernate.dialect.PostgreSQL10Dialect
       spring.jpa.hibernate.ddl-auto: update
@@ -63,12 +63,12 @@ services:
     image: quay.io/keycloak/keycloak:24.0.0
     container_name: openehr_keycloak
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin_password_123
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: fhir_user
-      KC_DB_PASSWORD: fhir_secure_password_123
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
       KC_HOSTNAME_STRICT: "false"
       KC_PROXY: "edge"
     ports:

@@ -79,7 +79,7 @@ class KeycloakAuthentication(TokenAuthentication):
             client_id = settings.KEYCLOAK_CLIENT_ID
             client_secret = settings.KEYCLOAK_CLIENT_SECRET
             
-            url = f"{keycloak_url}/auth/realms/{realm}/protocol/openid-connect/token/introspect"
+            url = f"{keycloak_url}/realms/{realm}/protocol/openid-connect/token/introspect"
             
             response = requests.post(
                 url,
@@ -152,7 +152,7 @@ def get_keycloak_token(username: str, password: str) -> Optional[str]:
         client_id = settings.KEYCLOAK_CLIENT_ID
         client_secret = settings.KEYCLOAK_CLIENT_SECRET
         
-        url = f"{keycloak_url}/auth/realms/{realm}/protocol/openid-connect/token"
+        url = f"{keycloak_url}/realms/{realm}/protocol/openid-connect/token"
         
         response = requests.post(
             url,

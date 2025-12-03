@@ -43,7 +43,7 @@ interface AuthProviderProps {
  *   </AuthProvider>
  */
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const parts = token.split(".");
       if (parts.length !== 3) return;
 
-      const decoded = JSON.parse(atob(parts[1]));
+      // Decodificar Base64Url para Base64
+      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      // Decodificar Base64 para String UTF-8
+      const jsonPayload = decodeURIComponent(
+        window
+          .atob(base64)
+          .split("")
+          .map(function (c) {
+            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join("")
+      );
+
+      const decoded = JSON.parse(jsonPayload);
 
       setUser({
         id: decoded.sub,
@@ -132,7 +145,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const checkTokenExpiration = () => {
       try {
         const parts = token.split(".");
-        const decoded = JSON.parse(atob(parts[1]));
+        // Decodificar Base64Url para Base64
+        const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        // Decodificar Base64 para String UTF-8
+        const jsonPayload = decodeURIComponent(
+          window
+            .atob(base64)
+            .split("")
+            .map(function (c) {
+              return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+            })
+            .join("")
+        );
+
+        const decoded = JSON.parse(jsonPayload);
         const exp = decoded.exp * 1000; // Converter para ms
 
         if (Date.now() >= exp) {
