@@ -215,6 +215,43 @@ class FHIRService:
             logger.error(f"Error retrieving Patient {patient_id}: {str(e)}")
             raise FHIRServiceException(f"Failed to retrieve Patient: {str(e)}")
 
+    def search_patients(self, name: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Busca pacientes no servidor FHIR.
+        
+        Args:
+            name: Nome para busca parcial (opcional)
+            
+        Returns:
+            Lista de recursos Patient
+        """
+        try:
+            params = {"_sort": "-_lastUpdated"}
+            if name:
+                params["name"] = name
+                
+            response = self.session.get(
+                f"{self.base_url}/Patient",
+                params=params,
+                timeout=self.timeout
+            )
+            
+            response.raise_for_status()
+            bundle = response.json()
+            
+            patients = []
+            if "entry" in bundle:
+                for entry in bundle["entry"]:
+                    if "resource" in entry:
+                        patients.append(entry["resource"])
+                        
+            logger.info(f"Search patients (name={name}): found {len(patients)}")
+            return patients
+            
+        except requests.RequestException as e:
+            logger.error(f"Error searching patients: {str(e)}")
+            raise FHIRServiceException(f"Failed to search patients: {str(e)}")
+
     def create_encounter_resource(
         self,
         patient_id: str,

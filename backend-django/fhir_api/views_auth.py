@@ -95,58 +95,93 @@ def login(request):
 # PROTECTED ENDPOINTS (com autenticação Keycloak)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @authentication_classes([KeycloakAuthentication])
 @permission_classes([IsAuthenticated])
-@require_role('medico', 'admin')  # Apenas médicos e admins podem criar pacientes
-def create_patient(request):
+@require_role('medico', 'admin', 'enfermeiro')  # Enfermeiros também podem listar/criar
+def manage_patients(request):
     """
-    Cria um novo paciente no sistema.
+    Gerencia pacientes (Listar e Criar).
     
-    ✅ REQUER AUTENTICAÇÃO + ROLE 'medico' ou 'admin'
+    GET /api/v1/patients/
+    - Retorna lista de pacientes
+    - Query params: ?name=João
     
     POST /api/v1/patients/
-    
-    Headers:
-        Authorization: Bearer <keycloak_token>
-    
-    Body:
-    {
-        "first_name": "João",
-        "last_name": "Silva",
-        "birth_date": "1990-05-15",
-        "cpf": "12345678901",
-        "gender": "male",
-        "telecom": [
-            {"system": "phone", "value": "(11) 99999-9999"}
-        ]
-    }
+    - Cria novo paciente
     """
-    try:
-        # Informações do usuário autenticado
-        user_info = request.user
-        logger.info(f"Criando paciente. Usuário: {user_info.get('preferred_username')}")
-        
-        data = request.data
-        
-        # Validar campos obrigatórios
-        required_fields = ['first_name', 'last_name', 'birth_date']
-        for field in required_fields:
-            if field not in data:
-                return Response({
-                    "error": f"Campo obrigatório ausente: {field}"
-                }, status=status.HTTP_400_BAD_REQUEST)
-        
-        fhir_service = FHIRService()
-        
-        result = fhir_service.create_patient_resource(
-            first_name=data.get('first_name'),
-            last_name=data.get('last_name'),
-            birth_date=data.get('birth_date'),
-            cpf=data.get('cpf'),
-            gender=data.get('gender'),
-            telecom=data.get('telecom'),
-        )
+    fhir_service = FHIRService()
+
+    # 1. LISTAR PACIENTES (GET)
+    if request.method == 'GET':
+        try:
+            name = request.query_params.get('name')
+            patients = fhir_service.search_patients(name=name)
+            
+            # Simplificar resposta para o frontend
+            results = []
+            for p in patients:
+                # Extrair nome completo
+                name_text = "Sem nome"
+                if p.get("name"):
+                    given = " ".join(p["name"][0].get("given", []))
+                    family = p["name"][0].get("family", "")
+                    name_text = f"{given} {family}".strip()
+                
+                # Extrair email/telefone
+                email = None
+                phone = None
+                for t in p.get("telecom", []):
+                    if t.get("system") == "email":
+                        email = t.get("value")
+                    elif t.get("system") == "phone":
+                        phone = t.get("value")
+
+                results.append({
+                    "id": p.get("id"),
+                    "resourceType": "Patient",
+                    "name": name_text,
+                    "birthDate": p.get("birthDate"),
+                    "gender": p.get("gender"),
+                    "email": email,
+                    "phone": phone
+                })
+                
+            return Response(results, status=status.HTTP_200_OK)
+            
+        except FHIRServiceException as e:
+            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    # 2. CRIAR PACIENTE (POST)
+    elif request.method == 'POST':
+        try:
+            # Informações do usuário autenticado
+            user_info = request.user
+            logger.info(f"Criando paciente. Usuário: {user_info.get('preferred_username')}")
+            
+            data = request.data
+            
+            # Validar campos obrigatórios
+            required_fields = ['first_name', 'last_name', 'birth_date']
+            for field in required_fields:
+                if field not in data:
+                    return Response({
+                        "error": f"Campo obrigatório ausente: {field}"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            
+            result = fhir_service.create_patient_resource(
+                first_name=data.get('first_name'),
+                last_name=data.get('last_name'),
+                birth_date=data.get('birth_date'),
+                cpf=data.get('cpf'),
+                gender=data.get('gender'),
+                telecom=data.get('telecom'),
+            )
+            
+            return Response(result, status=status.HTTP_201_CREATED)
+            
+        except FHIRServiceException as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         # Adicionar informação de quem criou
         result['created_by'] = user_info.get('preferred_username')

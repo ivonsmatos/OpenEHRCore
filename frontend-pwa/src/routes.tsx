@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import Login from './components/Login';
 import PatientList from './components/PatientList';
 import PatientDetail from './components/PatientDetail';
+import PatientForm from './components/forms/PatientForm';
 import Header from './components/base/Header';
 import Button from './components/base/Button';
 import { colors, spacing } from './theme/colors';
@@ -43,6 +44,7 @@ const ProtectedRoutes: React.FC = () => {
         <MainLayout>
             <Routes>
                 <Route path="/" element={<PatientList />} />
+                <Route path="/patients/new" element={<PatientForm />} />
                 <Route path="/patients/:id" element={<PatientDetail loading={false} error={undefined} />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
@@ -52,6 +54,7 @@ const ProtectedRoutes: React.FC = () => {
 
 /**
  * Componente principal de rotas
+ * NOTA: BrowserRouter está em main.tsx, não duplicar aqui!
  */
 export const AppRoutes: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -67,9 +70,5 @@ export const AppRoutes: React.FC = () => {
         );
     }
 
-    return (
-        <BrowserRouter>
-            {isAuthenticated ? <ProtectedRoutes /> : <Login />}
-        </BrowserRouter>
-    );
+    return isAuthenticated ? <ProtectedRoutes /> : <Login />;
 };
