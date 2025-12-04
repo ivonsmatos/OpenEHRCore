@@ -79,11 +79,11 @@ class KeycloakAuthentication(TokenAuthentication):
             # BYPASS: Token de desenvolvimento
             if key == "dev-token-bypass":
                 user_info = {
-                    'name': 'Dev User',
-                    'preferred_username': 'dev',
-                    'email': 'dev@example.com',
+                    'name': 'Ivon Matos',
+                    'preferred_username': 'contato@ivonmatos.com.br',
+                    'email': 'contato@ivonmatos.com.br',
                     'roles': ['medico', 'admin', 'enfermeiro'],
-                    'sub': 'dev-user-id'
+                    'sub': 'ivon-matos-id'
                 }
                 return (KeycloakUser(user_info), key)
 

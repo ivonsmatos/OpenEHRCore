@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import Card from "./base/Card";
 import Button from "./base/Button";
 import Header from "./base/Header";
@@ -31,13 +32,10 @@ interface PatientDetailProps {
  * - Whitespace generoso e tipografia moderna
  * - Componentes reutilizáveis (Card, Button, Header)
  */
-export const PatientDetail: React.FC<PatientDetailProps> = ({
-  patient,
-  loading = false,
-  error,
-  onEdit,
-  onDelete,
-}) => {
+export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { patient, loading = false, error, onEdit, onDelete } = props;
   const [mockPatient, setMockPatient] = useState<FHIRPatient | undefined>(patient);
 
   // Se nenhum paciente foi passado, usar dados de exemplo
@@ -45,7 +43,7 @@ export const PatientDetail: React.FC<PatientDetailProps> = ({
     if (!patient) {
       const examplePatient: FHIRPatient = {
         resourceType: "Patient",
-        id: "patient-example-001",
+        id: id || "patient-example-001", // Usar ID da URL ou fallback
         name: [
           {
             use: "official",

@@ -63,6 +63,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // 2. Decodificar informações do token JWT
   const decodeTokenInfo = (token: string) => {
     try {
+      // BYPASS: Token de desenvolvimento
+      if (token === "dev-token-bypass") {
+        setUser({
+          id: "ivon-matos-id",
+          username: "contato@ivonmatos.com.br",
+          email: "contato@ivonmatos.com.br",
+          name: "Ivon Matos",
+          roles: ["medico", "admin", "enfermeiro"],
+        });
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        return;
+      }
+
       const parts = token.split(".");
       if (parts.length !== 3) return;
 
@@ -154,6 +167,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!token) return;
 
     const checkTokenExpiration = () => {
+      // BYPASS: Token de desenvolvimento nunca expira
+      if (token === "dev-token-bypass") {
+        return;
+      }
+
       try {
         const parts = token.split(".");
         // Decodificar Base64Url para Base64

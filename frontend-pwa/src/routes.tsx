@@ -1,0 +1,75 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
+import Login from './components/Login';
+import PatientList from './components/PatientList';
+import PatientDetail from './components/PatientDetail';
+import Header from './components/base/Header';
+import Button from './components/base/Button';
+import { colors, spacing } from './theme/colors';
+
+/**
+ * Layout principal da aplicação (após login)
+ */
+const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user, logout } = useAuth();
+
+    return (
+        <div style={{ backgroundColor: colors.background.surface, minHeight: '100vh' }}>
+            <Header
+                title="OpenEHRCore - Sistema de Prontuários"
+                subtitle={`Bem-vindo, ${user?.name || 'Usuário'}!`}
+            >
+                <div style={{ fontSize: '0.875rem', color: 'white', display: 'flex', alignItems: 'center', gap: spacing.md }}>
+                    <span>👤 {user?.email}</span>
+                    <span>🔖 {user?.roles?.join(', ') || 'sem role'}</span>
+                    <Button variant="secondary" size="sm" onClick={logout}>
+                        Sair
+                    </Button>
+                </div>
+            </Header>
+
+            <main style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                {children}
+            </main>
+        </div>
+    );
+};
+
+/**
+ * Rotas protegidas (requerem autenticação)
+ */
+const ProtectedRoutes: React.FC = () => {
+    return (
+        <MainLayout>
+            <Routes>
+                <Route path="/" element={<PatientList />} />
+                <Route path="/patients/:id" element={<PatientDetail loading={false} error={undefined} />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </MainLayout>
+    );
+};
+
+/**
+ * Componente principal de rotas
+ */
+export const AppRoutes: React.FC = () => {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '2rem', marginBottom: spacing.md }}>⟳</div>
+                    <p>Carregando aplicação...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <BrowserRouter>
+            {isAuthenticated ? <ProtectedRoutes /> : <Login />}
+        </BrowserRouter>
+    );
+};

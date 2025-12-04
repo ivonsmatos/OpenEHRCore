@@ -65,7 +65,7 @@ def login(request):
     password = request.data.get('password')
     
     # BYPASS: Login de desenvolvimento
-    if username == 'dev' and password == 'dev':
+    if username == 'contato@ivonmatos.com.br' and password == 'Protonsysdba@1986':
         return Response({
             'access_token': 'dev-token-bypass',
             'refresh_token': 'dev-refresh-bypass',

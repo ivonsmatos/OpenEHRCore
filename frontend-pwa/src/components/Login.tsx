@@ -11,8 +11,8 @@ import Card from "./base/Card";
  * Autenticação com Keycloak via API Django
  */
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState("medico@example.com");
-  const [password, setPassword] = useState("senha123!@#");
+  const [email, setEmail] = useState("contato@ivonmatos.com.br");
+  const [password, setPassword] = useState("Protonsysdba@1986");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -108,10 +108,10 @@ export const Login: React.FC = () => {
               Email ou Usuário
             </label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="medico@example.com"
+              placeholder="contato@ivonmatos.com.br"
               style={{
                 width: "100%",
                 padding: "12px",
@@ -193,7 +193,7 @@ export const Login: React.FC = () => {
             variant="primary"
             size="lg"
             isLoading={isLoading}
-            onClick={() => {}}
+            onClick={() => { }}
             type="submit"
           >
             {isLoading ? "Entrando..." : "Entrar"}
@@ -212,11 +212,11 @@ export const Login: React.FC = () => {
             lineHeight: "1.5rem",
           }}
         >
-          <strong>Demo Credentials:</strong>
+          <strong>Credenciais de Acesso:</strong>
           <br />
-          Email: <code>medico@example.com</code>
+          Email: <code>contato@ivonmatos.com.br</code>
           <br />
-          Senha: <code>senha123!@#</code>
+          Senha: <code>Protonsysdba@1986</code>
         </div>
 
         {/* Help Link */}

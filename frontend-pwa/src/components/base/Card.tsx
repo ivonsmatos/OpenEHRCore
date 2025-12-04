@@ -7,6 +7,9 @@ interface CardProps {
   padding?: "none" | "sm" | "md" | "lg";
   elevation?: "none" | "soft" | "base" | "md";
   onClick?: () => void;
+  style?: React.CSSProperties;
+  onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onMouseLeave?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 /**
@@ -24,6 +27,9 @@ export const Card: React.FC<CardProps> = ({
   padding = "md",
   elevation = "base",
   onClick,
+  style,
+  onMouseEnter,
+  onMouseLeave,
 }) => {
   const paddingMap = {
     none: "0px",
@@ -35,6 +41,8 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       className={className}
       style={{
         backgroundColor: colors.background.default,
@@ -44,6 +52,7 @@ export const Card: React.FC<CardProps> = ({
         border: `1px solid ${colors.border.light}`,
         transition: `all 250ms ease-in-out`,
         cursor: onClick ? "pointer" : "default",
+        ...style,
       }}
     >
       {children}
