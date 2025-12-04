@@ -21,13 +21,31 @@ def get_token():
         exit(1)
 
 def create_patient(token):
-    # Tenta criar o paciente se não existir (embora o frontend use mock, o backend precisa dele para vincular dados)
-    # Mas como o ID é 'patient-example-001', o backend pode não aceitar criar com ID específico via POST padrão
-    # O FHIRService.create_patient_resource gera ID.
-    # Vamos assumir que o usuário quer ver dados vinculados ao ID que o frontend mostra.
-    # Se o backend validar a existência do paciente, precisaremos criar um.
-    # Mas para popular dados, podemos tentar enviar o patient_id direto.
-    pass
+    print("👤 Garantindo que o paciente exista...")
+    # Criar paciente via PUT direto no HAPI FHIR para forçar o ID
+    fhir_url = "http://localhost:8080/fhir/Patient/patient-example-001"
+    patient_data = {
+        "resourceType": "Patient",
+        "id": "patient-example-001",
+        "name": [
+            {
+                "use": "official",
+                "family": "Silva",
+                "given": ["João", "da", "Costa"]
+            }
+        ],
+        "gender": "male",
+        "birthDate": "1985-06-15"
+    }
+    
+    try:
+        resp = requests.put(fhir_url, json=patient_data, headers={"Content-Type": "application/fhir+json"})
+        if resp.status_code in [200, 201]:
+            print("  ✅ Paciente criado/atualizado com sucesso!")
+        else:
+            print(f"  ⚠️ Erro ao criar paciente no FHIR: {resp.status_code} - {resp.text}")
+    except Exception as e:
+        print(f"  ❌ Erro de conexão com FHIR: {e}")
 
 def populate_vital_signs(token):
     print("🩺 Criando Sinais Vitais...")
@@ -77,7 +95,9 @@ def populate_vital_signs(token):
         if resp.status_code == 201:
             print(f"  ✅ {obs['code']}: {obs['value']} {obs['unit']}")
         else:
-            print(f"  ❌ Falha {obs['code']}: {resp.text}")
+            print(f"  ❌ Falha {obs['code']}: {resp.status_code}")
+            with open("erro_vital_signs.html", "w", encoding="utf-8") as f:
+                f.write(resp.text)
 
 def populate_conditions(token):
     print("⚠️ Criando Condições (Problemas)...")
@@ -183,6 +203,7 @@ if __name__ == "__main__":
     # Mas nossos métodos create_* apenas criam o recurso linkando o subject.
     # O HAPI FHIR geralmente aceita referências a recursos inexistentes se não tiver validação referencial estrita ativada.
     # Se falhar, teremos que criar o paciente primeiro com PUT.
+    create_patient(token)
     
     populate_vital_signs(token)
     populate_conditions(token)

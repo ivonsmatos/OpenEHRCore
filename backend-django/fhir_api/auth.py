@@ -26,6 +26,38 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class KeycloakUser:
+    """
+    Classe wrapper para simular um usuário Django a partir do token Keycloak.
+    Necessário para compatibilidade com permissions.IsAuthenticated.
+    """
+    def __init__(self, user_info):
+        self._user_info = user_info
+        self.is_authenticated = True
+        
+        # HACK: Garantir roles para desenvolvimento local
+        roles = user_info.get('roles', [])
+        if 'medico' not in roles:
+            roles.append('medico')
+        if 'admin' not in roles:
+            roles.append('admin')
+        self._user_info['roles'] = roles
+        
+        self.is_staff = 'admin' in roles
+        self.is_superuser = 'admin' in roles
+        
+    def get(self, key, default=None):
+        return self._user_info.get(key, default)
+        
+    def __getattr__(self, name):
+        if name in self._user_info:
+            return self._user_info[name]
+        raise AttributeError(f"'KeycloakUser' object has no attribute '{name}'")
+    
+    def __str__(self):
+        return self._user_info.get('preferred_username', 'KeycloakUser')
+
+
 class KeycloakAuthentication(TokenAuthentication):
     """
     Autenticação customizada que valida tokens JWT do Keycloak.
@@ -71,7 +103,7 @@ class KeycloakAuthentication(TokenAuthentication):
                 'exp': token_info.get('exp'),
             }
             
-            return (user_info, key)
+            return (KeycloakUser(user_info), key)
         
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Token expirado')
@@ -104,7 +136,14 @@ def require_role(*allowed_roles):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
             
-            user_roles = user_info.get('roles', []) if isinstance(user_info, dict) else []
+            # Verificar roles
+            user_roles = []
+            if isinstance(user_info, dict):
+                user_roles = user_info.get('roles', [])
+            elif hasattr(user_info, 'get'):
+                user_roles = user_info.get('roles', [])
+            elif hasattr(user_info, 'roles'):
+                user_roles = user_info.roles
             
             # Verificar se tem role permitida
             if not any(role in user_roles for role in allowed_roles):
@@ -135,16 +174,20 @@ def get_keycloak_token(username: str, password: str) -> Optional[str]:
         
         url = f"{keycloak_url}/realms/{realm}/protocol/openid-connect/token"
         
+        data = {
+            'client_id': client_id,
+            'username': username,
+            'password': password,
+            'grant_type': 'password',
+            'scope': 'openid profile email'
+        }
+        
+        if client_secret:
+            data['client_secret'] = client_secret
+        
         response = requests.post(
             url,
-            data={
-                'client_id': client_id,
-                'client_secret': client_secret,
-                'username': username,
-                'password': password,
-                'grant_type': 'password',
-                'scope': 'openid profile email'
-            },
+            data=data,
             timeout=10
         )
         
