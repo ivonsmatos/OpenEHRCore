@@ -29,13 +29,13 @@ services:
     container_name: openehr_hapi_fhir
     environment:
       # server.servlet.context-path: /fhir
-      spring.datasource.url: jdbc:postgresql://postgres:5432/hapi_fhir
-      spring.datasource.username: ${POSTGRES_USER}
-      spring.datasource.password: ${POSTGRES_PASSWORD}
-      spring.datasource.driver-class-name: org.postgresql.Driver
-      spring.jpa.database-platform: org.hibernate.dialect.PostgreSQLDialect
-      spring.jpa.hibernate.ddl-auto: update
-      spring.jpa.show-sql: false
+      # spring.datasource.url: jdbc:postgresql://postgres:5432/hapi_fhir
+      # spring.datasource.username: ${POSTGRES_USER}
+      # spring.datasource.password: ${POSTGRES_PASSWORD}
+      # spring.datasource.driver-class-name: org.postgresql.Driver
+      # spring.jpa.database-platform: org.hibernate.dialect.PostgreSQLDialect
+      # spring.jpa.hibernate.ddl-auto: update
+      # spring.jpa.show-sql: false
       hapi.fhir.fhir_version: R4
       # Validação FHIR habilitada
       hapi.fhir.validation.enabled: "true"
@@ -60,17 +60,18 @@ services:
   # Keycloak - Gerenciador de Identidade (OAuth2/OIDC)
   # Porta 8180: Console e endpoints de autenticação
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0.0
+    image: quay.io/keycloak/keycloak:26.0.0
     container_name: openehr_keycloak
     environment:
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: ${POSTGRES_USER}
-      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
       KC_HOSTNAME_STRICT: "false"
       KC_PROXY: "edge"
+      KC_HTTP_ENABLED: "true"
     ports:
       - "8180:8080"
     depends_on:

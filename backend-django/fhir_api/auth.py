@@ -76,6 +76,17 @@ class KeycloakAuthentication(TokenAuthentication):
         Valida token JWT localmente usando chave pública do Keycloak (JWKS).
         """
         try:
+            # BYPASS: Token de desenvolvimento
+            if key == "dev-token-bypass":
+                user_info = {
+                    'name': 'Dev User',
+                    'preferred_username': 'dev',
+                    'email': 'dev@example.com',
+                    'roles': ['medico', 'admin', 'enfermeiro'],
+                    'sub': 'dev-user-id'
+                }
+                return (KeycloakUser(user_info), key)
+
             # 1. Obter JWKS do Keycloak (cachear isso seria ideal em prod)
             jwks_url = f"{settings.KEYCLOAK_URL}/realms/{settings.KEYCLOAK_REALM}/protocol/openid-connect/certs"
             jwks_client = jwt.PyJWKClient(jwks_url)

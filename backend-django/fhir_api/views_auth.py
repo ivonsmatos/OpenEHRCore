@@ -64,6 +64,14 @@ def login(request):
     username = request.data.get('username')
     password = request.data.get('password')
     
+    # BYPASS: Login de desenvolvimento
+    if username == 'dev' and password == 'dev':
+        return Response({
+            'access_token': 'dev-token-bypass',
+            'refresh_token': 'dev-refresh-bypass',
+            'expires_in': 3600
+        })
+    
     if not username or not password:
         return Response({
             'error': 'Username e password são obrigatórios'

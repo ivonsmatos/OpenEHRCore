@@ -4,8 +4,8 @@ import datetime
 
 # Configuração
 API_URL = "http://localhost:8000/api/v1"
-USERNAME = "medico@example.com"
-PASSWORD = "senha123!@#"
+USERNAME = "dev"
+PASSWORD = "dev"
 PATIENT_ID = "patient-example-001"
 
 def get_token():
