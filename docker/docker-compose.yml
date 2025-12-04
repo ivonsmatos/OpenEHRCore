@@ -28,7 +28,7 @@ services:
     image: hapiproject/hapi:v7.2.0
     container_name: openehr_hapi_fhir
     environment:
-      server.servlet.context-path: /fhir
+      # server.servlet.context-path: /fhir
       spring.datasource.url: jdbc:postgresql://postgres:5432/hapi_fhir
       spring.datasource.username: ${POSTGRES_USER}
       spring.datasource.password: ${POSTGRES_PASSWORD}

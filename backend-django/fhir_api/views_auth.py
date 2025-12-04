@@ -76,6 +76,7 @@ def login(request):
             'error': 'Credenciais inválidas'
         }, status=status.HTTP_401_UNAUTHORIZED)
     
+    logger.info(f"Login bem-sucedido para usuário: {username}")
     return Response({
         'access_token': token,
         'token_type': 'Bearer'

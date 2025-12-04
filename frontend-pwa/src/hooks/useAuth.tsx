@@ -81,10 +81,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       const decoded = JSON.parse(jsonPayload);
 
-      // Verificar expiração imediatamente
+      // Verificar expiração imediatamente (com 5 minutos de tolerância para clock skew)
       const exp = decoded.exp * 1000;
-      if (Date.now() >= exp) {
-        console.warn("Token expirado detectado no decode.");
+      const now = Date.now();
+      const tolerance = 5 * 60 * 1000; // 5 minutos
+
+      if (now >= exp + tolerance) {
+        console.warn(`Token expirado detectado no decode. Exp: ${new Date(exp).toISOString()}, Now: ${new Date(now).toISOString()}`);
         logout();
         return;
       }

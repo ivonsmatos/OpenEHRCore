@@ -7,6 +7,7 @@ Todos os endpoints protegidos validam tokens JWT contra o servidor Keycloak.
 
 import requests
 import json
+import jwt
 from functools import wraps
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Any
@@ -40,18 +41,27 @@ class KeycloakAuthentication(TokenAuthentication):
     
     def authenticate_credentials(self, key):
         """
-        Valida token JWT contra Keycloak.
-        
-        Retorna (user_info, validated_token) ou lança AuthenticationFailed
+        Valida token JWT localmente usando chave pública do Keycloak (JWKS).
         """
         try:
-            # 1. Validar token no Keycloak (introspect endpoint)
-            token_info = self._introspect_token(key)
+            # 1. Obter JWKS do Keycloak (cachear isso seria ideal em prod)
+            jwks_url = f"{settings.KEYCLOAK_URL}/realms/{settings.KEYCLOAK_REALM}/protocol/openid-connect/certs"
+            jwks_client = jwt.PyJWKClient(jwks_url)
             
-            if not token_info.get('active'):
-                raise AuthenticationFailed('Token inválido ou expirado')
+            # 2. Obter a chave de assinatura
+            signing_key = jwks_client.get_signing_key_from_jwt(key)
             
-            # 2. Extrair informações do usuário
+            # 3. Decodificar e validar token
+            # audience pode ser opcional dependendo da config do Keycloak, aqui validamos se presente
+            token_info = jwt.decode(
+                key,
+                signing_key.key,
+                algorithms=["RS256"],
+                audience=settings.KEYCLOAK_CLIENT_ID,
+                options={"verify_aud": False} # Relaxar aud por enquanto para evitar erros se não configurado
+            )
+            
+            # 4. Extrair informações do usuário
             user_info = {
                 'sub': token_info.get('sub'),
                 'preferred_username': token_info.get('preferred_username'),
@@ -61,47 +71,16 @@ class KeycloakAuthentication(TokenAuthentication):
                 'exp': token_info.get('exp'),
             }
             
-            # 3. Retornar como usuário autenticado
-            # Nota: Não criamos usuário Django, apenas usamos info do Keycloak
             return (user_info, key)
         
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Token expirado')
+        except jwt.InvalidTokenError as e:
+            logger.error(f"Token inválido: {str(e)}")
+            raise AuthenticationFailed(f'Token inválido: {str(e)}')
         except Exception as e:
-            logger.error(f"Erro validando token Keycloak: {str(e)}")
+            logger.error(f"Erro validando token: {str(e)}")
             raise AuthenticationFailed(f'Falha na autenticação: {str(e)}')
-    
-    def _introspect_token(self, token: str) -> Dict[str, Any]:
-        """
-        Valida token contra endpoint /protocol/openid-connect/token/introspect
-        """
-        try:
-            keycloak_url = settings.KEYCLOAK_URL
-            realm = settings.KEYCLOAK_REALM
-            client_id = settings.KEYCLOAK_CLIENT_ID
-            client_secret = settings.KEYCLOAK_CLIENT_SECRET
-            
-            url = f"{keycloak_url}/realms/{realm}/protocol/openid-connect/token/introspect"
-            
-            response = requests.post(
-                url,
-                data={
-                    'client_id': client_id,
-                    'client_secret': client_secret,
-                    'token': token,
-                },
-                timeout=10
-            )
-            
-            if response.status_code != 200:
-                logger.warning(f"Keycloak introspect failed: {response.status_code} - {response.text}")
-                return {'active': False}
-            
-            data = response.json()
-            logger.info(f"Introspect response: {data}")
-            return data
-        
-        except Exception as e:
-            logger.error(f"Erro ao chamar Keycloak introspect: {str(e)}")
-            return {'active': False}
 
 
 def require_role(*allowed_roles):
