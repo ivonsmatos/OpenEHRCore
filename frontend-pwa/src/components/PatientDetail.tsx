@@ -2,18 +2,15 @@ import React, { useEffect, useState } from "react";
 import Card from "./base/Card";
 import Button from "./base/Button";
 import Header from "./base/Header";
-import { colors, spacing, typography } from "../theme/colors";
+import VitalSigns from "./clinical/VitalSigns";
+import ProblemList from "./clinical/ProblemList";
+import AllergyList from "./clinical/AllergyList";
+import AppointmentList from "./scheduling/AppointmentList";
+import { colors, spacing } from "../theme/colors";
 import {
   FHIRPatient,
-  getPatientFullName,
-  getPatientCPF,
-  formatPatientBirthDate,
-  calculatePatientAge,
-  getPatientGenderLabel,
-  getPatientTelecom,
-  getPatientAddress,
-  isValidPatientResource,
   getPatientSummary,
+  isValidPatientResource,
 } from "../utils/fhirParser";
 
 interface PatientDetailProps {
@@ -158,7 +155,7 @@ export const PatientDetail: React.FC<PatientDetailProps> = ({
         style={{
           maxWidth: "1200px",
           margin: "0 auto",
-          padding: spacing.xl,
+          padding: spacing.md,
         }}
       >
         {/* Section: Dados Pessoais */}
@@ -177,7 +174,7 @@ export const PatientDetail: React.FC<PatientDetailProps> = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
               gap: spacing.lg,
             }}
           >
@@ -346,6 +343,87 @@ export const PatientDetail: React.FC<PatientDetailProps> = ({
           </div>
         </section>
 
+        {/* Section: Sinais Vitais */}
+        <section style={{ marginBottom: spacing.xl }}>
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              marginBottom: spacing.md,
+              color: colors.text.primary,
+              display: "flex",
+              alignItems: "center",
+              gap: spacing.sm,
+            }}
+          >
+            Sinais Vitais 🩺
+          </h2>
+          <VitalSigns patientId={mockPatient.id} />
+        </section>
+
+        {/* Section: Histórico Clínico */}
+        <section style={{ marginBottom: spacing.xl }}>
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              marginBottom: spacing.md,
+              color: colors.text.primary,
+            }}
+          >
+            Histórico Clínico
+          </h2>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: spacing.lg,
+            }}
+          >
+            <div>
+              <h3
+                style={{
+                  fontSize: "1.125rem",
+                  fontWeight: 600,
+                  marginBottom: spacing.sm,
+                  color: colors.text.secondary,
+                }}
+              >
+                Problemas / Condições
+              </h3>
+              <ProblemList patientId={mockPatient.id} />
+            </div>
+            <div>
+              <h3
+                style={{
+                  fontSize: "1.125rem",
+                  fontWeight: 600,
+                  marginBottom: spacing.sm,
+                  color: colors.text.secondary,
+                }}
+              >
+                Alergias
+              </h3>
+              <AllergyList patientId={mockPatient.id} />
+            </div>
+          </div>
+        </section>
+
+        {/* Section: Agendamentos */}
+        <section style={{ marginBottom: spacing.xl }}>
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              marginBottom: spacing.md,
+              color: colors.text.primary,
+            }}
+          >
+            Próximos Agendamentos 📅
+          </h2>
+          <AppointmentList patientId={mockPatient.id} />
+        </section>
+
         {/* Section: Contatos */}
         {summary.telecom && summary.telecom.length > 0 && (
           <section style={{ marginBottom: spacing.xl }}>
@@ -476,7 +554,7 @@ export const PatientDetail: React.FC<PatientDetailProps> = ({
                 borderRadius: "8px",
                 fontSize: "0.75rem",
                 overflow: "auto",
-                color: colors.text.darkest,
+                color: colors.text.primary,
                 border: `1px solid ${colors.border.light}`,
               }}
             >

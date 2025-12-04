@@ -254,3 +254,184 @@ export function getPatientSummary(patient: FHIRPatient) {
     address: getPatientAddress(patient),
   };
 }
+
+// ----------------------------------------------------------------------
+// OBSERVATION (Sinais Vitais)
+// ----------------------------------------------------------------------
+
+export interface FHIRObservation {
+  resourceType: string;
+  id: string;
+  status: string;
+  code: {
+    coding: Array<{
+      system: string;
+      code: string;
+      display?: string;
+    }>;
+    text?: string;
+  };
+  subject: {
+    reference: string;
+  };
+  valueQuantity?: {
+    value: number;
+    unit?: string;
+    system?: string;
+    code?: string;
+  };
+  effectiveDateTime?: string;
+  [key: string]: any;
+}
+
+/**
+ * Extrai o nome da observação (ex: "Blood Pressure")
+ */
+export function getObservationName(obs: FHIRObservation): string {
+  if (obs.code?.text) return obs.code.text;
+  if (obs.code?.coding?.[0]?.display) return obs.code.coding[0].display;
+  return "Observação sem nome";
+}
+
+/**
+ * Extrai o valor formatado (ex: "120 mmHg")
+ */
+export function getObservationValue(obs: FHIRObservation): string {
+  if (obs.valueQuantity) {
+    const val = obs.valueQuantity.value;
+    const unit = obs.valueQuantity.unit || "";
+    return `${val} ${unit}`.trim();
+  }
+  return "Sem valor";
+}
+
+/**
+ * Formata data da observação
+ */
+export function formatObservationDate(dateString?: string): string {
+  if (!dateString) return "-";
+  try {
+    return new Date(dateString).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return dateString;
+  }
+}
+
+// ----------------------------------------------------------------------
+// CONDITION (Problemas/Diagnósticos)
+// ----------------------------------------------------------------------
+
+export interface FHIRCondition {
+  resourceType: string;
+  id: string;
+  clinicalStatus?: {
+    coding: Array<{ code: string }>;
+  };
+  verificationStatus?: {
+    coding: Array<{ code: string }>;
+  };
+  code?: {
+    text?: string;
+    coding?: Array<{ display?: string; code: string }>;
+  };
+  recordedDate?: string;
+  [key: string]: any;
+}
+
+export function getConditionName(cond: FHIRCondition): string {
+  return cond.code?.text || cond.code?.coding?.[0]?.display || "Condição sem nome";
+}
+
+export function getConditionStatus(cond: FHIRCondition): string {
+  return cond.clinicalStatus?.coding?.[0]?.code || "unknown";
+}
+
+// ----------------------------------------------------------------------
+// ALLERGY INTOLERANCE (Alergias)
+// ----------------------------------------------------------------------
+
+export interface FHIRAllergyIntolerance {
+  resourceType: string;
+  id: string;
+  clinicalStatus?: {
+    coding: Array<{ code: string }>;
+  };
+  criticality?: "low" | "high" | "unable-to-assess";
+  code?: {
+    text?: string;
+    coding?: Array<{ display?: string; code: string }>;
+  };
+  recordedDate?: string;
+  [key: string]: any;
+}
+
+export function getAllergyName(allergy: FHIRAllergyIntolerance): string {
+  return allergy.code?.text || allergy.code?.coding?.[0]?.display || "Alergia sem nome";
+}
+
+export function getAllergyCriticality(allergy: FHIRAllergyIntolerance): string {
+  const map: Record<string, string> = {
+    low: "Baixa",
+    high: "Alta",
+    "unable-to-assess": "Desconhecida",
+  };
+  return map[allergy.criticality || ""] || "Desconhecida";
+}
+
+// ----------------------------------------------------------------------
+// APPOINTMENT (Agendamento)
+// ----------------------------------------------------------------------
+
+export interface FHIRAppointment {
+  resourceType: string;
+  id: string;
+  status: string;
+  description?: string;
+  start?: string;
+  end?: string;
+  participant?: Array<{
+    actor?: { reference: string; display?: string };
+    status: string;
+  }>;
+  [key: string]: any;
+}
+
+export function getAppointmentDescription(appt: FHIRAppointment): string {
+  return appt.description || "Consulta sem descrição";
+}
+
+export function formatAppointmentDate(dateString?: string): string {
+  if (!dateString) return "Data não definida";
+  try {
+    return new Date(dateString).toLocaleString("pt-BR", {
+      weekday: "short",
+      day: "2-digit",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return dateString;
+  }
+}
+
+export function getAppointmentStatusLabel(status: string): string {
+  const map: Record<string, string> = {
+    proposed: "Proposto",
+    pending: "Pendente",
+    booked: "Agendado",
+    arrived: "Chegou",
+    fulfilled: "Realizado",
+    cancelled: "Cancelado",
+    noshow: "Não compareceu",
+    "entered-in-error": "Erro",
+    "checked-in": "Check-in",
+    waitlist: "Lista de espera",
+  };
+  return map[status] || status;
+}

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { AuthProvider, useAuth, ProtectedRoute, setupAxiosInterceptors } from "./hooks/useAuth";
+// import { useState } from "react";
+import { AuthProvider, useAuth, setupAxiosInterceptors } from "./hooks/useAuth";
 import Login from "./components/Login";
 import PatientDetail from "./components/PatientDetail";
 import Header from "./components/base/Header";
@@ -14,7 +14,7 @@ setupAxiosInterceptors();
  */
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
+  // const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
 
   return (
     <div style={{ backgroundColor: colors.background.surface, minHeight: "100vh" }}>

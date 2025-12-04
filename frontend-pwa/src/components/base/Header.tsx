@@ -1,5 +1,5 @@
 import React from "react";
-import { colors, typography, spacing } from "../../theme/colors";
+import { colors, spacing } from "../../theme/colors";
 
 interface HeaderProps {
   title: string;
@@ -28,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
       style={{
         backgroundColor: colors.primary.dark,
         color: "#FFFFFF",
-        padding: `${spacing.lg} ${spacing.xl}`,
+        padding: spacing.md,
         boxShadow: "0 2px 8px rgba(3, 57, 166, 0.15)",
         borderBottom: `1px solid ${colors.primary.medium}`,
       }}

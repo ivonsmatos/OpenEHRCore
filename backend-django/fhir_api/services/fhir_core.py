@@ -25,6 +25,10 @@ from fhirclient.models.period import Period
 from fhirclient.models.observation import Observation
 from fhirclient.models.quantity import Quantity
 from fhirclient.models.fhirdate import FHIRDate
+from fhirclient.models.fhirreference import FHIRReference
+from fhirclient.models.condition import Condition
+from fhirclient.models.allergyintolerance import AllergyIntolerance
+from fhirclient.models.appointment import Appointment
 
 
 logger = logging.getLogger(__name__)
@@ -370,3 +374,232 @@ class FHIRService:
         except Exception as e:
             logger.error(f"Error creating Observation: {str(e)}")
             raise FHIRServiceException(f"Failed to create Observation: {str(e)}")
+
+    def get_observations_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
+        """
+        Recupera todas as observações de um paciente.
+        
+        Args:
+            patient_id: ID do paciente
+            
+        Returns:
+            Lista de recursos Observation
+        """
+        try:
+            # Busca por observações onde subject = Patient/{id}
+            # Ordenado por data decrescente (_sort=-date)
+            response = self.session.get(
+                f"{self.base_url}/Observation",
+                params={
+                    "subject": f"Patient/{patient_id}",
+                    "_sort": "-date"
+                },
+                timeout=self.timeout
+            )
+            
+            response.raise_for_status()
+            
+            bundle = response.json()
+            
+            # Extrair recursos do Bundle
+            observations = []
+            if "entry" in bundle:
+                for entry in bundle["entry"]:
+                    if "resource" in entry:
+                        observations.append(entry["resource"])
+            
+            logger.info(f"Retrieved {len(observations)} observations for Patient {patient_id}")
+            return observations
+            
+        except requests.RequestException as e:
+            logger.error(f"Error retrieving observations for Patient {patient_id}: {str(e)}")
+            raise FHIRServiceException(f"Failed to retrieve observations: {str(e)}")
+
+    def create_condition_resource(
+        self,
+        patient_id: str,
+        code: str,
+        display: str,
+        clinical_status: str = "active",
+        verification_status: str = "confirmed",
+    ) -> Dict[str, Any]:
+        try:
+            condition = Condition()
+            
+            # Clinical Status
+            condition.clinicalStatus = CodeableConcept()
+            condition.clinicalStatus.coding = [Coding()]
+            condition.clinicalStatus.coding[0].system = "http://terminology.hl7.org/CodeSystem/condition-clinical"
+            condition.clinicalStatus.coding[0].code = clinical_status
+            
+            # Verification Status
+            condition.verificationStatus = CodeableConcept()
+            condition.verificationStatus.coding = [Coding()]
+            condition.verificationStatus.coding[0].system = "http://terminology.hl7.org/CodeSystem/condition-ver-status"
+            condition.verificationStatus.coding[0].code = verification_status
+            
+            # Code
+            condition.code = CodeableConcept()
+            condition.code.coding = [Coding()]
+            condition.code.coding[0].system = "http://snomed.info/sct"
+            condition.code.coding[0].code = code
+            condition.code.coding[0].display = display
+            condition.code.text = display
+            
+            # Subject
+            from fhirclient.models.fhirreference import FHIRReference
+            condition.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            
+            condition.recordedDate = FHIRDate(datetime.utcnow().isoformat())
+            
+            response = self.session.post(
+                f"{self.base_url}/Condition",
+                json=condition.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create Condition: {response.text}")
+                
+            return response.json()
+            
+        except Exception as e:
+            logger.error(f"Error creating Condition: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Condition: {str(e)}")
+
+    def get_conditions_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
+        try:
+            response = self.session.get(
+                f"{self.base_url}/Condition",
+                params={"subject": f"Patient/{patient_id}"},
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            bundle = response.json()
+            return [entry["resource"] for entry in bundle.get("entry", []) if "resource" in entry]
+        except Exception as e:
+            logger.error(f"Error getting conditions: {str(e)}")
+            raise FHIRServiceException(f"Failed to get conditions: {str(e)}")
+
+    def create_allergy_resource(
+        self,
+        patient_id: str,
+        code: str,
+        display: str,
+        clinical_status: str = "active",
+        criticality: str = "low",
+    ) -> Dict[str, Any]:
+        try:
+            allergy = AllergyIntolerance()
+            
+            # Clinical Status
+            allergy.clinicalStatus = CodeableConcept()
+            allergy.clinicalStatus.coding = [Coding()]
+            allergy.clinicalStatus.coding[0].system = "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical"
+            allergy.clinicalStatus.coding[0].code = clinical_status
+            
+            # Criticality
+            allergy.criticality = criticality
+            
+            # Code
+            allergy.code = CodeableConcept()
+            allergy.code.coding = [Coding()]
+            allergy.code.coding[0].system = "http://snomed.info/sct"
+            allergy.code.coding[0].code = code
+            allergy.code.coding[0].display = display
+            allergy.code.text = display
+            
+            # Patient
+            from fhirclient.models.fhirreference import FHIRReference
+            allergy.patient = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            
+            allergy.recordedDate = FHIRDate(datetime.utcnow().isoformat())
+            
+            response = self.session.post(
+                f"{self.base_url}/AllergyIntolerance",
+                json=allergy.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create Allergy: {response.text}")
+                
+            return response.json()
+            
+        except Exception as e:
+            logger.error(f"Error creating Allergy: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Allergy: {str(e)}")
+
+    def get_allergies_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
+        try:
+            response = self.session.get(
+                f"{self.base_url}/AllergyIntolerance",
+                params={"patient": f"Patient/{patient_id}"},
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            bundle = response.json()
+            return [entry["resource"] for entry in bundle.get("entry", []) if "resource" in entry]
+        except Exception as e:
+            logger.error(f"Error getting allergies: {str(e)}")
+            raise FHIRServiceException(f"Failed to get allergies: {str(e)}")
+
+    def create_appointment_resource(
+        self,
+        patient_id: str,
+        status: str,
+        description: str,
+        start: str,
+        end: str,
+    ) -> Dict[str, Any]:
+        try:
+            appointment = Appointment()
+            
+            appointment.status = status
+            appointment.description = description
+            
+            if start:
+                appointment.start = FHIRDate(start)
+            if end:
+                appointment.end = FHIRDate(end)
+            
+            # Participant (Patient)
+            from fhirclient.models.appointment import AppointmentParticipant
+            participant = AppointmentParticipant()
+            participant.actor = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            participant.status = "accepted"
+            appointment.participant = [participant]
+            
+            appointment.created = FHIRDate(datetime.utcnow().isoformat())
+            
+            response = self.session.post(
+                f"{self.base_url}/Appointment",
+                json=appointment.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create Appointment: {response.text}")
+                
+            return response.json()
+            
+        except Exception as e:
+            logger.error(f"Error creating Appointment: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Appointment: {str(e)}")
+
+    def get_appointments_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
+        try:
+            response = self.session.get(
+                f"{self.base_url}/Appointment",
+                params={
+                    "actor": f"Patient/{patient_id}",
+                    "_sort": "date"
+                },
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            bundle = response.json()
+            return [entry["resource"] for entry in bundle.get("entry", []) if "resource" in entry]
+        except Exception as e:
+            logger.error(f"Error getting appointments: {str(e)}")
+            raise FHIRServiceException(f"Failed to get appointments: {str(e)}")

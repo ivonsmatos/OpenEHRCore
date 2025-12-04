@@ -92,10 +92,12 @@ class KeycloakAuthentication(TokenAuthentication):
             )
             
             if response.status_code != 200:
-                logger.warning(f"Keycloak introspect failed: {response.status_code}")
+                logger.warning(f"Keycloak introspect failed: {response.status_code} - {response.text}")
                 return {'active': False}
             
-            return response.json()
+            data = response.json()
+            logger.info(f"Introspect response: {data}")
+            return data
         
         except Exception as e:
             logger.error(f"Erro ao chamar Keycloak introspect: {str(e)}")

@@ -312,3 +312,140 @@ def create_observation(request):
 #      -d '{"first_name": "João", ...}'
 #
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def get_observations(request, patient_id):
+    """
+    Recupera todas as observações (sinais vitais, exames) de um paciente.
+    
+    ✅ REQUER AUTENTICAÇÃO
+    
+    GET /api/v1/patients/{patient_id}/observations/
+    """
+    try:
+        fhir_service = FHIRService()
+        observations = fhir_service.get_observations_by_patient_id(patient_id)
+        
+        return Response(observations, status=status.HTTP_200_OK)
+    
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error retrieving observations: {str(e)}")
+        return Response({"error": "Erro ao recuperar observações"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('medico', 'enfermeiro', 'admin')
+def create_condition(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_condition_resource(
+            patient_id=data.get('patient_id'),
+            code=data.get('code'),
+            display=data.get('display'),
+            clinical_status=data.get('clinical_status', 'active'),
+            verification_status=data.get('verification_status', 'confirmed'),
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating condition: {str(e)}")
+        return Response({"error": "Erro ao criar condição"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def get_conditions(request, patient_id):
+    try:
+        fhir_service = FHIRService()
+        conditions = fhir_service.get_conditions_by_patient_id(patient_id)
+        return Response(conditions, status=status.HTTP_200_OK)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error getting conditions: {str(e)}")
+        return Response({"error": "Erro ao recuperar condições"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('medico', 'enfermeiro', 'admin')
+def create_allergy(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_allergy_resource(
+            patient_id=data.get('patient_id'),
+            code=data.get('code'),
+            display=data.get('display'),
+            clinical_status=data.get('clinical_status', 'active'),
+            criticality=data.get('criticality', 'low'),
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating allergy: {str(e)}")
+        return Response({"error": "Erro ao criar alergia"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def get_allergies(request, patient_id):
+    try:
+        fhir_service = FHIRService()
+        allergies = fhir_service.get_allergies_by_patient_id(patient_id)
+        return Response(allergies, status=status.HTTP_200_OK)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error getting allergies: {str(e)}")
+        return Response({"error": "Erro ao recuperar alergias"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('medico', 'recepcionista', 'admin')
+def create_appointment(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_appointment_resource(
+            patient_id=data.get('patient_id'),
+            status=data.get('status', 'booked'),
+            description=data.get('description'),
+            start=data.get('start'),
+            end=data.get('end'),
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating appointment: {str(e)}")
+        return Response({"error": "Erro ao criar agendamento"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def get_appointments(request, patient_id):
+    try:
+        fhir_service = FHIRService()
+        appointments = fhir_service.get_appointments_by_patient_id(patient_id)
+        return Response(appointments, status=status.HTTP_200_OK)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error getting appointments: {str(e)}")
+        return Response({"error": "Erro ao recuperar agendamentos"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

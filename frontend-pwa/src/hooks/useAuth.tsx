@@ -81,6 +81,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       const decoded = JSON.parse(jsonPayload);
 
+      // Verificar expiração imediatamente
+      const exp = decoded.exp * 1000;
+      if (Date.now() >= exp) {
+        console.warn("Token expirado detectado no decode.");
+        logout();
+        return;
+      }
+
       setUser({
         id: decoded.sub,
         username: decoded.preferred_username,
@@ -234,6 +242,7 @@ export const setupAxiosInterceptors = () => {
     (response) => response,
     (error) => {
       if (error.response?.status === 401) {
+        console.warn("401 Unauthorized detectado pelo interceptor. Redirecionando para login.");
         // Token expirado ou inválido
         localStorage.removeItem("access_token");
         window.location.href = "/login";

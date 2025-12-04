@@ -4,7 +4,7 @@ import { colors, spacing, borderRadius, shadows } from "../../theme/colors";
 interface CardProps {
   children: React.ReactNode;
   className?: string;
-  padding?: "sm" | "md" | "lg";
+  padding?: "none" | "sm" | "md" | "lg";
   elevation?: "none" | "soft" | "base" | "md";
   onClick?: () => void;
 }
@@ -26,6 +26,7 @@ export const Card: React.FC<CardProps> = ({
   onClick,
 }) => {
   const paddingMap = {
+    none: "0px",
     sm: spacing.sm,    // 16px
     md: spacing.md,    // 24px
     lg: spacing.lg,    // 32px
