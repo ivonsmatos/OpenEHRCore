@@ -4,17 +4,18 @@ from . import views_auth
 
 urlpatterns = [
     # Health check (público)
-    path('health/', views.health_check, name='health_check'),
+    path('health/', views_auth.health_check, name='health_check'),
     
     # Autenticação
     path('auth/login/', views_auth.login, name='login'),
     
     # Patient endpoints (protegidos com auth)
-    path('patients/', views_auth.create_patient, name='create_patient'),
+    path('patients/', views_auth.manage_patients, name='manage_patients'),
     path('patients/<str:patient_id>/', views_auth.get_patient, name='get_patient'),
     
     # Encounter endpoints (protegidos com auth)
     path('encounters/', views_auth.create_encounter, name='create_encounter'),
+    path('patients/<str:patient_id>/encounters/', views_auth.get_encounters, name='get_encounters'),
     
     # Observation endpoints (protegidos com auth)
     path('observations/', views_auth.create_observation, name='create_observation'),
@@ -31,4 +32,18 @@ urlpatterns = [
     # Appointment endpoints
     path('appointments/', views_auth.create_appointment, name='create_appointment'),
     path('patients/<str:patient_id>/appointments/', views_auth.get_appointments, name='get_appointments'),
+    
+    # Medication endpoints
+    path('medications/', views_auth.create_medication_request, name='create_medication_request'),
+    
+    # ServiceRequest endpoints
+    path('exams/', views_auth.create_service_request, name='create_service_request'),
+    
+    # ClinicalImpression endpoints
+    path('clinical-impressions/', views_auth.create_clinical_impression, name='create_clinical_impression'),
+    
+    # Schedule & Slot endpoints (Sprint 4)
+    path('schedule/', views_auth.create_schedule, name='create_schedule'),
+    path('slots/', views_auth.create_slot, name='create_slot'),
+    path('slots/search/', views_auth.get_slots, name='get_slots'),
 ]

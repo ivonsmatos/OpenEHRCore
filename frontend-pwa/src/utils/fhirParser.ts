@@ -240,11 +240,16 @@ export function isValidPatientResource(patient: any): patient is FHIRPatient {
  * Resume do paciente para exibição rápida
  */
 export function getPatientSummary(patient: FHIRPatient) {
+  const firstName = getPatientFirstName(patient);
+  const lastName = getPatientLastName(patient);
+  const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+
   return {
     id: patient.id,
     name: getPatientFullName(patient),
-    firstName: getPatientFirstName(patient),
-    lastName: getPatientLastName(patient),
+    firstName,
+    lastName,
+    initials,
     cpf: getPatientCPF(patient),
     birthDate: patient.birthDate,
     birthDateFormatted: formatPatientBirthDate(patient.birthDate),

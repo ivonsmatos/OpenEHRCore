@@ -202,20 +202,27 @@ def create_observation(request):
     Body:
     {
         "patient_id": "patient-123",
-        "code": "8480-6",  # LOINC code para pressão sistólica
-        "value": "120",
-        "status": "final"
+        "code": "8480-6",  # LOINC code
+        "value": "120",    # Opcional se components estiver presente
+        "status": "final",
+        "components": [    # Opcional
+            {"code": "8480-6", "value": "120", "unit": "mmHg"},
+            {"code": "8462-4", "value": "80", "unit": "mmHg"}
+        ]
     }
     """
     try:
         data = request.data
         
-        required_fields = ['patient_id', 'code', 'value']
-        for field in required_fields:
-            if field not in data:
-                return Response({
-                    "error": f"Campo obrigatório ausente: {field}"
-                }, status=status.HTTP_400_BAD_REQUEST)
+        if 'patient_id' not in data or 'code' not in data:
+             return Response({
+                "error": "Campos obrigatórios ausentes: patient_id, code"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if 'value' not in data and 'components' not in data:
+             return Response({
+                "error": "É necessário fornecer 'value' ou 'components'"
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         fhir_service = FHIRService()
         
@@ -224,6 +231,8 @@ def create_observation(request):
             code=data.get('code'),
             value=data.get('value'),
             status=data.get('status', 'final'),
+            components=data.get('components'),
+            encounter_id=data.get('encounter_id'),
         )
         
         return Response(result, status=status.HTTP_201_CREATED)
@@ -233,3 +242,50 @@ def create_observation(request):
     except Exception as e:
         logger.error(f"Error creating observation: {str(e)}")
         return Response({"error": "Erro ao criar observação"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def create_condition(request):
+    """
+    Cria uma nova condição (diagnóstico) para um paciente.
+    
+    POST /api/v1/conditions/
+    
+    Body:
+    {
+        "patient_id": "patient-123",
+        "code": "38341003",
+        "display": "Hypertension",
+        "clinical_status": "active",
+        "verification_status": "confirmed",
+        "encounter_id": "encounter-123"
+    }
+    """
+    try:
+        data = request.data
+        
+        required_fields = ['patient_id', 'code', 'display']
+        for field in required_fields:
+            if field not in data:
+                return Response({
+                    "error": f"Campo obrigatório ausente: {field}"
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        fhir_service = FHIRService()
+        
+        result = fhir_service.create_condition_resource(
+            patient_id=data.get('patient_id'),
+            code=data.get('code'),
+            display=data.get('display'),
+            clinical_status=data.get('clinical_status', 'active'),
+            verification_status=data.get('verification_status', 'confirmed'),
+            encounter_id=data.get('encounter_id'),
+        )
+        
+        return Response(result, status=status.HTTP_201_CREATED)
+    
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating condition: {str(e)}")
+        return Response({"error": "Erro ao criar condição"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

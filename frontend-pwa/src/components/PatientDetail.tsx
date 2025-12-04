@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { usePatients } from "../hooks/usePatients";
 import Card from "./base/Card";
 import Button from "./base/Button";
 import Header from "./base/Header";
 import VitalSigns from "./clinical/VitalSigns";
 import ProblemList from "./clinical/ProblemList";
 import AllergyList from "./clinical/AllergyList";
+import EncounterList from "./clinical/EncounterList";
 import AppointmentList from "./scheduling/AppointmentList";
 import { colors, spacing } from "../theme/colors";
 import {
@@ -35,49 +37,36 @@ interface PatientDetailProps {
 export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { patient, loading = false, error, onEdit, onDelete } = props;
-  const [mockPatient, setMockPatient] = useState<FHIRPatient | undefined>(patient);
+  const { patient, loading: propLoading, error: propError, onEdit, onDelete } = props;
 
-  // Se nenhum paciente foi passado, usar dados de exemplo
+  // Hook para buscar dados se não forem passados via props
+  const { getPatient, loading: hookLoading, error: hookError } = usePatients();
+
+  const [currentPatient, setCurrentPatient] = useState<FHIRPatient | undefined>(patient);
+
+  // Combinar estados de loading e error
+  const loading = propLoading || hookLoading;
+  const error = propError || hookError;
+
   useEffect(() => {
-    if (!patient) {
-      const examplePatient: FHIRPatient = {
-        resourceType: "Patient",
-        id: id || "patient-example-001", // Usar ID da URL ou fallback
-        name: [
-          {
-            use: "official",
-            family: "Silva",
-            given: ["João", "da", "Costa"],
-          },
-        ],
-        birthDate: "1985-06-15",
-        gender: "male",
-        identifier: [
-          {
-            system: "http://openehrcore.com.br/cpf",
-            value: "123.456.789-00",
-            type: {
-              coding: [{ code: "CPF", display: "CPF" }],
-            },
-          },
-        ],
-        telecom: [
-          { system: "phone", value: "(11) 98765-4321" },
-          { system: "email", value: "joao.silva@email.com" },
-        ],
-        address: [
-          {
-            line: ["Rua das Flores, 123"],
-            city: "São Paulo",
-            state: "SP",
-            postalCode: "01234-567",
-          },
-        ],
-      };
-      setMockPatient(examplePatient);
-    }
-  }, [patient]);
+    const loadPatientData = async () => {
+      if (patient) {
+        setCurrentPatient(patient);
+      } else if (id) {
+        try {
+          const fetchedPatient = await getPatient(id);
+          setCurrentPatient(fetchedPatient);
+        } catch (err) {
+          console.error("Erro ao buscar paciente:", err);
+        }
+      }
+    };
+
+    loadPatientData();
+  }, [id, patient]);
+
+  // Usar currentPatient para renderização
+  const mockPatient = currentPatient; // Mantendo nome da variável para minimizar diff, mas idealmente renomearíamos
 
   if (error) {
     return (
@@ -119,10 +108,10 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
         style={{
           padding: spacing.lg,
           textAlign: "center",
-          color: colors.text.tertiary,
+          color: colors.text.secondary,
         }}
       >
-        Nenhum paciente disponível.
+        Paciente não encontrado ou dados inválidos.
       </div>
     );
   }
@@ -130,68 +119,68 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
   const summary = getPatientSummary(mockPatient);
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: colors.background.surface }}>
-      {/* Header */}
+    <div
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: spacing.lg,
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
       <Header
-        title="Prontuário do Paciente"
-        subtitle={`ID: ${mockPatient.id}`}
+        title="Detalhes do Paciente"
+        subtitle="Visão unificada do prontuário eletrônico (FHIR)"
       >
-        {onEdit && (
-          <Button variant="secondary" size="sm" onClick={onEdit}>
-            ✏️ Editar
+        <div style={{ display: "flex", gap: spacing.sm }}>
+          <Button onClick={() => navigate(`/patients/${mockPatient.id}/encounter/new`)}>
+            ▶ Iniciar Atendimento
           </Button>
-        )}
-        {onDelete && (
-          <Button variant="danger" size="sm" onClick={onDelete}>
-            🗑️ Deletar
+          <Button variant="secondary" onClick={onEdit}>
+            Editar
           </Button>
-        )}
+          <Button
+            variant="secondary"
+            style={{
+              border: `1px solid ${colors.alert.critical}`,
+              color: colors.alert.critical,
+              backgroundColor: "transparent",
+            }}
+            onClick={onDelete}
+          >
+            Excluir
+          </Button>
+        </div>
       </Header>
 
-      {/* Main Content */}
-      <main
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          padding: spacing.md,
-        }}
-      >
-        {/* Section: Dados Pessoais */}
+      <main>
+        {/* Section: Resumo do Paciente */}
         <section style={{ marginBottom: spacing.xl }}>
-          <h2
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: 700,
-              marginBottom: spacing.md,
-              color: colors.text.primary,
-            }}
-          >
-            Dados Pessoais
-          </h2>
-
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
               gap: spacing.lg,
             }}
           >
-            {/* Card: Nome e ID */}
+            {/* Card: Identificação Principal */}
             <Card padding="lg">
-              <div style={{ marginBottom: spacing.md }}>
-                <label
+              <div style={{ display: "flex", alignItems: "center", gap: spacing.md }}>
+                <div
                   style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: colors.text.tertiary,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    marginBottom: "4px",
+                    width: "64px",
+                    height: "64px",
+                    borderRadius: "50%",
+                    backgroundColor: colors.primary.light,
+                    color: colors.primary.dark,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.5rem",
+                    fontWeight: 700,
                   }}
                 >
-                  Nome Completo
-                </label>
+                  {summary.initials}
+                </div>
                 <div
                   style={{
                     fontSize: "1.25rem",
@@ -405,6 +394,24 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
               <AllergyList patientId={mockPatient.id} />
             </div>
           </div>
+        </section>
+
+        {/* Section: Atendimentos (Encounters) */}
+        <section style={{ marginBottom: spacing.xl }}>
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              marginBottom: spacing.md,
+              color: colors.text.primary,
+            }}
+          >
+            Atendimentos 🩺
+          </h2>
+          <EncounterList
+            patientId={mockPatient.id}
+            onStartEncounter={() => navigate(`/patients/${mockPatient.id}/encounter/new`)}
+          />
         </section>
 
         {/* Section: Agendamentos */}

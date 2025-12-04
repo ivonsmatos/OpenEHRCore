@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 @api_view(['GET'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def health_check(request):
     """
@@ -178,26 +179,19 @@ def manage_patients(request):
                 telecom=data.get('telecom'),
             )
             
+            # Adicionar informação de quem criou
+            result['created_by'] = user_info.get('preferred_username')
+            
             return Response(result, status=status.HTTP_201_CREATED)
             
         except FHIRServiceException as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # Adicionar informação de quem criou
-        result['created_by'] = user_info.get('preferred_username')
-        
-        return Response(result, status=status.HTTP_201_CREATED)
-    
-    except FHIRServiceException as e:
-        logger.error(f"FHIR error creating patient: {str(e)}")
-        return Response({
-            "error": str(e)
-        }, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-        logger.error(f"Unexpected error creating patient: {str(e)}")
-        return Response({
-            "error": "Erro interno ao criar paciente"
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"FHIR error creating patient: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Unexpected error creating patient: {str(e)}")
+            return Response({
+                "error": "Erro interno ao criar paciente"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -287,6 +281,26 @@ def create_encounter(request):
     except Exception as e:
         logger.error(f"Error creating encounter: {str(e)}")
         return Response({"error": "Erro ao criar encontro"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def get_encounters(request, patient_id):
+    """
+    Recupera todos os encontros de um paciente.
+    
+    GET /api/v1/patients/{patient_id}/encounters/
+    """
+    try:
+        fhir_service = FHIRService()
+        encounters = fhir_service.get_encounters_by_patient_id(patient_id)
+        return Response(encounters, status=status.HTTP_200_OK)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error getting encounters: {str(e)}")
+        return Response({"error": "Erro ao recuperar encontros"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -395,6 +409,7 @@ def create_condition(request):
             display=data.get('display'),
             clinical_status=data.get('clinical_status', 'active'),
             verification_status=data.get('verification_status', 'confirmed'),
+            encounter_id=data.get('encounter_id'),
         )
         return Response(result, status=status.HTTP_201_CREATED)
     except FHIRServiceException as e:
@@ -433,6 +448,7 @@ def create_allergy(request):
             display=data.get('display'),
             clinical_status=data.get('clinical_status', 'active'),
             criticality=data.get('criticality', 'low'),
+            encounter_id=data.get('encounter_id'),
         )
         return Response(result, status=status.HTTP_201_CREATED)
     except FHIRServiceException as e:
@@ -493,3 +509,136 @@ def get_appointments(request, patient_id):
     except Exception as e:
         logger.error(f"Error getting appointments: {str(e)}")
         return Response({"error": "Erro ao recuperar agendamentos"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('medico', 'admin')
+def create_medication_request(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_medication_request_resource(
+            patient_id=data.get('patient_id'),
+            medication_code=data.get('medication_code'),
+            medication_display=data.get('medication_display'),
+            status=data.get('status', 'active'),
+            intent=data.get('intent', 'order'),
+            dosage_instruction=data.get('dosage_instruction'),
+            encounter_id=data.get('encounter_id'),
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating MedicationRequest: {str(e)}")
+        return Response({"error": "Erro ao criar prescrição"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('medico', 'admin')
+def create_service_request(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_service_request_resource(
+            patient_id=data.get('patient_id'),
+            code=data.get('code'),
+            display=data.get('display'),
+            status=data.get('status', 'active'),
+            intent=data.get('intent', 'order'),
+            encounter_id=data.get('encounter_id'),
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating ServiceRequest: {str(e)}")
+        return Response({"error": "Erro ao criar solicitação de exame"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('medico', 'enfermeiro', 'admin')
+def create_clinical_impression(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_clinical_impression_resource(
+            patient_id=data.get('patient_id'),
+            summary=data.get('summary'),
+            status=data.get('status', 'completed'),
+            encounter_id=data.get('encounter_id'),
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating ClinicalImpression: {str(e)}")
+        return Response({"error": "Erro ao criar nota de evolução"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('medico', 'admin')
+def create_schedule(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_schedule_resource(
+            practitioner_id=data.get('practitioner_id'),
+            actor_display=data.get('actor_display'),
+            comment=data.get('comment', 'Horário de Atendimento'),
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating Schedule: {str(e)}")
+        return Response({"error": "Erro ao criar agenda"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('medico', 'admin', 'recepcionista')
+def create_slot(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_slot_resource(
+            schedule_id=data.get('schedule_id'),
+            start=data.get('start'),
+            end=data.get('end'),
+            status=data.get('status', 'free'),
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating Slot: {str(e)}")
+        return Response({"error": "Erro ao criar slot"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def get_slots(request):
+    try:
+        start = request.query_params.get('start')
+        end = request.query_params.get('end')
+        status_param = request.query_params.get('status', 'free')
+        
+        fhir_service = FHIRService()
+        slots = fhir_service.search_slots(start=start, end=end, status=status_param)
+        return Response(slots, status=status.HTTP_200_OK)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error getting slots: {str(e)}")
+        return Response({"error": "Erro ao buscar slots"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

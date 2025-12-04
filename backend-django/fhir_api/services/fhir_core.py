@@ -338,17 +338,22 @@ class FHIRService:
         self,
         patient_id: str,
         code: str,  # LOINC code para a observação
-        value: str,
+        value: Optional[str] = None,
         status: str = "final",  # preliminary, final, amended, corrected, cancelled
+        components: Optional[List[Dict[str, Any]]] = None, # [{"code": "...", "value": "..."}]
+        encounter_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Cria um novo recurso Observation (resultado de teste/medição) no FHIR.
+        Suporta observações simples (value) ou complexas (components).
         
         Args:
             patient_id: ID do paciente
             code: LOINC code da observação
-            value: Valor da observação
+            value: Valor da observação (para simples)
             status: Status da observação
+            components: Lista de componentes (para complexas, ex: BP)
+            encounter_id: ID do encontro relacionado (opcional)
         
         Returns:
             Dict com resourceType, id e metadados
@@ -373,10 +378,38 @@ class FHIRService:
             from fhirclient.models.fhirreference import FHIRReference
             observation.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
             
-            # Valor da observação
-            quantity = Quantity()
-            quantity.value = float(value)
-            observation.value = quantity
+            # Relacionar ao encontro (Encounter)
+            if encounter_id:
+                observation.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+
+            # Valor da observação (Simples)
+            if value is not None:
+                quantity = Quantity()
+                quantity.value = float(value)
+                observation.valueQuantity = quantity
+
+            # Componentes (Complexa - ex: BP)
+            if components:
+                observation.component = []
+                for comp in components:
+                    from fhirclient.models.observation import ObservationComponent
+                    obs_comp = ObservationComponent()
+                    
+                    # Component Code
+                    comp_code = CodeableConcept()
+                    comp_code.coding = [Coding()]
+                    comp_code.coding[0].system = "http://loinc.org"
+                    comp_code.coding[0].code = comp.get("code")
+                    obs_comp.code = comp_code
+                    
+                    # Component Value
+                    comp_val = Quantity()
+                    comp_val.value = float(comp.get("value"))
+                    if comp.get("unit"):
+                        comp_val.unit = comp.get("unit")
+                    obs_comp.valueQuantity = comp_val
+                    
+                    observation.component.append(obs_comp)
             
             # Data da observação
             observation.effectiveDateTime = FHIRDate(datetime.utcnow().isoformat())
@@ -402,8 +435,10 @@ class FHIRService:
                 "resourceType": "Observation",
                 "id": obs_id,
                 "patientId": patient_id,
+                "encounterId": encounter_id,
                 "code": code,
                 "value": value,
+                "components": components,
                 "status": status,
                 "created_at": datetime.utcnow().isoformat(),
             }
@@ -459,6 +494,7 @@ class FHIRService:
         display: str,
         clinical_status: str = "active",
         verification_status: str = "confirmed",
+        encounter_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         try:
             condition = Condition()
@@ -474,6 +510,7 @@ class FHIRService:
             condition.verificationStatus.coding = [Coding()]
             condition.verificationStatus.coding[0].system = "http://terminology.hl7.org/CodeSystem/condition-ver-status"
             condition.verificationStatus.coding[0].code = verification_status
+            condition.verificationStatus.coding[0].display = verification_status
             
             # Code
             condition.code = CodeableConcept()
@@ -486,6 +523,10 @@ class FHIRService:
             # Subject
             from fhirclient.models.fhirreference import FHIRReference
             condition.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+
+            # Encounter
+            if encounter_id:
+                condition.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
             
             condition.recordedDate = FHIRDate(datetime.utcnow().isoformat())
             
@@ -497,8 +538,21 @@ class FHIRService:
             
             if response.status_code not in [200, 201]:
                 raise FHIRServiceException(f"Failed to create Condition: {response.text}")
-                
-            return response.json()
+            
+            result = response.json()
+            condition_id = result.get("id")
+            
+            return {
+                "resourceType": "Condition",
+                "id": condition_id,
+                "patientId": patient_id,
+                "encounterId": encounter_id,
+                "code": code,
+                "display": display,
+                "clinicalStatus": clinical_status,
+                "verificationStatus": verification_status,
+                "created_at": datetime.utcnow().isoformat(),
+            }
             
         except Exception as e:
             logger.error(f"Error creating Condition: {str(e)}")
@@ -525,6 +579,7 @@ class FHIRService:
         display: str,
         clinical_status: str = "active",
         criticality: str = "low",
+        encounter_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         try:
             allergy = AllergyIntolerance()
@@ -549,6 +604,10 @@ class FHIRService:
             # Patient
             from fhirclient.models.fhirreference import FHIRReference
             allergy.patient = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+
+            # Encounter
+            if encounter_id:
+                allergy.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
             
             allergy.recordedDate = FHIRDate(datetime.utcnow().isoformat())
             
@@ -560,12 +619,208 @@ class FHIRService:
             
             if response.status_code not in [200, 201]:
                 raise FHIRServiceException(f"Failed to create Allergy: {response.text}")
-                
-            return response.json()
+            
+            result = response.json()
+            allergy_id = result.get("id")
+            
+            return {
+                "resourceType": "AllergyIntolerance",
+                "id": allergy_id,
+                "patientId": patient_id,
+                "encounterId": encounter_id,
+                "code": code,
+                "display": display,
+                "clinicalStatus": clinical_status,
+                "criticality": criticality,
+                "created_at": datetime.utcnow().isoformat(),
+            }
             
         except Exception as e:
             logger.error(f"Error creating Allergy: {str(e)}")
             raise FHIRServiceException(f"Failed to create Allergy: {str(e)}")
+
+    def create_medication_request_resource(
+        self,
+        patient_id: str,
+        medication_code: str,
+        medication_display: str,
+        status: str = "active",
+        intent: str = "order",
+        dosage_instruction: str = None,
+        encounter_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        try:
+            from fhirclient.models.medicationrequest import MedicationRequest
+            
+            med_req = MedicationRequest()
+            med_req.status = status
+            med_req.intent = intent
+            
+            # MedicationCodeableConcept
+            med_req.medicationCodeableConcept = CodeableConcept()
+            med_req.medicationCodeableConcept.coding = [Coding()]
+            med_req.medicationCodeableConcept.coding[0].system = "http://www.nlm.nih.gov/research/umls/rxnorm"
+            med_req.medicationCodeableConcept.coding[0].code = medication_code
+            med_req.medicationCodeableConcept.coding[0].display = medication_display
+            med_req.medicationCodeableConcept.text = medication_display
+            
+            # Subject
+            from fhirclient.models.fhirreference import FHIRReference
+            med_req.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            
+            # Encounter
+            if encounter_id:
+                med_req.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+            
+            # DosageInstruction
+            if dosage_instruction:
+                from fhirclient.models.dosage import Dosage
+                dosage = Dosage()
+                dosage.text = dosage_instruction
+                med_req.dosageInstruction = [dosage]
+            
+            med_req.authoredOn = FHIRDate(datetime.utcnow().isoformat())
+            
+            response = self.session.post(
+                f"{self.base_url}/MedicationRequest",
+                json=med_req.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create MedicationRequest: {response.text}")
+            
+            result = response.json()
+            med_req_id = result.get("id")
+            
+            return {
+                "resourceType": "MedicationRequest",
+                "id": med_req_id,
+                "patientId": patient_id,
+                "encounterId": encounter_id,
+                "medicationCode": medication_code,
+                "medicationDisplay": medication_display,
+                "status": status,
+                "intent": intent,
+                "dosageInstruction": dosage_instruction,
+                "created_at": datetime.utcnow().isoformat(),
+            }
+            
+        except Exception as e:
+            logger.error(f"Error creating MedicationRequest: {str(e)}")
+            raise FHIRServiceException(f"Failed to create MedicationRequest: {str(e)}")
+
+    def create_service_request_resource(
+        self,
+        patient_id: str,
+        code: str,
+        display: str,
+        status: str = "active",
+        intent: str = "order",
+        encounter_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        try:
+            from fhirclient.models.servicerequest import ServiceRequest
+            
+            req = ServiceRequest()
+            req.status = status
+            req.intent = intent
+            
+            # Code
+            req.code = CodeableConcept()
+            req.code.coding = [Coding()]
+            req.code.coding[0].system = "http://snomed.info/sct"
+            req.code.coding[0].code = code
+            req.code.coding[0].display = display
+            req.code.text = display
+            
+            # Subject
+            from fhirclient.models.fhirreference import FHIRReference
+            req.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            
+            # Encounter
+            if encounter_id:
+                req.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+            
+            req.authoredOn = FHIRDate(datetime.utcnow().isoformat())
+            
+            response = self.session.post(
+                f"{self.base_url}/ServiceRequest",
+                json=req.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create ServiceRequest: {response.text}")
+            
+            result = response.json()
+            req_id = result.get("id")
+            
+            return {
+                "resourceType": "ServiceRequest",
+                "id": req_id,
+                "patientId": patient_id,
+                "encounterId": encounter_id,
+                "code": code,
+                "display": display,
+                "status": status,
+                "intent": intent,
+                "created_at": datetime.utcnow().isoformat(),
+            }
+            
+        except Exception as e:
+            logger.error(f"Error creating ServiceRequest: {str(e)}")
+            raise FHIRServiceException(f"Failed to create ServiceRequest: {str(e)}")
+
+    def create_clinical_impression_resource(
+        self,
+        patient_id: str,
+        summary: str,
+        status: str = "completed",
+        encounter_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        try:
+            from fhirclient.models.clinicalimpression import ClinicalImpression
+            
+            impression = ClinicalImpression()
+            impression.status = status
+            impression.summary = summary
+            
+            # Subject
+            from fhirclient.models.fhirreference import FHIRReference
+            impression.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            
+            # Encounter
+            if encounter_id:
+                impression.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+            
+            impression.effectiveDateTime = FHIRDate(datetime.utcnow().isoformat())
+            
+            response = self.session.post(
+                f"{self.base_url}/ClinicalImpression",
+                json=impression.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create ClinicalImpression: {response.text}")
+            
+            result = response.json()
+            impression_id = result.get("id")
+            
+            return {
+                "resourceType": "ClinicalImpression",
+                "id": impression_id,
+                "patientId": patient_id,
+                "encounterId": encounter_id,
+                "summary": summary,
+                "status": status,
+                "created_at": datetime.utcnow().isoformat(),
+            }
+            
+        except Exception as e:
+            logger.error(f"Error creating ClinicalImpression: {str(e)}")
+            raise FHIRServiceException(f"Failed to create ClinicalImpression: {str(e)}")
 
     def get_allergies_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
         try:
@@ -640,3 +895,116 @@ class FHIRService:
         except Exception as e:
             logger.error(f"Error getting appointments: {str(e)}")
             raise FHIRServiceException(f"Failed to get appointments: {str(e)}")
+
+    def get_encounters_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
+        try:
+            response = self.session.get(
+                f"{self.base_url}/Encounter",
+                params={"subject": f"Patient/{patient_id}", "_sort": "-date"},
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            bundle = response.json()
+            return [entry["resource"] for entry in bundle.get("entry", []) if "resource" in entry]
+        except Exception as e:
+            logger.error(f"Error getting encounters: {str(e)}")
+            raise FHIRServiceException(f"Failed to get encounters: {str(e)}")
+
+    def create_schedule_resource(
+        self,
+        practitioner_id: str,
+        actor_display: str,
+        comment: str = "Horário de Atendimento",
+    ) -> Dict[str, Any]:
+        try:
+            from fhirclient.models.schedule import Schedule
+            
+            schedule = Schedule()
+            schedule.active = True
+            schedule.comment = comment
+            
+            # Actor (Practitioner)
+            from fhirclient.models.fhirreference import FHIRReference
+            actor = FHIRReference(json={"reference": f"Practitioner/{practitioner_id}", "display": actor_display})
+            schedule.actor = [actor]
+            
+            response = self.session.post(
+                f"{self.base_url}/Schedule",
+                json=schedule.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create Schedule: {response.text}")
+                
+            result = response.json()
+            return {
+                "resourceType": "Schedule",
+                "id": result.get("id"),
+                "actor": actor_display,
+                "comment": comment
+            }
+        except Exception as e:
+            logger.error(f"Error creating Schedule: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Schedule: {str(e)}")
+
+    def create_slot_resource(
+        self,
+        schedule_id: str,
+        start: str,
+        end: str,
+        status: str = "free",
+    ) -> Dict[str, Any]:
+        try:
+            from fhirclient.models.slot import Slot
+            
+            slot = Slot()
+            slot.status = status
+            slot.start = FHIRDate(start)
+            slot.end = FHIRDate(end)
+            
+            # Schedule Reference
+            from fhirclient.models.fhirreference import FHIRReference
+            slot.schedule = FHIRReference(json={"reference": f"Schedule/{schedule_id}"})
+            
+            response = self.session.post(
+                f"{self.base_url}/Slot",
+                json=slot.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create Slot: {response.text}")
+                
+            result = response.json()
+            return {
+                "resourceType": "Slot",
+                "id": result.get("id"),
+                "scheduleId": schedule_id,
+                "start": start,
+                "end": end,
+                "status": status
+            }
+        except Exception as e:
+            logger.error(f"Error creating Slot: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Slot: {str(e)}")
+
+    def search_slots(self, start: str = None, end: str = None, status: str = "free") -> List[Dict[str, Any]]:
+        try:
+            params = {"status": status}
+            if start:
+                params["start"] = f"ge{start}"
+            if end:
+                params["start"] = [f"ge{start}", f"lt{end}"] # HAPI FHIR supports multiple params with same name for range
+
+            response = self.session.get(
+                f"{self.base_url}/Slot",
+                params=params,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            bundle = response.json()
+            return [entry["resource"] for entry in bundle.get("entry", []) if "resource" in entry]
+        except Exception as e:
+            logger.error(f"Error searching Slots: {str(e)}")
+            raise FHIRServiceException(f"Failed to search Slots: {str(e)}")

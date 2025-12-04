@@ -4,6 +4,8 @@ import Login from './components/Login';
 import PatientList from './components/PatientList';
 import PatientDetail from './components/PatientDetail';
 import PatientForm from './components/forms/PatientForm';
+import ClinicalWorkspace from './components/clinical/ClinicalWorkspace';
+import SchedulingWorkspace from './components/scheduling/SchedulingWorkspace';
 import Header from './components/base/Header';
 import Button from './components/base/Button';
 import { colors, spacing } from './theme/colors';
@@ -46,6 +48,9 @@ const ProtectedRoutes: React.FC = () => {
                 <Route path="/" element={<PatientList />} />
                 <Route path="/patients/new" element={<PatientForm />} />
                 <Route path="/patients/:id" element={<PatientDetail loading={false} error={undefined} />} />
+                <Route path="/patients/:id/encounter/new" element={<ClinicalWorkspace />} />
+                <Route path="/patients/:id/encounter/new" element={<ClinicalWorkspace />} />
+                <Route path="/scheduling" element={<SchedulingWorkspace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </MainLayout>

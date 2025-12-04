@@ -9,6 +9,7 @@ interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
+  style?: React.CSSProperties;
   type?: "button" | "submit" | "reset";
 }
 
@@ -29,6 +30,7 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   onClick,
   className = "",
+  style = {},
   type = "button",
 }) => {
   const baseStyles = `
@@ -98,6 +100,7 @@ export const Button: React.FC<ButtonProps> = ({
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
         transition: `all ${transitions.base}`,
+        ...style,
       }}
     >
       {isLoading ? (

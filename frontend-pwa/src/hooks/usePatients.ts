@@ -60,6 +60,20 @@ export const usePatients = () => {
         }
     };
 
+    const getPatient = async (id: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await axios.get(`${API_URL}/patients/${id}/`);
+            return response.data;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erro ao carregar paciente');
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchPatients();
     }, []);
@@ -71,5 +85,6 @@ export const usePatients = () => {
         fetchPatients,
         createPatient,
         updatePatient,
+        getPatient,
     };
 };

@@ -1,0 +1,157 @@
+import React, { useState } from 'react';
+import { useEncounters } from '../../hooks/useEncounters';
+import Button from '../base/Button';
+import { colors, spacing } from '../../theme/colors';
+
+interface SOAPNoteProps {
+    encounterId?: string | null;
+    onSuccess?: () => void;
+}
+
+export const SOAPNote: React.FC<SOAPNoteProps> = ({ encounterId, onSuccess }) => {
+    const { createSOAPNote, loading } = useEncounters();
+
+    const [subjective, setSubjective] = useState<string>('');
+    const [objective, setObjective] = useState<string>('');
+    const [assessment, setAssessment] = useState<string>('');
+    const [plan, setPlan] = useState<string>('');
+
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setSuccessMessage(null);
+
+        if (!subjective && !objective && !assessment && !plan) {
+            setError("Preencha pelo menos um dos campos da nota.");
+            return;
+        }
+
+        const summary = `
+S (Subjetivo):
+${subjective || '-'}
+
+O (Objetivo):
+${objective || '-'}
+
+A (Avaliação):
+${assessment || '-'}
+
+P (Plano):
+${plan || '-'}
+        `.trim();
+
+        try {
+            await createSOAPNote({
+                summary: summary,
+                status: 'completed',
+                encounter_id: encounterId
+            });
+
+            setSuccessMessage("Nota de evolução salva com sucesso!");
+            setSubjective('');
+            setObjective('');
+            setAssessment('');
+            setPlan('');
+            if (onSuccess) onSuccess();
+
+        } catch (err) {
+            console.error(err);
+            setError("Erro ao salvar nota. Tente novamente.");
+        }
+    };
+
+    const textareaStyle = {
+        width: '100%',
+        padding: spacing.sm,
+        borderRadius: '4px',
+        border: `1px solid ${colors.border.default}`,
+        minHeight: '80px',
+        fontFamily: 'inherit'
+    };
+
+    const labelStyle = {
+        display: 'block',
+        marginBottom: spacing.xs,
+        fontSize: '0.875rem',
+        fontWeight: 600,
+        color: colors.text.primary
+    };
+
+    return (
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, color: colors.text.primary }}>Nota de Evolução (SOAP)</h3>
+                <span style={{ fontSize: '0.75rem', color: colors.text.secondary }}>{new Date().toLocaleDateString()}</span>
+            </div>
+
+            {error && (
+                <div style={{ padding: spacing.md, backgroundColor: `${colors.alert.critical}20`, color: colors.alert.critical, borderRadius: '4px' }}>
+                    {error}
+                </div>
+            )}
+
+            {successMessage && (
+                <div style={{ padding: spacing.md, backgroundColor: `${colors.alert.success}20`, color: colors.alert.success, borderRadius: '4px' }}>
+                    {successMessage}
+                </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
+                {/* Subjective */}
+                <div>
+                    <label style={labelStyle}>S - Subjetivo</label>
+                    <textarea
+                        value={subjective}
+                        onChange={(e) => setSubjective(e.target.value)}
+                        style={textareaStyle}
+                        placeholder="Queixas do paciente, história da moléstia atual..."
+                    />
+                </div>
+
+                {/* Objective */}
+                <div>
+                    <label style={labelStyle}>O - Objetivo</label>
+                    <textarea
+                        value={objective}
+                        onChange={(e) => setObjective(e.target.value)}
+                        style={textareaStyle}
+                        placeholder="Exame físico, resultados de exames..."
+                    />
+                </div>
+
+                {/* Assessment */}
+                <div>
+                    <label style={labelStyle}>A - Avaliação</label>
+                    <textarea
+                        value={assessment}
+                        onChange={(e) => setAssessment(e.target.value)}
+                        style={textareaStyle}
+                        placeholder="Hipóteses diagnósticas, análise do caso..."
+                    />
+                </div>
+
+                {/* Plan */}
+                <div>
+                    <label style={labelStyle}>P - Plano</label>
+                    <textarea
+                        value={plan}
+                        onChange={(e) => setPlan(e.target.value)}
+                        style={textareaStyle}
+                        placeholder="Conduta, prescrições, solicitações, orientações..."
+                    />
+                </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing.md }}>
+                <Button type="submit" disabled={loading}>
+                    {loading ? 'Salvando...' : 'Salvar Nota'}
+                </Button>
+            </div>
+        </form>
+    );
+};
+
+export default SOAPNote;
