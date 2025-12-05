@@ -642,3 +642,45 @@ def get_slots(request):
     except Exception as e:
         logger.error(f"Error getting slots: {str(e)}")
         return Response({"error": "Erro ao buscar slots"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('medico', 'admin', 'recepcionista')
+def create_questionnaire_view(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_questionnaire(
+            title=data.get('title'),
+            items=data.get('items', []),
+            status=data.get('status', 'active')
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating Questionnaire: {str(e)}")
+        return Response({"error": "Erro ao criar questionário"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def create_response_view(request):
+    try:
+        data = request.data
+        fhir_service = FHIRService()
+        result = fhir_service.create_questionnaire_response(
+            questionnaire_id=data.get('questionnaire_id'),
+            patient_id=data.get('patient_id'),
+            answers=data.get('answers', []),
+            status=data.get('status', 'completed')
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error creating QuestionnaireResponse: {str(e)}")
+        return Response({"error": "Erro ao enviar resposta"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

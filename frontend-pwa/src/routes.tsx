@@ -6,6 +6,7 @@ import PatientDetail from './components/PatientDetail';
 import PatientForm from './components/forms/PatientForm';
 import ClinicalWorkspace from './components/clinical/ClinicalWorkspace';
 import SchedulingWorkspace from './components/scheduling/SchedulingWorkspace';
+import CheckInWorkspace from './components/checkin/CheckInWorkspace';
 import Header from './components/base/Header';
 import Button from './components/base/Button';
 import { colors, spacing } from './theme/colors';
@@ -51,6 +52,7 @@ const ProtectedRoutes: React.FC = () => {
                 <Route path="/patients/:id/encounter/new" element={<ClinicalWorkspace />} />
                 <Route path="/patients/:id/encounter/new" element={<ClinicalWorkspace />} />
                 <Route path="/scheduling" element={<SchedulingWorkspace />} />
+                <Route path="/checkin" element={<CheckInWorkspace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </MainLayout>

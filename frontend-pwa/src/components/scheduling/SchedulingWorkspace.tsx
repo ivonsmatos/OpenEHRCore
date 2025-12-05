@@ -19,11 +19,11 @@ const SchedulingWorkspace: React.FC = () => {
             // 1. Criar Schedule (se não existir - simplificado para demo)
             const schedule = await createSchedule('practitioner-1', 'Dr. House', 'Agenda Principal');
 
-            // 2. Criar Slots para hoje
+            // 2. Criar Slots para hoje (UTC)
             const today = new Date().toISOString().split('T')[0];
-            await createSlot(schedule.id, `${today}T09:00:00`, `${today}T09:30:00`);
-            await createSlot(schedule.id, `${today}T09:30:00`, `${today}T10:00:00`);
-            await createSlot(schedule.id, `${today}T10:00:00`, `${today}T10:30:00`);
+            await createSlot(schedule.id, `${today}T09:00:00Z`, `${today}T09:30:00Z`);
+            await createSlot(schedule.id, `${today}T09:30:00Z`, `${today}T10:00:00Z`);
+            await createSlot(schedule.id, `${today}T10:00:00Z`, `${today}T10:30:00Z`);
 
             alert('Slots de teste gerados com sucesso!');
             fetchSlots();

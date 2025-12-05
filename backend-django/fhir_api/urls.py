@@ -46,4 +46,8 @@ urlpatterns = [
     path('schedule/', views_auth.create_schedule, name='create_schedule'),
     path('slots/', views_auth.create_slot, name='create_slot'),
     path('slots/search/', views_auth.get_slots, name='get_slots'),
+    
+    # Questionnaire endpoints (Sprint 4)
+    path('questionnaires/', views_auth.create_questionnaire_view, name='create_questionnaire'),
+    path('questionnaires/response/', views_auth.create_response_view, name='create_response'),
 ]

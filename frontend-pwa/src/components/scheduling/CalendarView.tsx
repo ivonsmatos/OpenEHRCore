@@ -44,6 +44,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, onDateClick, onEven
                 slotMaxTime="20:00:00"
                 allDaySlot={false}
                 locale="pt-br"
+                buttonText={{
+                    today: 'Hoje',
+                    month: 'Mês',
+                    week: 'Semana',
+                    day: 'Dia',
+                    list: 'Lista'
+                }}
                 height="auto"
                 eventColor={colors.primary.medium}
             />

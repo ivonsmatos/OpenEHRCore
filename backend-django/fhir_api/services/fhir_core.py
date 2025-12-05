@@ -925,7 +925,7 @@ class FHIRService:
             
             # Actor (Practitioner)
             from fhirclient.models.fhirreference import FHIRReference
-            actor = FHIRReference(json={"reference": f"Practitioner/{practitioner_id}", "display": actor_display})
+            actor = FHIRReference(jsondict={"reference": f"Practitioner/{practitioner_id}", "display": actor_display})
             schedule.actor = [actor]
             
             response = self.session.post(
@@ -957,15 +957,16 @@ class FHIRService:
     ) -> Dict[str, Any]:
         try:
             from fhirclient.models.slot import Slot
+            from fhirclient.models.fhirinstant import FHIRInstant
             
             slot = Slot()
             slot.status = status
-            slot.start = FHIRDate(start)
-            slot.end = FHIRDate(end)
+            slot.start = FHIRInstant(start)
+            slot.end = FHIRInstant(end)
             
             # Schedule Reference
             from fhirclient.models.fhirreference import FHIRReference
-            slot.schedule = FHIRReference(json={"reference": f"Schedule/{schedule_id}"})
+            slot.schedule = FHIRReference(jsondict={"reference": f"Schedule/{schedule_id}"})
             
             response = self.session.post(
                 f"{self.base_url}/Slot",
@@ -1008,3 +1009,86 @@ class FHIRService:
         except Exception as e:
             logger.error(f"Error searching Slots: {str(e)}")
             raise FHIRServiceException(f"Failed to search Slots: {str(e)}")
+
+    def create_questionnaire(
+        self,
+        title: str,
+        items: List[Dict[str, Any]],
+        status: str = "active"
+    ) -> Dict[str, Any]:
+        try:
+            from fhirclient.models.questionnaire import Questionnaire, QuestionnaireItem
+            
+            q = Questionnaire()
+            q.title = title
+            q.status = status
+            
+            q_items = []
+            for item_data in items:
+                item = QuestionnaireItem()
+                item.linkId = item_data.get("linkId")
+                item.text = item_data.get("text")
+                item.type = item_data.get("type")
+                q_items.append(item)
+            
+            q.item = q_items
+            
+            response = self.session.post(
+                f"{self.base_url}/Questionnaire",
+                json=q.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create Questionnaire: {response.text}")
+                
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error creating Questionnaire: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Questionnaire: {str(e)}")
+
+    def create_questionnaire_response(
+        self,
+        questionnaire_id: str,
+        patient_id: str,
+        answers: List[Dict[str, Any]],
+        status: str = "completed"
+    ) -> Dict[str, Any]:
+        try:
+            from fhirclient.models.questionnaireresponse import QuestionnaireResponse, QuestionnaireResponseItem, QuestionnaireResponseItemAnswer
+            from fhirclient.models.fhirreference import FHIRReference
+            
+            qr = QuestionnaireResponse()
+            qr.status = status
+            qr.questionnaire = f"Questionnaire/{questionnaire_id}"
+            qr.subject = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
+            
+            qr_items = []
+            for ans_data in answers:
+                item = QuestionnaireResponseItem()
+                item.linkId = ans_data.get("linkId")
+                item.text = ans_data.get("text")
+                
+                # Simple string answer support for now
+                if "valueString" in ans_data:
+                    ans = QuestionnaireResponseItemAnswer()
+                    ans.valueString = ans_data["valueString"]
+                    item.answer = [ans]
+                
+                qr_items.append(item)
+            
+            qr.item = qr_items
+            
+            response = self.session.post(
+                f"{self.base_url}/QuestionnaireResponse",
+                json=qr.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create QuestionnaireResponse: {response.text}")
+                
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error creating QuestionnaireResponse: {str(e)}")
+            raise FHIRServiceException(f"Failed to create QuestionnaireResponse: {str(e)}")
