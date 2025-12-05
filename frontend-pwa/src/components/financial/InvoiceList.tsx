@@ -17,10 +17,12 @@ const InvoiceList: React.FC = () => {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
     useEffect(() => {
         const fetchInvoices = async () => {
             try {
-                const response = await axios.get('/financial/invoices/');
+                const response = await axios.get(`${API_URL}/financial/invoices/`);
                 console.log("Invoice API Response:", response.data);
 
                 if (Array.isArray(response.data)) {

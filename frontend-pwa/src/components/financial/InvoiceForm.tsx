@@ -22,6 +22,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSuccess, onCancel }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -30,7 +32,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSuccess, onCancel }) => {
         try {
             // Auto-create Account if needed or just link to user
             // Ideally we'd list accounts and pick one, but for simplicity let's assume auto-account creation in backend or optional
-            await axios.post('/financial/invoices/', {
+            await axios.post(`${API_URL}/financial/invoices/`, {
                 patient_id: user?.id || 'patient-1',
                 total_gross: parseFloat(formData.total_gross),
                 status: formData.status

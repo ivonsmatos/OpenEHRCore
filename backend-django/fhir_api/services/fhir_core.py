@@ -220,6 +220,100 @@ class FHIRService:
             logger.error(f"Error retrieving Patient {patient_id}: {str(e)}")
             raise FHIRServiceException(f"Failed to retrieve Patient: {str(e)}")
 
+    def update_patient_resource(self, patient_id: str, patient_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Atualiza um recurso Patient existente.
+        """
+        try:
+            # Primeiro, buscar o paciente atual para preservar ID e outros campos se necessário
+            # Mas idealmente construímos um novo objeto com os dados novos e o mesmo ID
+            
+            from fhirclient.models.patient import Patient
+            from fhirclient.models.humanname import HumanName
+            from fhirclient.models.identifier import Identifier
+            from fhirclient.models.codeableconcept import CodeableConcept
+            from fhirclient.models.coding import Coding
+            from fhirclient.models.contactpoint import ContactPoint
+            from fhirclient.models.fhirdate import FHIRDate
+            
+            patient = Patient()
+            patient.id = patient_id
+            
+            # 1. Nome
+            if 'first_name' in patient_data or 'last_name' in patient_data:
+                human_name = HumanName()
+                human_name.given = [patient_data.get('first_name', '')] 
+                human_name.family = patient_data.get('last_name', '')
+                human_name.use = "official"
+                patient.name = [human_name]
+            
+            # 2. Identificador (CPF)
+            if 'cpf' in patient_data and patient_data['cpf']:
+                identifier = Identifier()
+                identifier.system = "http://openehrcore.com.br/cpf"
+                identifier.value = patient_data['cpf']
+                identifier.type = CodeableConcept()
+                identifier.type.coding = [Coding()]
+                identifier.type.coding[0].system = "http://terminology.hl7.org/CodeSystem/v2-0203"
+                identifier.type.coding[0].code = "CPF"
+                patient.identifier = [identifier]
+            
+            # 3. Data de nascimento
+            if 'birth_date' in patient_data:
+                patient.birthDate = FHIRDate(patient_data['birth_date'])
+            
+            # 4. Gênero
+            if 'gender' in patient_data:
+                patient.gender = patient_data['gender']
+            
+            # 5. Contatos
+            if 'telecom' in patient_data:
+                contact_points = []
+                for contact in patient_data['telecom']:
+                    cp = ContactPoint()
+                    cp.system = contact.get("system", "phone")
+                    cp.value = contact.get("value")
+                    contact_points.append(cp)
+                patient.telecom = contact_points
+                
+            # Serializar
+            patient_json = patient.as_json()
+            
+            response = self.session.put(
+                f"{self.base_url}/Patient/{patient_id}",
+                json=patient_json,
+                timeout=self.timeout
+            )
+            
+            response.raise_for_status()
+            logger.info(f"Patient updated: ID={patient_id}")
+            return response.json()
+            
+        except Exception as e:
+            logger.error(f"Error updating Patient {patient_id}: {str(e)}")
+            raise FHIRServiceException(f"Failed to update Patient: {str(e)}")
+
+    def delete_patient_resource(self, patient_id: str) -> bool:
+        """
+        Remove um recurso Patient.
+        """
+        try:
+            response = self.session.delete(
+                f"{self.base_url}/Patient/{patient_id}",
+                timeout=self.timeout
+            )
+            
+            if response.status_code == 404:
+                return False # Já não existia
+                
+            response.raise_for_status()
+            logger.info(f"Patient deleted: ID={patient_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error deleting Patient {patient_id}: {str(e)}")
+            raise FHIRServiceException(f"Failed to delete Patient: {str(e)}")
+
     def search_patients(self, name: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Busca pacientes no servidor FHIR.

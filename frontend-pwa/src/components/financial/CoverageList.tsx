@@ -15,10 +15,12 @@ const CoverageList: React.FC = () => {
     const [coverages, setCoverages] = useState<Coverage[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
     useEffect(() => {
         const fetchCoverage = async () => {
             try {
-                const response = await axios.get('/financial/coverage/');
+                const response = await axios.get(`${API_URL}/financial/coverage/`);
                 if (Array.isArray(response.data)) {
                     setCoverages(response.data);
                 } else {

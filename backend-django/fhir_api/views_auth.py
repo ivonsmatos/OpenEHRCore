@@ -194,37 +194,57 @@ def manage_patients(request):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PUT', 'DELETE'])
 @authentication_classes([KeycloakAuthentication])
 @permission_classes([IsAuthenticated])
 def get_patient(request, patient_id):
     """
-    Recupera um paciente pelo ID.
+    Recupera, atualiza ou remove um paciente pelo ID.
     
     ✅ REQUER AUTENTICAÇÃO
     
     GET /api/v1/patients/{patient_id}/
+    PUT /api/v1/patients/{patient_id}/
+    DELETE /api/v1/patients/{patient_id}/
     
     Headers:
         Authorization: Bearer <keycloak_token>
     """
     try:
         user_info = request.user
-        logger.info(f"Recuperando paciente {patient_id}. Usuário: {user_info.get('preferred_username')}")
+        logger.info(f"Acessando paciente {patient_id}. Método: {request.method}. Usuário: {user_info.get('preferred_username')}")
         
         fhir_service = FHIRService()
-        patient = fhir_service.get_patient_by_id(patient_id)
         
-        return Response(patient, status=status.HTTP_200_OK)
+        if request.method == 'GET':
+            patient = fhir_service.get_patient_by_id(patient_id)
+            return Response(patient, status=status.HTTP_200_OK)
+            
+        elif request.method == 'PUT':
+            # Verificar permissões de edição se necessário (roles)
+            # if 'start_edit' not in user_info.get('roles', []): ...
+            
+            updated_patient = fhir_service.update_patient_resource(patient_id, request.data)
+            return Response(updated_patient, status=status.HTTP_200_OK)
+            
+        elif request.method == 'DELETE':
+            # Verificar permissões de exclusão
+            # if 'admin' not in user_info.get('roles', []): ...
+            
+            success = fhir_service.delete_patient_resource(patient_id)
+            if success:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                return Response({'error': 'Paciente não encontrado'}, status=status.HTTP_404_NOT_FOUND)
     
     except FHIRServiceException as e:
         return Response({
             "error": str(e)
-        }, status=status.HTTP_404_NOT_FOUND)
+        }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        logger.error(f"Error retrieving patient: {str(e)}")
+        logger.error(f"Error accessing patient {patient_id}: {str(e)}")
         return Response({
-            "error": "Erro ao recuperar paciente"
+            "error": "Erro interno ao acessar paciente"
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

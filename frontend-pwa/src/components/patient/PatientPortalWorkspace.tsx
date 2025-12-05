@@ -59,6 +59,13 @@ export const PatientPortalWorkspace: React.FC = () => {
 
     return (
         <div className="max-w-6xl mx-auto p-6 space-y-8">
+            <Button
+                variant="secondary"
+                onClick={() => window.location.href = '/'}
+                className="mb-4"
+            >
+                ← Voltar
+            </Button>
             {/* Header */}
             <div className="bg-gradient-to-r from-primary-dark to-primary-medium p-8 rounded-2xl shadow-lg text-white">
                 <h1 className="text-3xl font-bold mb-2">Olá, Paciente! 👋</h1>

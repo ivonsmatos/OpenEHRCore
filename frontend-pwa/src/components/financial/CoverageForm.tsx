@@ -22,13 +22,15 @@ const CoverageForm: React.FC<CoverageFormProps> = ({ onSuccess, onCancel }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            await axios.post('/financial/coverage/', {
+            await axios.post(`${API_URL}/financial/coverage/`, {
                 patient_id: user?.id || 'patient-1', // Fallback for dev/demo
                 ...formData
             });

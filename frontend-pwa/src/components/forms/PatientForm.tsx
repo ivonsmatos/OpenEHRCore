@@ -116,7 +116,7 @@ const PatientForm: React.FC = () => {
                     paddingBottom: spacing.md,
                     marginBottom: spacing.lg
                 }}>
-                    Novo Paciente
+                    {isEditing ? 'Editar Paciente' : 'Novo Paciente'}
                 </h2>
 
                 {error && (
@@ -233,7 +233,7 @@ const PatientForm: React.FC = () => {
                             variant="primary"
                             disabled={loading}
                         >
-                            {loading ? 'Salvando...' : 'Cadastrar Paciente'}
+                            {loading ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Cadastrar Paciente')}
                         </Button>
                     </div>
                 </form>

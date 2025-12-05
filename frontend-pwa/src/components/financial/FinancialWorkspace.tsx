@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CreditCard, FileText, User } from 'lucide-react';
+import { Button } from '../base/Button';
 import InvoiceList from './InvoiceList';
 import CoverageList from './CoverageList';
 import InvoiceForm from './InvoiceForm';
@@ -18,6 +19,13 @@ const FinancialWorkspace: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
+                    <Button
+                        variant="secondary"
+                        onClick={() => window.location.href = '/'}
+                        className="mb-4"
+                    >
+                        ← Voltar para Dashboard
+                    </Button>
                     <h1 className="text-2xl font-bold text-slate-900">Módulo Financeiro</h1>
                     <p className="text-slate-600">Gerenciamento de Faturas, Convênios e Contas</p>
                 </div>

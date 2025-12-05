@@ -133,55 +133,62 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
   }
 
   const summary = getPatientSummary(mockPatient);
-
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", paddingBottom: spacing.xl }}>
+    <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
+      <main style={{ maxWidth: "1200px", margin: "0 auto", padding: spacing.md }}>
+        <Button
+          variant="secondary"
+          onClick={() => navigate('/')}
+          style={{ marginBottom: spacing.md }}
+        >
+          &larr; Voltar para Lista de Pacientes
+        </Button>
 
-      {/* Banner Superior - Customizado para alinhar perfeitamente */}
-      <div style={{
-        backgroundColor: colors.primary.dark,
-        color: "white",
-        borderRadius: "12px",
-        padding: spacing.lg,
-        marginBottom: spacing.xl,
-        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: spacing.md
-      }}>
-        <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
-            {summary.name}
-          </h1>
-          <p style={{ margin: "4px 0 0 0", opacity: 0.9, fontSize: "0.9rem" }}>
-            ID: <span style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>{mockPatient.id}</span> • {summary.gender} • {summary.age ? `${summary.age} anos` : 'Idade N/A'}
-          </p>
-        </div>
+        <div style={{
+          backgroundColor: colors.primary.medium,
+          color: "white",
+          borderRadius: "12px",
+          padding: spacing.lg,
+          marginTop: spacing.xl,
+          marginBottom: spacing.xl,
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: spacing.md
+        }}>
+          <div>
+            <h1 style={{ fontSize: "1.75rem", fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
+              {summary.name}
+            </h1>
+            <p style={{ margin: "4px 0 0 0", opacity: 0.9, fontSize: "0.9rem" }}>
+              ID: <span style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>{mockPatient.id}</span> • {summary.gender} • {summary.age ? `${summary.age} anos` : 'Idade N/A'}
+            </p>
+          </div>
 
-        <div style={{ display: "flex", gap: spacing.sm }}>
-          <Button onClick={() => navigate(`/patients/${mockPatient.id}/encounter/new`)} style={{ backgroundColor: 'white', color: colors.primary.dark }}>
-            ▶ Iniciar Atendimento
-          </Button>
-          <Button variant="secondary" onClick={handleEdit} style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white', backgroundColor: 'transparent' }}>
-            ✎ Editar
-          </Button>
-          <Button
-            variant="secondary"
-            style={{
-              borderColor: '#ef4444',
-              color: '#ef4444',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-            }}
-            onClick={handleDelete}
-          >
-            🗑 Excluir
-          </Button>
-        </div>
-      </div>
+          <div style={{ display: "flex", gap: spacing.sm }}>
+            <Button onClick={() => navigate(`/patients/${mockPatient.id}/encounter/new`)} style={{ backgroundColor: 'white', color: colors.primary.dark }}>
+              ▶ Iniciar Atendimento
+            </Button>
+            <Button variant="secondary" onClick={handleEdit} style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white', backgroundColor: 'transparent' }}>
+              ✎ Editar
+            </Button>
+            <Button
+              variant="secondary"
+              style={{
+                borderColor: '#ef4444',
+                color: '#ef4444',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              }}
+              onClick={handleDelete}
+            >
+              🗑 Excluir
+            </Button>
+          </div>
+        </div >
 
-      <main>
+
         {/* Section: Resumo Estruturado */}
         <section style={{ marginBottom: spacing.xl }}>
           <div
@@ -277,7 +284,7 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
           </details>
         </section>
       </main>
-    </div>
+    </div >
   );
 };
 
