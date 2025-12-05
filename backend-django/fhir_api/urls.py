@@ -62,7 +62,8 @@ urlpatterns = [
     # ----------------------------------------------------------------------
     # Sprint 8: Documentos & PDF
     # ----------------------------------------------------------------------
-    path('documents/', views_documents.create_composition, name='create_composition'),
+    path('documents/', views_documents.documents_list_create, name='documents_list_create'),
+    path('documents/<str:composition_id>/', views_documents.delete_document, name='delete_document'), # Supports DELETE
     path('documents/<str:composition_id>/pdf/', views_documents.generate_pdf, name='generate_pdf'),
 ]
 

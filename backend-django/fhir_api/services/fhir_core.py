@@ -1350,10 +1350,10 @@ class FHIRService:
         Cria um recurso Composition (Documento Clínico).
         """
         try:
-            from fhirclient.models.composition import Composition, CompositionType, CompositionSection, CompositionRelatesTo
+            from fhirclient.models.composition import Composition, CompositionSection
             from fhirclient.models.codeableconcept import CodeableConcept
             from fhirclient.models.coding import Coding
-            from fhirclient.models.fhirdate import FHIRDate
+            from fhirclient.models.fhirdatetime import FHIRDateTime
             from fhirclient.models.fhirreference import FHIRReference
             from fhirclient.models.narrative import Narrative
             
@@ -1361,7 +1361,7 @@ class FHIRService:
             comp.status = status
             
             # Data do documento
-            comp.date = FHIRDate(date_time)
+            comp.date = FHIRDateTime(date_time)
             
             # Título
             comp.title = title
@@ -1419,7 +1419,13 @@ class FHIRService:
                 json=comp_json,
                 timeout=self.timeout
             )
-            response.raise_for_status()
+            
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                error_body = response.text
+                logger.error(f"FHIR Server Error: {error_body}")
+                raise FHIRServiceException(f"FHIR Server rejected: {error_body}")
             
             logger.info(f"Composition created for Patient {patient_id}")
             return response.json()
@@ -1427,3 +1433,60 @@ class FHIRService:
         except Exception as e:
             logger.error(f"Error creating Composition: {str(e)}")
             raise FHIRServiceException(f"Failed to create Composition: {str(e)}")
+
+
+    def get_composition_by_id(self, composition_id: str) -> Dict[str, Any]:
+        """
+        Recupera um documento (Composition) pelo ID.
+        """
+        try:
+            response = self.session.get(
+                f"{self.base_url}/Composition/{composition_id}",
+                timeout=self.timeout
+            )
+            if response.status_code == 404:
+                raise FHIRServiceException(f"Document not found: {composition_id}")
+            
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Error retrieving Composition {composition_id}: {str(e)}")
+            raise FHIRServiceException(f"Failed to retrieve document: {str(e)}")
+
+    def delete_composition_resource(self, composition_id: str) -> bool:
+        """
+        Remove um documento (Composition) pelo ID.
+        """
+        try:
+            response = self.session.delete(
+                f"{self.base_url}/Composition/{composition_id}",
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            logger.info(f"Composition deleted: ID={composition_id}")
+            return True
+        except requests.RequestException as e:
+            logger.error(f"Error deleting Composition {composition_id}: {str(e)}")
+            raise FHIRServiceException(f"Failed to delete document: {str(e)}")
+
+    def search_resources(self, resource_type: str, search_params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """
+        Busca recursos no servidor FHIR usando parâmetros de consulta.
+        """
+        try:
+            response = self.session.get(
+                f"{self.base_url}/{resource_type}",
+                params=search_params,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            bundle = response.json()
+            
+            # Extrair os recursos do Bundle
+            if 'entry' in bundle:
+                return [entry['resource'] for entry in bundle['entry']]
+            return []
+            
+        except requests.RequestException as e:
+            logger.error(f"Error searching {resource_type}: {str(e)}")
+            raise FHIRServiceException(f"Failed to search {resource_type}: {str(e)}")
