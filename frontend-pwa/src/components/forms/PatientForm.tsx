@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { usePatients } from '../../hooks/usePatients';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { usePatients, Patient } from '../../hooks/usePatients';
 import { colors, spacing, borderRadius } from '../../theme/colors';
 import Card from '../base/Card';
 import Button from '../base/Button';
 import Header from '../base/Header';
+import { FHIRPatient, getPatientSummary } from '../../utils/fhirParser';
 
 const PatientForm: React.FC = () => {
     const navigate = useNavigate();
-    const { createPatient, loading, error } = usePatients();
+    const location = useLocation();
+    const { createPatient, updatePatient, loading, error } = usePatients();
+
+    // Check if we are editing
+    const editingPatient = location.state?.patient as FHIRPatient | undefined;
+    const isEditing = !!editingPatient;
 
     const [formData, setFormData] = useState({
         first_name: '',
@@ -19,6 +25,29 @@ const PatientForm: React.FC = () => {
         phone: '',
         email: ''
     });
+
+    useEffect(() => {
+        if (editingPatient) {
+            const summary = getPatientSummary(editingPatient);
+            // Parsing names logic simplified for this form
+            const given = editingPatient.name?.[0]?.given?.join(' ') || '';
+            const family = editingPatient.name?.[0]?.family || '';
+
+            // Extract phone and email
+            const phone = editingPatient.telecom?.find(t => t.system === 'phone')?.value || '';
+            const email = editingPatient.telecom?.find(t => t.system === 'email')?.value || '';
+
+            setFormData({
+                first_name: given,
+                last_name: family,
+                birth_date: editingPatient.birthDate || '',
+                cpf: summary.cpf || '',
+                gender: editingPatient.gender || 'unknown',
+                phone: phone,
+                email: email
+            });
+        }
+    }, [editingPatient]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -41,10 +70,15 @@ const PatientForm: React.FC = () => {
                 ].filter(t => t.value) // Remover vazios
             };
 
-            await createPatient(patientData);
+            if (isEditing && editingPatient?.id) {
+                await updatePatient(editingPatient.id, patientData);
+            } else {
+                await createPatient(patientData);
+            }
+
             navigate('/'); // Voltar para dashboard
         } catch (err) {
-            console.error("Erro ao criar paciente:", err);
+            console.error("Erro ao salvar paciente:", err);
         }
     };
 

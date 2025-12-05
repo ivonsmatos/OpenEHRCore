@@ -60,6 +60,20 @@ export const usePatients = () => {
         }
     };
 
+    const deletePatient = async (id: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            await axios.delete(`${API_URL}/patients/${id}/`);
+            await fetchPatients(); // Recarregar lista
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erro ao excluir paciente');
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const getPatient = async (id: string) => {
         setLoading(true);
         setError(null);
@@ -85,6 +99,7 @@ export const usePatients = () => {
         fetchPatients,
         createPatient,
         updatePatient,
+        deletePatient,
         getPatient,
     };
 };

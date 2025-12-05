@@ -201,8 +201,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!token) return;
 
     const checkTokenExpiration = () => {
-      // BYPASS: Token de desenvolvimento nunca expira
-      if (token === "dev-token-bypass") {
+      // BYPASS: Tokens de desenvolvimento nunca expiram
+      if (token === "dev-token-bypass" || token === "patient-token-bypass") {
         return;
       }
 

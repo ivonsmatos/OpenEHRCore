@@ -1,4 +1,5 @@
 from django.urls import path
+from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
 from . import views
 from . import views_auth
 
@@ -51,10 +52,19 @@ urlpatterns = [
     path('questionnaires/', views_auth.create_questionnaire_view, name='create_questionnaire'),
     path('questionnaires/response/', views_auth.create_response_view, name='create_response'),
 
-    # ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
     # Sprint 5: Portal do Paciente
     # ----------------------------------------------------------------------
     path('patient/dashboard/', views_auth.patient_dashboard, name='patient_dashboard'),
     path('patient/appointments/', views_auth.get_my_appointments, name='patient_appointments'),
     path('patient/exams/', views_auth.get_my_exams, name='patient_exams'),
 ]
+
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
+router.register(r'financial/accounts', AccountViewSet, basename='account')
+router.register(r'financial/invoices', InvoiceViewSet, basename='invoice')
+
+urlpatterns += router.urls

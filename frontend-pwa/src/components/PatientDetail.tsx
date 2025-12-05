@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { usePatients } from "../hooks/usePatients";
 import Card from "./base/Card";
 import Button from "./base/Button";
-import Header from "./base/Header";
 import VitalSigns from "./clinical/VitalSigns";
 import ProblemList from "./clinical/ProblemList";
 import AllergyList from "./clinical/AllergyList";
@@ -37,10 +36,10 @@ interface PatientDetailProps {
 export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { patient, loading: propLoading, error: propError, onEdit, onDelete } = props;
+  const { patient, loading: propLoading, error: propError, onEdit } = props;
 
-  // Hook para buscar dados se não forem passados via props
-  const { getPatient, loading: hookLoading, error: hookError } = usePatients();
+  // Hook para buscar dados
+  const { getPatient, deletePatient, loading: hookLoading, error: hookError } = usePatients();
 
   const [currentPatient, setCurrentPatient] = useState<FHIRPatient | undefined>(patient);
 
@@ -65,8 +64,28 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
     loadPatientData();
   }, [id, patient]);
 
-  // Usar currentPatient para renderização
-  const mockPatient = currentPatient; // Mantendo nome da variável para minimizar diff, mas idealmente renomearíamos
+  const handleDelete = async () => {
+    if (!currentPatient?.id) return;
+    if (window.confirm("Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.")) {
+      try {
+        await deletePatient(currentPatient.id);
+        navigate('/');
+      } catch (err) {
+        alert("Erro ao excluir paciente: " + err);
+      }
+    }
+  };
+
+  const handleEdit = () => {
+    // Navigate to edit form - passing data via state for now or just navigating
+    if (onEdit) {
+      onEdit();
+    } else {
+      // Assuming PatientForm can handle editing via state or separate route
+      // For now, let's navigate to a hypothetical edit route or reuse new with state
+      navigate('/patients/new', { state: { patient: currentPatient } });
+    }
+  };
 
   if (error) {
     return (
@@ -77,6 +96,7 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
           border: `2px solid ${colors.alert.critical}`,
           borderRadius: "8px",
           color: colors.alert.critical,
+          margin: spacing.lg
         }}
       >
         <strong>Erro:</strong> {error}
@@ -102,15 +122,11 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
     );
   }
 
+  const mockPatient = currentPatient;
+
   if (!mockPatient || !isValidPatientResource(mockPatient)) {
     return (
-      <div
-        style={{
-          padding: spacing.lg,
-          textAlign: "center",
-          color: colors.text.secondary,
-        }}
-      >
+      <div style={{ padding: spacing.lg, textAlign: "center", color: colors.text.secondary }}>
         Paciente não encontrado ou dados inválidos.
       </div>
     );
@@ -119,212 +135,89 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
   const summary = getPatientSummary(mockPatient);
 
   return (
-    <div
-      style={{
-        maxWidth: "1200px",
-        margin: "0 auto",
+    <div style={{ fontFamily: "'Inter', sans-serif", paddingBottom: spacing.xl }}>
+
+      {/* Banner Superior - Customizado para alinhar perfeitamente */}
+      <div style={{
+        backgroundColor: colors.primary.dark,
+        color: "white",
+        borderRadius: "12px",
         padding: spacing.lg,
-        fontFamily: "'Inter', sans-serif",
-      }}
-    >
-      <Header
-        title="Detalhes do Paciente"
-        subtitle="Visão unificada do prontuário eletrônico (FHIR)"
-      >
+        marginBottom: spacing.xl,
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: spacing.md
+      }}>
+        <div>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
+            {summary.name}
+          </h1>
+          <p style={{ margin: "4px 0 0 0", opacity: 0.9, fontSize: "0.9rem" }}>
+            ID: <span style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>{mockPatient.id}</span> • {summary.gender} • {summary.age ? `${summary.age} anos` : 'Idade N/A'}
+          </p>
+        </div>
+
         <div style={{ display: "flex", gap: spacing.sm }}>
-          <Button onClick={() => navigate(`/patients/${mockPatient.id}/encounter/new`)}>
+          <Button onClick={() => navigate(`/patients/${mockPatient.id}/encounter/new`)} style={{ backgroundColor: 'white', color: colors.primary.dark }}>
             ▶ Iniciar Atendimento
           </Button>
-          <Button variant="secondary" onClick={onEdit}>
-            Editar
+          <Button variant="secondary" onClick={handleEdit} style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white', backgroundColor: 'transparent' }}>
+            ✎ Editar
           </Button>
           <Button
             variant="secondary"
             style={{
-              border: `1px solid ${colors.alert.critical}`,
-              color: colors.alert.critical,
-              backgroundColor: "transparent",
+              borderColor: '#ef4444',
+              color: '#ef4444',
+              backgroundColor: 'rgba(255,255,255,0.1)',
             }}
-            onClick={onDelete}
+            onClick={handleDelete}
           >
-            Excluir
+            🗑 Excluir
           </Button>
         </div>
-      </Header>
+      </div>
 
       <main>
-        {/* Section: Resumo do Paciente */}
+        {/* Section: Resumo Estruturado */}
         <section style={{ marginBottom: spacing.xl }}>
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
               gap: spacing.lg,
             }}
           >
-            {/* Card: Identificação Principal */}
+            {/* Card: Dados Nascimento */}
             <Card padding="lg">
-              <div style={{ display: "flex", alignItems: "center", gap: spacing.md }}>
-                <div
-                  style={{
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "50%",
-                    backgroundColor: colors.primary.light,
-                    color: colors.primary.dark,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "1.5rem",
-                    fontWeight: 700,
-                  }}
-                >
-                  {summary.initials}
-                </div>
-                <div
-                  style={{
-                    fontSize: "1.25rem",
-                    fontWeight: 600,
-                    color: colors.primary.dark,
-                  }}
-                >
-                  {summary.name}
-                </div>
-              </div>
-
-              <div style={{ marginTop: spacing.md }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: colors.text.tertiary,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    marginBottom: "4px",
-                  }}
-                >
-                  ID do Paciente
-                </label>
-                <code
-                  style={{
-                    fontSize: "0.875rem",
-                    color: colors.text.secondary,
-                    backgroundColor: colors.background.muted,
-                    padding: "4px 8px",
-                    borderRadius: "4px",
-                    fontFamily: "monospace",
-                  }}
-                >
-                  {mockPatient.id}
-                </code>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: colors.text.tertiary, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Nascimento
+              </label>
+              <div style={{ fontSize: "1.125rem", fontWeight: 500, color: colors.text.primary, marginTop: '4px' }}>
+                {summary.birthDateFormatted}
               </div>
             </Card>
 
-            {/* Card: Data de Nascimento e Idade */}
+            {/* Card: CPF/Documentos */}
             <Card padding="lg">
-              <div style={{ marginBottom: spacing.md }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: colors.text.tertiary,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Data de Nascimento
-                </label>
-                <div
-                  style={{
-                    fontSize: "1.125rem",
-                    fontWeight: 500,
-                    color: colors.text.primary,
-                  }}
-                >
-                  {summary.birthDateFormatted}
-                </div>
-              </div>
-
-              <div style={{ marginTop: spacing.md }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: colors.text.tertiary,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Idade
-                </label>
-                <div
-                  style={{
-                    fontSize: "1.5rem",
-                    fontWeight: 700,
-                    color: colors.accent.primary,
-                  }}
-                >
-                  {summary.age !== null ? `${summary.age} anos` : "N/A"}
-                </div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: colors.text.tertiary, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                CPF
+              </label>
+              <div style={{ fontSize: "1.125rem", fontWeight: 500, color: colors.text.primary, marginTop: '4px', fontFamily: 'monospace' }}>
+                {summary.cpf || "—"}
               </div>
             </Card>
 
-            {/* Card: Gênero e CPF */}
+            {/* Card: Contato Principal */}
             <Card padding="lg">
-              <div style={{ marginBottom: spacing.md }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: colors.text.tertiary,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Gênero
-                </label>
-                <div
-                  style={{
-                    fontSize: "1.125rem",
-                    fontWeight: 500,
-                    color: colors.text.primary,
-                  }}
-                >
-                  {summary.gender}
-                </div>
-              </div>
-
-              <div style={{ marginTop: spacing.md }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: colors.text.tertiary,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    marginBottom: "4px",
-                  }}
-                >
-                  CPF
-                </label>
-                <div
-                  style={{
-                    fontSize: "1.125rem",
-                    fontWeight: 500,
-                    color: colors.text.secondary,
-                    fontFamily: "monospace",
-                  }}
-                >
-                  {summary.cpf || "Não registrado"}
-                </div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: colors.text.tertiary, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Contato
+              </label>
+              <div style={{ fontSize: "1rem", fontWeight: 500, color: colors.primary.medium, marginTop: '4px' }}>
+                {summary.telecom?.[0]?.value || "Sem contato"}
               </div>
             </Card>
           </div>
@@ -332,237 +225,53 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
 
         {/* Section: Sinais Vitais */}
         <section style={{ marginBottom: spacing.xl }}>
-          <h2
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: 700,
-              marginBottom: spacing.md,
-              color: colors.text.primary,
-              display: "flex",
-              alignItems: "center",
-              gap: spacing.sm,
-            }}
-          >
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.primary.medium}`, paddingLeft: spacing.sm }}>
             Sinais Vitais 🩺
           </h2>
           <VitalSigns patientId={mockPatient.id} />
         </section>
 
-        {/* Section: Histórico Clínico */}
-        <section style={{ marginBottom: spacing.xl }}>
-          <h2
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: 700,
-              marginBottom: spacing.md,
-              color: colors.text.primary,
-            }}
-          >
-            Histórico Clínico
-          </h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              gap: spacing.lg,
-            }}
-          >
-            <div>
-              <h3
-                style={{
-                  fontSize: "1.125rem",
-                  fontWeight: 600,
-                  marginBottom: spacing.sm,
-                  color: colors.text.secondary,
-                }}
-              >
-                Problemas / Condições
-              </h3>
+        {/* Layout em Grid para Listas Clinicas */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: spacing.lg, marginBottom: spacing.xl }}>
+          {/* Histórico */}
+          <section>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.accent.primary}`, paddingLeft: spacing.sm }}>
+              Histórico Clínico
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
               <ProblemList patientId={mockPatient.id} />
-            </div>
-            <div>
-              <h3
-                style={{
-                  fontSize: "1.125rem",
-                  fontWeight: 600,
-                  marginBottom: spacing.sm,
-                  color: colors.text.secondary,
-                }}
-              >
-                Alergias
-              </h3>
               <AllergyList patientId={mockPatient.id} />
             </div>
+          </section>
+
+          {/* Atendimentos e Agendamentos */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xl }}>
+            <section>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.primary.dark}`, paddingLeft: spacing.sm }}>
+                Timeline de Atendimentos
+              </h2>
+              <EncounterList
+                patientId={mockPatient.id}
+                onStartEncounter={() => navigate(`/patients/${mockPatient.id}/encounter/new`)}
+              />
+            </section>
+
+            <section>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.primary.medium}`, paddingLeft: spacing.sm }}>
+                Agendamentos
+              </h2>
+              <AppointmentList patientId={mockPatient.id} />
+            </section>
           </div>
-        </section>
+        </div>
 
-        {/* Section: Atendimentos (Encounters) */}
-        <section style={{ marginBottom: spacing.xl }}>
-          <h2
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: 700,
-              marginBottom: spacing.md,
-              color: colors.text.primary,
-            }}
-          >
-            Atendimentos 🩺
-          </h2>
-          <EncounterList
-            patientId={mockPatient.id}
-            onStartEncounter={() => navigate(`/patients/${mockPatient.id}/encounter/new`)}
-          />
-        </section>
-
-        {/* Section: Agendamentos */}
-        <section style={{ marginBottom: spacing.xl }}>
-          <h2
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: 700,
-              marginBottom: spacing.md,
-              color: colors.text.primary,
-            }}
-          >
-            Próximos Agendamentos 📅
-          </h2>
-          <AppointmentList patientId={mockPatient.id} />
-        </section>
-
-        {/* Section: Contatos */}
-        {summary.telecom && summary.telecom.length > 0 && (
-          <section style={{ marginBottom: spacing.xl }}>
-            <h2
-              style={{
-                fontSize: "1.5rem",
-                fontWeight: 700,
-                marginBottom: spacing.md,
-                color: colors.text.primary,
-              }}
-            >
-              Contatos
-            </h2>
-
-            <Card padding="lg">
-              <ul
-                style={{
-                  listStyle: "none",
-                  padding: 0,
-                  margin: 0,
-                }}
-              >
-                {summary.telecom.map((contact, idx) => (
-                  <li
-                    key={idx}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: spacing.md,
-                      paddingBottom: idx !== summary.telecom.length - 1 ? spacing.md : 0,
-                      marginBottom: idx !== summary.telecom.length - 1 ? spacing.md : 0,
-                      borderBottom:
-                        idx !== summary.telecom.length - 1
-                          ? `1px solid ${colors.border.light}`
-                          : "none",
-                    }}
-                  >
-                    <span style={{ fontSize: "1.25rem" }}>
-                      {contact.system === "phone" ? "📞" : "📧"}
-                    </span>
-                    <div>
-                      <div
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          color: colors.text.tertiary,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {contact.system === "phone" ? "Telefone" : "E-mail"}
-                      </div>
-                      <a
-                        href={
-                          contact.system === "phone"
-                            ? `tel:${contact.value}`
-                            : `mailto:${contact.value}`
-                        }
-                        style={{
-                          color: colors.primary.medium,
-                          textDecoration: "none",
-                          fontSize: "1rem",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {contact.value}
-                      </a>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          </section>
-        )}
-
-        {/* Section: Endereço */}
-        {summary.address && summary.address !== "Sem endereço registrado" && (
-          <section style={{ marginBottom: spacing.xl }}>
-            <h2
-              style={{
-                fontSize: "1.5rem",
-                fontWeight: 700,
-                marginBottom: spacing.md,
-                color: colors.text.primary,
-              }}
-            >
-              Endereço
-            </h2>
-
-            <Card padding="lg">
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "1rem",
-                  lineHeight: "1.5rem",
-                  color: colors.text.secondary,
-                }}
-              >
-                {summary.address}
-              </p>
-            </Card>
-          </section>
-        )}
-
-        {/* Section: JSON FHIR (Debug) */}
+        {/* Section: JSON FHIR (Debug/Advanced) */}
         <section>
-          <details
-            style={{
-              cursor: "pointer",
-            }}
-          >
-            <summary
-              style={{
-                padding: spacing.md,
-                backgroundColor: colors.background.muted,
-                borderRadius: "8px",
-                fontWeight: 600,
-                color: colors.text.secondary,
-                userSelect: "none",
-              }}
-            >
-              🔍 Recurso FHIR (JSON)
+          <details style={{ cursor: "pointer" }}>
+            <summary style={{ fontSize: '0.8rem', color: colors.text.tertiary }}>
+              🔧 Dados Brutos (FHIR Resource)
             </summary>
-            <pre
-              style={{
-                marginTop: spacing.md,
-                padding: spacing.md,
-                backgroundColor: colors.background.muted,
-                borderRadius: "8px",
-                fontSize: "0.75rem",
-                overflow: "auto",
-                color: colors.text.primary,
-                border: `1px solid ${colors.border.light}`,
-              }}
-            >
+            <pre style={{ marginTop: spacing.sm, padding: spacing.md, backgroundColor: '#f8fafc', borderRadius: "8px", fontSize: "0.7rem", overflow: "auto", border: `1px solid ${colors.border.default}` }}>
               {JSON.stringify(mockPatient, null, 2)}
             </pre>
           </details>

@@ -30,6 +30,10 @@ from fhirclient.models.fhirreference import FHIRReference
 from fhirclient.models.condition import Condition
 from fhirclient.models.allergyintolerance import AllergyIntolerance
 from fhirclient.models.appointment import Appointment
+from fhirclient.models.coverage import Coverage
+from fhirclient.models.invoice import Invoice
+from fhirclient.models.account import Account
+from fhirclient.models.money import Money
 
 
 logger = logging.getLogger(__name__)
@@ -284,6 +288,13 @@ class FHIRService:
             
             # Status (obrigatório)
             encounter.status = status
+
+            # Class (obrigatório) - usando AMB (ambulatory)
+            class_coding = Coding()
+            class_coding.system = "http://terminology.hl7.org/CodeSystem/v3-ActCode"
+            class_coding.code = "AMB"
+            class_coding.display = "ambulatory"
+            encounter.class_fhir = class_coding
             
             # Tipo de encontro
             type_coding = CodeableConcept()
@@ -413,7 +424,8 @@ class FHIRService:
                     observation.component.append(obs_comp)
             
             # Data da observação
-            observation.effectiveDateTime = FHIRDateTime(datetime.utcnow().isoformat())
+            # Fix: Remover microsegundos e adicionar Z para compatibilidade FHIR strict
+            observation.effectiveDateTime = FHIRDateTime(datetime.utcnow().replace(microsecond=0).isoformat() + "Z")
             
             logger.info(f"Creating Observation for Patient {patient_id}, code: {code}")
             
@@ -1086,10 +1098,145 @@ class FHIRService:
                 timeout=self.timeout
             )
             
-            if response.status_code not in [200, 201]:
-                raise FHIRServiceException(f"Failed to create QuestionnaireResponse: {response.text}")
-                
-            return response.json()
         except Exception as e:
             logger.error(f"Error creating QuestionnaireResponse: {str(e)}")
             raise FHIRServiceException(f"Failed to create QuestionnaireResponse: {str(e)}")
+
+    # -------------------------------------------------------------------------
+    # Módulo Financeiro (Sprint 6)
+    # -------------------------------------------------------------------------
+
+    def create_coverage_resource(
+        self,
+        patient_id: str,
+        payor_name: str,
+        subscriber_id: str,
+        status: str = "active",
+        type_text: str = "health insurance"
+    ) -> Dict[str, Any]:
+        """
+        Cria um recurso Coverage (Plano de Saúde/Convênio).
+        """
+        try:
+            cov = Coverage()
+            cov.status = status
+            cov.subscriberId = subscriber_id
+            
+            # Relacionar ao paciente (Subscriber & Beneficiary)
+            from fhirclient.models.fhirreference import FHIRReference
+            ref = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
+            cov.subscriber = ref
+            cov.beneficiary = ref
+            
+            # Payor (Pagador) - Simplificado como Organization text only por enquanto
+            # Em prod real, seria uma Reference(Organization/id)
+            payor_ref = FHIRReference()
+            payor_ref.display = payor_name
+            cov.payor = [payor_ref]
+            
+            # Tipo
+            type_concept = CodeableConcept()
+            type_concept.text = type_text
+            cov.type = type_concept
+            
+            logger.info(f"Creating Coverage for Patient {patient_id}, Payor: {payor_name}")
+            
+            response = self.session.post(
+                f"{self.base_url}/Coverage",
+                json=cov.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create Coverage: {response.text}")
+                
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error creating Coverage: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Coverage: {str(e)}")
+
+    def create_account_resource(
+        self,
+        patient_id: str,
+        name: str = "Conta Paciente",
+        status: str = "active",
+        currency: str = "BRL"
+    ) -> Dict[str, Any]:
+        """
+        Cria um recurso Account (Conta Financeira do Paciente).
+        """
+        try:
+            acc = Account()
+            acc.status = status
+            acc.name = name
+            
+            # Subject (Paciente)
+            from fhirclient.models.fhirreference import FHIRReference
+            acc.subject = [FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})]
+            
+            # Mock currency/balance extension if needed, but standard Account lacks 'balance' field in R4 direct root.
+            # Usually calculated from Invoices/Payments.
+            # We'll rely on listing Invoices linked to this Account for balance.
+            
+            logger.info(f"Creating Account for Patient {patient_id}")
+            
+            response = self.session.post(
+                f"{self.base_url}/Account",
+                json=acc.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create Account: {response.text}")
+                
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error creating Account: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Account: {str(e)}")
+
+    def create_invoice_resource(
+        self,
+        patient_id: str,
+        account_id: str,
+        total_gross: float,
+        status: str = "issued"
+    ) -> Dict[str, Any]:
+        """
+        Cria um recurso Invoice (Fatura/Cobrança).
+        """
+        try:
+            inv = Invoice()
+            inv.status = status
+            inv.date = FHIRDateTime(datetime.utcnow().replace(microsecond=0).isoformat() + "Z")
+            
+            # Subject
+            from fhirclient.models.fhirreference import FHIRReference
+            inv.subject = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
+            
+            # Account
+            if account_id:
+                inv.account = FHIRReference(jsondict={"reference": f"Account/{account_id}"})
+            
+            # Total Gross
+            m = Money()
+            m.value = float(total_gross)
+            m.currency = "BRL"
+            inv.totalGross = m
+            # totalNet required sometimes, reusing gross for simplicity
+            inv.totalNet = m 
+
+            logger.info(f"Creating Invoice for Patient {patient_id}: {total_gross} BRL")
+            
+            response = self.session.post(
+                f"{self.base_url}/Invoice",
+                json=inv.as_json(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                raise FHIRServiceException(f"Failed to create Invoice: {response.text}")
+                
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error creating Invoice: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Invoice: {str(e)}")
