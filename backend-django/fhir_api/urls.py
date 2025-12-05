@@ -50,4 +50,11 @@ urlpatterns = [
     # Questionnaire endpoints (Sprint 4)
     path('questionnaires/', views_auth.create_questionnaire_view, name='create_questionnaire'),
     path('questionnaires/response/', views_auth.create_response_view, name='create_response'),
+
+    # ----------------------------------------------------------------------
+    # Sprint 5: Portal do Paciente
+    # ----------------------------------------------------------------------
+    path('patient/dashboard/', views_auth.patient_dashboard, name='patient_dashboard'),
+    path('patient/appointments/', views_auth.get_my_appointments, name='patient_appointments'),
+    path('patient/exams/', views_auth.get_my_exams, name='patient_exams'),
 ]

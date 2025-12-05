@@ -76,6 +76,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
 
+      // BYPASS: Token de paciente (Sprint 5)
+      if (token === "patient-token-bypass") {
+        setUser({
+          id: "patient-1",
+          username: "paciente@teste.com",
+          email: "paciente@teste.com",
+          name: "Paciente Teste",
+          roles: ["paciente"],
+        });
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        return;
+      }
+
       const parts = token.split(".");
       if (parts.length !== 3) return;
 
@@ -128,6 +141,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setError(null);
 
     try {
+      // BYPASS PROVISÓRIO: Login de desenvolvimento
+      if (username === "patient-demo") {
+        const bypassToken = "patient-token-bypass";
+        setToken(bypassToken);
+        localStorage.setItem("access_token", bypassToken);
+        decodeTokenInfo(bypassToken);
+        setIsLoading(false);
+        window.location.href = "/portal";
+        return;
+      }
+
+      if (username === "medico-demo") {
+        const bypassToken = "dev-token-bypass";
+        setToken(bypassToken);
+        localStorage.setItem("access_token", bypassToken);
+        decodeTokenInfo(bypassToken);
+        setIsLoading(false);
+        window.location.href = "/";
+        return;
+      }
+
       const response = await axios.post(`${VITE_API_URL}/auth/login/`, {
         username,
         password,

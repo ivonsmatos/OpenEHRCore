@@ -11,22 +11,22 @@
 export const colors = {
   // Primary - Para header, menu, ações principais
   primary: {
-    dark: "#0339A6",     // Menu/Header - Azul escuro confiança
-    medium: "#0468BF",   // Botões/Ações principais
-    light: "#79ACD9",    // Destaques suaves
+    dark: "#1E40AF",     // Menu/Header - Azul escuro mais suave (Blue-800)
+    medium: "#3B82F6",   // Botões/Ações principais - Azul amigável (Blue-500)
+    light: "#93C5FD",    // Destaques suaves (Blue-300)
   },
 
   // Secondary/Accent - Destaques e elementos secundários
   accent: {
-    primary: "#79ACD9",  // Destaque suave
+    primary: "#60A5FA",  // Destaque suave (Blue-400)
   },
 
   // Alert/Status - Para erros e alertas críticos
   alert: {
-    critical: "#D91A1A", // Erros/Alertas médicos - Vermelho vibrante
-    warning: "#F59E0B",  // Avisos (extensão)
-    success: "#10B981",  // Sucesso (extensão)
-    info: "#0468BF",     // Info (usar primary medium)
+    critical: "#EF4444", // Erros/Alertas médicos - Vermelho suave (Red-500)
+    warning: "#F59E0B",  // Avisos (Amber-500)
+    success: "#10B981",  // Sucesso (Emerald-500)
+    info: "#3B82F6",     // Info (Blue-500)
   },
 
   // Background - Fundo geral (clean design)

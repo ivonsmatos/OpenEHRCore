@@ -25,6 +25,7 @@ from fhirclient.models.period import Period
 from fhirclient.models.observation import Observation
 from fhirclient.models.quantity import Quantity
 from fhirclient.models.fhirdate import FHIRDate
+from fhirclient.models.fhirdatetime import FHIRDateTime
 from fhirclient.models.fhirreference import FHIRReference
 from fhirclient.models.condition import Condition
 from fhirclient.models.allergyintolerance import AllergyIntolerance
@@ -293,15 +294,15 @@ class FHIRService:
             
             # Relacionar ao paciente
             from fhirclient.models.fhirreference import FHIRReference
-            encounter.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            encounter.subject = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
             
             # Período (quando aconteceu)
             if period_start or period_end:
                 period = Period()
                 if period_start:
-                    period.start = FHIRDate(period_start)
+                    period.start = FHIRDateTime(period_start)
                 if period_end:
-                    period.end = FHIRDate(period_end)
+                    period.end = FHIRDateTime(period_end)
                 encounter.period = period
             
             logger.info(f"Creating Encounter for Patient {patient_id}, type: {encounter_type}")
@@ -376,11 +377,11 @@ class FHIRService:
             
             # Relacionar ao paciente
             from fhirclient.models.fhirreference import FHIRReference
-            observation.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            observation.subject = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
             
             # Relacionar ao encontro (Encounter)
             if encounter_id:
-                observation.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+                observation.encounter = FHIRReference(jsondict={"reference": f"Encounter/{encounter_id}"})
 
             # Valor da observação (Simples)
             if value is not None:
@@ -412,7 +413,7 @@ class FHIRService:
                     observation.component.append(obs_comp)
             
             # Data da observação
-            observation.effectiveDateTime = FHIRDate(datetime.utcnow().isoformat())
+            observation.effectiveDateTime = FHIRDateTime(datetime.utcnow().isoformat())
             
             logger.info(f"Creating Observation for Patient {patient_id}, code: {code}")
             
@@ -522,13 +523,13 @@ class FHIRService:
             
             # Subject
             from fhirclient.models.fhirreference import FHIRReference
-            condition.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            condition.subject = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
 
             # Encounter
             if encounter_id:
-                condition.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+                condition.encounter = FHIRReference(jsondict={"reference": f"Encounter/{encounter_id}"})
             
-            condition.recordedDate = FHIRDate(datetime.utcnow().isoformat())
+            condition.recordedDate = FHIRDateTime(datetime.utcnow().isoformat())
             
             response = self.session.post(
                 f"{self.base_url}/Condition",
@@ -603,13 +604,13 @@ class FHIRService:
             
             # Patient
             from fhirclient.models.fhirreference import FHIRReference
-            allergy.patient = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            allergy.patient = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
 
             # Encounter
             if encounter_id:
-                allergy.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+                allergy.encounter = FHIRReference(jsondict={"reference": f"Encounter/{encounter_id}"})
             
-            allergy.recordedDate = FHIRDate(datetime.utcnow().isoformat())
+            allergy.recordedDate = FHIRDateTime(datetime.utcnow().isoformat())
             
             response = self.session.post(
                 f"{self.base_url}/AllergyIntolerance",
@@ -666,11 +667,11 @@ class FHIRService:
             
             # Subject
             from fhirclient.models.fhirreference import FHIRReference
-            med_req.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            med_req.subject = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
             
             # Encounter
             if encounter_id:
-                med_req.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+                med_req.encounter = FHIRReference(jsondict={"reference": f"Encounter/{encounter_id}"})
             
             # DosageInstruction
             if dosage_instruction:
@@ -679,7 +680,7 @@ class FHIRService:
                 dosage.text = dosage_instruction
                 med_req.dosageInstruction = [dosage]
             
-            med_req.authoredOn = FHIRDate(datetime.utcnow().isoformat())
+            med_req.authoredOn = FHIRDateTime(datetime.utcnow().isoformat())
             
             response = self.session.post(
                 f"{self.base_url}/MedicationRequest",
@@ -736,13 +737,13 @@ class FHIRService:
             
             # Subject
             from fhirclient.models.fhirreference import FHIRReference
-            req.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            req.subject = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
             
             # Encounter
             if encounter_id:
-                req.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+                req.encounter = FHIRReference(jsondict={"reference": f"Encounter/{encounter_id}"})
             
-            req.authoredOn = FHIRDate(datetime.utcnow().isoformat())
+            req.authoredOn = FHIRDateTime(datetime.utcnow().isoformat())
             
             response = self.session.post(
                 f"{self.base_url}/ServiceRequest",
@@ -788,13 +789,13 @@ class FHIRService:
             
             # Subject
             from fhirclient.models.fhirreference import FHIRReference
-            impression.subject = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            impression.subject = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
             
             # Encounter
             if encounter_id:
-                impression.encounter = FHIRReference(json={"reference": f"Encounter/{encounter_id}"})
+                impression.encounter = FHIRReference(jsondict={"reference": f"Encounter/{encounter_id}"})
             
-            impression.effectiveDateTime = FHIRDate(datetime.utcnow().isoformat())
+            impression.effectiveDateTime = FHIRDateTime(datetime.utcnow().isoformat())
             
             response = self.session.post(
                 f"{self.base_url}/ClinicalImpression",
@@ -851,18 +852,18 @@ class FHIRService:
             appointment.description = description
             
             if start:
-                appointment.start = FHIRDate(start)
+                appointment.start = FHIRDateTime(start)
             if end:
-                appointment.end = FHIRDate(end)
+                appointment.end = FHIRDateTime(end)
             
             # Participant (Patient)
             from fhirclient.models.appointment import AppointmentParticipant
             participant = AppointmentParticipant()
-            participant.actor = FHIRReference(json={"reference": f"Patient/{patient_id}"})
+            participant.actor = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
             participant.status = "accepted"
             appointment.participant = [participant]
             
-            appointment.created = FHIRDate(datetime.utcnow().isoformat())
+            appointment.created = FHIRDateTime(datetime.utcnow().isoformat())
             
             response = self.session.post(
                 f"{self.base_url}/Appointment",

@@ -76,7 +76,7 @@ class KeycloakAuthentication(TokenAuthentication):
         Valida token JWT localmente usando chave pública do Keycloak (JWKS).
         """
         try:
-            # BYPASS: Token de desenvolvimento
+            # BYPASS: Token de desenvolvimento (Medico)
             if key == "dev-token-bypass":
                 user_info = {
                     'name': 'Ivon Matos',
@@ -84,6 +84,17 @@ class KeycloakAuthentication(TokenAuthentication):
                     'email': 'contato@ivonmatos.com.br',
                     'roles': ['medico', 'admin', 'enfermeiro'],
                     'sub': 'ivon-matos-id'
+                }
+                return (KeycloakUser(user_info), key)
+
+            # BYPASS: Token de desenvolvimento (Paciente)
+            if key == "patient-token-bypass":
+                user_info = {
+                    'name': 'Paciente Teste',
+                    'preferred_username': 'paciente@teste.com',
+                    'email': 'paciente@teste.com',
+                    'roles': ['paciente'],
+                    'sub': 'patient-1'  # ID do paciente Patient/patient-1
                 }
                 return (KeycloakUser(user_info), key)
 

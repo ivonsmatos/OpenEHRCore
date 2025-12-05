@@ -684,3 +684,68 @@ def create_response_view(request):
     except Exception as e:
         logger.error(f"Error creating QuestionnaireResponse: {str(e)}")
         return Response({"error": "Erro ao enviar resposta"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ----------------------------------------------------------------------
+# Sprint 5: Portal do Paciente & Telemedicina
+# ----------------------------------------------------------------------
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('paciente')
+def patient_dashboard(request):
+    """
+    Retorna resumo para o dashboard do paciente.
+    """
+    try:
+        patient_id = request.user.sub
+        fhir_service = FHIRService()
+        
+        # 1. Próximos agendamentos
+        appointments = fhir_service.get_appointments_by_patient_id(patient_id)
+        # Filtrar apenas futuros (simplificado)
+        future_appointments = [a for a in appointments if a.get('start')] 
+        
+        # 2. Resultados de exames recentes (Observations)
+        observations = fhir_service.get_observations_by_patient_id(patient_id)
+        
+        return Response({
+            "patient_id": patient_id,
+            "appointments": future_appointments[:3], # Top 3
+            "exam_results": observations[:5] # Top 5
+        }, status=status.HTTP_200_OK)
+        
+    except FHIRServiceException as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error getting patient dashboard: {str(e)}")
+        return Response({"error": "Erro ao carregar dashboard"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('paciente')
+def get_my_appointments(request):
+    try:
+        patient_id = request.user.sub
+        fhir_service = FHIRService()
+        appointments = fhir_service.get_appointments_by_patient_id(patient_id)
+        return Response(appointments, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error getting appointments: {str(e)}")
+        return Response({"error": "Erro ao buscar agendamentos"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+@require_role('paciente')
+def get_my_exams(request):
+    try:
+        patient_id = request.user.sub
+        fhir_service = FHIRService()
+        observations = fhir_service.get_observations_by_patient_id(patient_id)
+        return Response(observations, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error getting exams: {str(e)}")
+        return Response({"error": "Erro ao buscar exames"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
