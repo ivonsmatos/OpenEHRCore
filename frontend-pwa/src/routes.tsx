@@ -10,6 +10,7 @@ import CheckInWorkspace from './components/checkin/CheckInWorkspace';
 import { PatientPortalWorkspace } from './components/patient/PatientPortalWorkspace';
 import FinancialWorkspace from './components/financial/FinancialWorkspace';
 import ClinicalDocumentWorkspace from './components/documents/ClinicalDocumentWorkspace';
+import DashboardWorkspace from './components/dashboard/DashboardWorkspace';
 import Header from './components/base/Header';
 import Button from './components/base/Button';
 import { colors, spacing } from './theme/colors';
@@ -71,7 +72,8 @@ const ProtectedRoutes: React.FC = () => {
     return (
         <MainLayout>
             <Routes>
-                <Route path="/" element={<PatientList />} />
+                <Route path="/" element={<DashboardWorkspace />} />
+                <Route path="/patients" element={<PatientList />} />
                 <Route path="/patients/new" element={<PatientForm />} />
                 <Route path="/patients/:id" element={<PatientDetail loading={false} error={undefined} />} />
                 <Route path="/patients/:id/encounter/new" element={<ClinicalWorkspace />} />

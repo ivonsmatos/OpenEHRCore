@@ -1,5 +1,6 @@
 
 import requests
+import json
 
 LOGIN_URL = "http://localhost:8000/api/v1/auth/login/"
 DOCS_URL = "http://localhost:8000/api/v1/documents/"
@@ -41,7 +42,7 @@ def check_list():
         if resp.status_code == 200:
             data = resp.json()
             print(f"Data received (List len={len(data)}):")
-            print(data)
+            print(json.dumps(data, indent=2))
         else:
             print("Error body:")
             print(resp.text)

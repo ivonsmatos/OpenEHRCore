@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { usePatients } from "../hooks/usePatients";
@@ -9,6 +10,10 @@ import AllergyList from "./clinical/AllergyList";
 import EncounterList from "./clinical/EncounterList";
 import AppointmentList from "./scheduling/AppointmentList";
 import { colors, spacing } from "../theme/colors";
+import { Activity } from "lucide-react";
+import ClinicalWorkspace from './clinical/ClinicalWorkspace';
+import ImmunizationWorkspace from './clinical/ImmunizationWorkspace';
+import DiagnosticResultWorkspace from './clinical/DiagnosticResultWorkspace';
 import {
   FHIRPatient,
   getPatientSummary,
@@ -37,6 +42,9 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { patient, loading: propLoading, error: propError, onEdit } = props;
+
+  // State for view switching
+  const [view, setView] = useState<'overview' | 'clinical' | 'immunization' | 'diagnostic'>('overview');
 
   // Hook para buscar dados
   const { getPatient, deletePatient, loading: hookLoading, error: hookError } = usePatients();
@@ -168,8 +176,8 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
           </div>
 
           <div style={{ display: "flex", gap: spacing.sm }}>
-            <Button onClick={() => navigate(`/patients/${mockPatient.id}/encounter/new`)} style={{ backgroundColor: 'white', color: colors.primary.dark }}>
-              ▶ Iniciar Atendimento
+            <Button onClick={() => setView(view === 'clinical' ? 'overview' : 'clinical')} style={{ backgroundColor: 'white', color: colors.primary.dark }}>
+              ▶ {view === 'clinical' ? 'Fechar Atendimento' : 'Iniciar Atendimento'}
             </Button>
             <Button variant="secondary" onClick={handleEdit} style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white', backgroundColor: 'transparent' }}>
               ✎ Editar
@@ -230,47 +238,95 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
           </div>
         </section>
 
-        {/* Section: Sinais Vitais */}
-        <section style={{ marginBottom: spacing.xl }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.primary.medium}`, paddingLeft: spacing.sm }}>
-            Sinais Vitais 🩺
-          </h2>
-          <VitalSigns patientId={mockPatient.id} />
-        </section>
-
-        {/* Layout em Grid para Listas Clinicas */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: spacing.lg, marginBottom: spacing.xl }}>
-          {/* Histórico */}
-          <section>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.accent.primary}`, paddingLeft: spacing.sm }}>
-              Histórico Clínico
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
-              <ProblemList patientId={mockPatient.id} />
-              <AllergyList patientId={mockPatient.id} />
-            </div>
-          </section>
-
-          {/* Atendimentos e Agendamentos */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xl }}>
-            <section>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.primary.dark}`, paddingLeft: spacing.sm }}>
-                Timeline de Atendimentos
-              </h2>
-              <EncounterList
-                patientId={mockPatient.id}
-                onStartEncounter={() => navigate(`/patients/${mockPatient.id}/encounter/new`)}
-              />
-            </section>
-
-            <section>
+        {view === 'overview' && (
+          <>
+            {/* Section: Sinais Vitais */}
+            <section style={{ marginBottom: spacing.xl }}>
               <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.primary.medium}`, paddingLeft: spacing.sm }}>
-                Agendamentos
+                Sinais Vitais 🩺
               </h2>
-              <AppointmentList patientId={mockPatient.id} />
+              <VitalSigns patientId={mockPatient.id} />
             </section>
+
+            {/* Layout em Grid para Listas Clinicas */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: spacing.lg, marginBottom: spacing.xl }}>
+              {/* Módulos e Histórico */}
+              <section>
+                <div className="mb-6">
+                  <Card className="p-4 bg-slate-50 border border-slate-200">
+                    <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                      <Activity size={18} className="text-indigo-600" />
+                      Módulos Clínicos
+                    </h3>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button variant="outline" onClick={() => setView('immunization')}>
+                        💉 Vacinas
+                      </Button>
+                      <Button variant="outline" onClick={() => setView('diagnostic')}>
+                        📑 Resultados de Exames
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.accent.primary}`, paddingLeft: spacing.sm }}>
+                  Histórico Clínico
+                </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+                  <ProblemList patientId={mockPatient.id} />
+                  <AllergyList patientId={mockPatient.id} />
+                </div>
+              </section>
+
+              {/* Atendimentos e Agendamentos */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xl }}>
+                <section>
+                  <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.primary.dark}`, paddingLeft: spacing.sm }}>
+                    Timeline de Atendimentos
+                  </h2>
+                  <EncounterList
+                    patientId={mockPatient.id}
+                    onStartEncounter={() => setView('clinical')}
+                  />
+                </section>
+
+                <section>
+                  <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.primary.medium}`, paddingLeft: spacing.sm }}>
+                    Agendamentos
+                  </h2>
+                  <AppointmentList patientId={mockPatient.id} />
+                </section>
+              </div>
+            </div>
+          </>
+        )}
+
+        {view === 'clinical' && (
+          <div className="mt-4">
+            <Button variant="ghost" onClick={() => setView('overview')} className="mb-4">
+              ← Voltar para Visão Geral
+            </Button>
+            <ClinicalWorkspace />
           </div>
-        </div>
+        )}
+
+        {view === 'immunization' && (
+          <div className="mt-4">
+            <Button variant="ghost" onClick={() => setView('overview')} className="mb-4">
+              ← Voltar para Visão Geral
+            </Button>
+            <ImmunizationWorkspace />
+          </div>
+        )}
+
+        {view === 'diagnostic' && (
+          <div className="mt-4">
+            <Button variant="ghost" onClick={() => setView('overview')} className="mb-4">
+              ← Voltar para Visão Geral
+            </Button>
+            <DiagnosticResultWorkspace />
+          </div>
+        )}
 
         {/* Section: JSON FHIR (Debug/Advanced) */}
         <section>

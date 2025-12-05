@@ -1,25 +1,31 @@
+
 from django.urls import path
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views
-from . import views_auth
-from . import views_documents
+from . import views_auth, views_documents, views_analytics, views_clinical
+
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
+router.register(r'financial/accounts', AccountViewSet, basename='account')
+router.register(r'financial/invoices', InvoiceViewSet, basename='invoice')
 
 urlpatterns = [
-    # Health check (público)
+    # Health check
     path('health/', views_auth.health_check, name='health_check'),
     
     # Autenticação
     path('auth/login/', views_auth.login, name='login'),
     
-    # Patient endpoints (protegidos com auth)
+    # Patient endpoints
     path('patients/', views_auth.manage_patients, name='manage_patients'),
     path('patients/<str:patient_id>/', views_auth.get_patient, name='get_patient'),
     
-    # Encounter endpoints (protegidos com auth)
+    # Encounter endpoints
     path('encounters/', views_auth.create_encounter, name='create_encounter'),
     path('patients/<str:patient_id>/encounters/', views_auth.get_encounters, name='get_encounters'),
     
-    # Observation endpoints (protegidos com auth)
+    # Observation endpoints
     path('observations/', views_auth.create_observation, name='create_observation'),
     path('patients/<str:patient_id>/observations/', views_auth.get_observations, name='get_observations'),
     
@@ -44,34 +50,33 @@ urlpatterns = [
     # ClinicalImpression endpoints
     path('clinical-impressions/', views_auth.create_clinical_impression, name='create_clinical_impression'),
     
-    # Schedule & Slot endpoints (Sprint 4)
+    # Schedule & Slot endpoints
     path('schedule/', views_auth.create_schedule, name='create_schedule'),
     path('slots/', views_auth.create_slot, name='create_slot'),
     path('slots/search/', views_auth.get_slots, name='get_slots'),
     
-    # Questionnaire endpoints (Sprint 4)
+    # Questionnaire endpoints
     path('questionnaires/', views_auth.create_questionnaire_view, name='create_questionnaire'),
     path('questionnaires/response/', views_auth.create_response_view, name='create_response'),
 
-# ----------------------------------------------------------------------
     # Sprint 5: Portal do Paciente
-    # ----------------------------------------------------------------------
     path('patient/dashboard/', views_auth.patient_dashboard, name='patient_dashboard'),
     path('patient/appointments/', views_auth.get_my_appointments, name='patient_appointments'),
     path('patient/exams/', views_auth.get_my_exams, name='patient_exams'),
-    # ----------------------------------------------------------------------
+    
     # Sprint 8: Documentos & PDF
-    # ----------------------------------------------------------------------
     path('documents/', views_documents.documents_list_create, name='documents_list_create'),
-    path('documents/<str:composition_id>/', views_documents.delete_document, name='delete_document'), # Supports DELETE
+    path('documents/<str:composition_id>/', views_documents.delete_document, name='delete_document'), 
     path('documents/<str:composition_id>/pdf/', views_documents.generate_pdf, name='generate_pdf'),
+    
+    # Sprint 9: Analytics
+    path('analytics/dashboard/', views_analytics.dashboard_stats, name='dashboard_stats'),
+
+    # Sprint 10: Immunization & Diagnostic Results
+    path('immunizations/', views_clinical.create_immunization, name='create_immunization'),
+    path('patients/<str:patient_id>/immunizations/', views_clinical.get_immunizations, name='get_immunizations'),
+    path('diagnostic-reports/', views_clinical.create_diagnostic_report, name='create_diagnostic_report'),
+    path('patients/<str:patient_id>/diagnostic-reports/', views_clinical.get_diagnostic_reports, name='get_diagnostic_reports'),
 ]
-
-from rest_framework.routers import DefaultRouter
-
-router = DefaultRouter()
-router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
-router.register(r'financial/accounts', AccountViewSet, basename='account')
-router.register(r'financial/invoices', InvoiceViewSet, basename='invoice')
 
 urlpatterns += router.urls

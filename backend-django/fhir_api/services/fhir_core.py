@@ -1469,6 +1469,24 @@ class FHIRService:
             logger.error(f"Error deleting Composition {composition_id}: {str(e)}")
             raise FHIRServiceException(f"Failed to delete document: {str(e)}")
 
+    def get_total_count(self, resource_type: str, search_params: Optional[Dict[str, Any]] = None) -> int:
+        """
+        Retorna a contagem total de recursos usando _summary=count.
+        """
+        params = search_params or {}
+        params['_summary'] = 'count'
+        try:
+            response = self.session.get(
+                f"{self.base_url}/{resource_type}",
+                params=params,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json().get('total', 0)
+        except requests.RequestException as e:
+            logger.error(f"Error counting {resource_type}: {str(e)}")
+            return 0
+
     def search_resources(self, resource_type: str, search_params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
         Busca recursos no servidor FHIR usando parâmetros de consulta.
