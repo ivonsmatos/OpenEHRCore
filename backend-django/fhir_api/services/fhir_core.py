@@ -1334,3 +1334,96 @@ class FHIRService:
         except Exception as e:
             logger.error(f"Error creating Invoice: {str(e)}")
             raise FHIRServiceException(f"Failed to create Invoice: {str(e)}")
+    # --------------------------------------------------------------------------
+    # COMPOSITION (Documentos Clínicos)
+    # --------------------------------------------------------------------------
+    
+    def create_composition_resource(self,
+                                  patient_id: str,
+                                  practitioner_id: str,
+                                  date_time: str,
+                                  doc_type: str,
+                                  title: str,
+                                  text_content: str,
+                                  status: str = "final") -> Dict[str, Any]:
+        """
+        Cria um recurso Composition (Documento Clínico).
+        """
+        try:
+            from fhirclient.models.composition import Composition, CompositionType, CompositionSection, CompositionRelatesTo
+            from fhirclient.models.codeableconcept import CodeableConcept
+            from fhirclient.models.coding import Coding
+            from fhirclient.models.fhirdate import FHIRDate
+            from fhirclient.models.fhirreference import FHIRReference
+            from fhirclient.models.narrative import Narrative
+            
+            comp = Composition()
+            comp.status = status
+            
+            # Data do documento
+            comp.date = FHIRDate(date_time)
+            
+            # Título
+            comp.title = title
+            
+            # Tipo de documento (LOINC codes simplificados para exemplo)
+            # 11488-4: Consultation note
+            # 18842-5: Discharge summary
+            # 34117-2: History and physical note
+            loinc_map = {
+                "anamnese": ("34117-2", "History and physical note"),
+                "evolucao": ("11506-3", "Progress note"),
+                "receita": ("57833-6", "Prescription for medication"),
+                "atestado": ("34105-7", "Hospital discharge summary") # Aproximação
+            }
+            
+            code_val, display_val = loinc_map.get(doc_type, ("11506-3", "Progress note"))
+            
+            doc_type_concept = CodeableConcept()
+            doc_type_concept.coding = [Coding()]
+            doc_type_concept.coding[0].system = "http://loinc.org"
+            doc_type_concept.coding[0].code = code_val
+            doc_type_concept.coding[0].display = display_val
+            comp.type = doc_type_concept
+            
+            # Sujeito (Paciente)
+            subject_ref = FHIRReference()
+            subject_ref.reference = f"Patient/{patient_id}"
+            comp.subject = subject_ref
+            
+            # Autor (Médico)
+            # Na prática seria um Practitioner, mas para simplificar usamos string ou referência dummy se não existir
+            # Ideal: Practitioner/practitioner_id
+            author_ref = FHIRReference()
+            author_ref.reference = f"Practitioner/{practitioner_id}" if practitioner_id else "Practitioner/example"
+            comp.author = [author_ref]
+            
+            # Seção Principal (Conteúdo de texto)
+            section = CompositionSection()
+            section.title = "Conteúdo Principal"
+            
+            # Narrativa HTML
+            div_content = f"<div xmlns=\"http://www.w3.org/1999/xhtml\">{text_content}</div>"
+            narrative = Narrative()
+            narrative.status = "generated"
+            narrative.div = div_content
+            section.text = narrative
+            
+            comp.section = [section]
+            
+            # Serializar e Enviar
+            comp_json = comp.as_json()
+            
+            response = self.session.post(
+                f"{self.base_url}/Composition",
+                json=comp_json,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            
+            logger.info(f"Composition created for Patient {patient_id}")
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"Error creating Composition: {str(e)}")
+            raise FHIRServiceException(f"Failed to create Composition: {str(e)}")

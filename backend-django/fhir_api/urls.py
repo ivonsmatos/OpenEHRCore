@@ -2,6 +2,7 @@ from django.urls import path
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
 from . import views
 from . import views_auth
+from . import views_documents
 
 urlpatterns = [
     # Health check (público)
@@ -58,6 +59,11 @@ urlpatterns = [
     path('patient/dashboard/', views_auth.patient_dashboard, name='patient_dashboard'),
     path('patient/appointments/', views_auth.get_my_appointments, name='patient_appointments'),
     path('patient/exams/', views_auth.get_my_exams, name='patient_exams'),
+    # ----------------------------------------------------------------------
+    # Sprint 8: Documentos & PDF
+    # ----------------------------------------------------------------------
+    path('documents/', views_documents.create_composition, name='create_composition'),
+    path('documents/<str:composition_id>/pdf/', views_documents.generate_pdf, name='generate_pdf'),
 ]
 
 from rest_framework.routers import DefaultRouter

@@ -9,6 +9,7 @@ import SchedulingWorkspace from './components/scheduling/SchedulingWorkspace';
 import CheckInWorkspace from './components/checkin/CheckInWorkspace';
 import { PatientPortalWorkspace } from './components/patient/PatientPortalWorkspace';
 import FinancialWorkspace from './components/financial/FinancialWorkspace';
+import ClinicalDocumentWorkspace from './components/documents/ClinicalDocumentWorkspace';
 import Header from './components/base/Header';
 import Button from './components/base/Button';
 import { colors, spacing } from './theme/colors';
@@ -34,6 +35,13 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         style={{ color: 'white', border: '1px solid white' }}
                         onClick={() => window.location.href = '/finance'}>
                         Financeiro
+                    </Button>
+
+                    {/* Documents Link */}
+                    <Button variant="ghost" size="sm"
+                        style={{ color: 'white', border: '1px solid white' }}
+                        onClick={() => window.location.href = '/documents'}>
+                        Doc. Clínicos
                     </Button>
 
                     {/* Demo: Switch Context */}
@@ -71,6 +79,7 @@ const ProtectedRoutes: React.FC = () => {
                 <Route path="/checkin" element={<CheckInWorkspace />} />
                 <Route path="/portal" element={<PatientPortalWorkspace />} />
                 <Route path="/finance" element={<FinancialWorkspace />} />
+                <Route path="/documents" element={<ClinicalDocumentWorkspace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </MainLayout>
