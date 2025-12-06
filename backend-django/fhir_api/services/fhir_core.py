@@ -92,6 +92,71 @@ class FHIRService:
             logger.error(f"FHIR Server health check failed: {str(e)}")
             raise FHIRServiceException(f"FHIR Server unreachable: {str(e)}")
 
+    def create_resource(self, resource_type: str, resource_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Cria qualquer recurso FHIR genericamente.
+        
+        Args:
+            resource_type: Tipo do recurso (Ex: 'RelatedPerson')
+            resource_data: Dict com os dados do recurso
+            
+        Returns:
+            Dict com o recurso criado (incluindo ID)
+        """
+        try:
+            logger.info(f"Creating generic {resource_type}")
+            response = self.session.post(
+                f"{self.base_url}/{resource_type}",
+                json=resource_data,
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                logger.error(f"Failed to create {resource_type}: {response.text}")
+                raise FHIRServiceException(f"Failed to create {resource_type}: {response.status_code}")
+                
+            result = response.json()
+            logger.info(f"{resource_type} created successfully: ID={result.get('id')}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error creating {resource_type}: {str(e)}")
+            raise FHIRServiceException(f"Error creating {resource_type}: {str(e)}")
+
+    def search_resources(self, resource_type: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """
+        Busca genérica de recursos FHIR.
+        
+        Args:
+            resource_type: Tipo do recurso (Ex: 'RelatedPerson')
+            params: Dicionário de parâmetros de busca
+            
+        Returns:
+            Lista de recursos encontrados
+        """
+        try:
+            response = self.session.get(
+                f"{self.base_url}/{resource_type}",
+                params=params,
+                timeout=self.timeout
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Search failed for {resource_type}: {response.status_code}")
+                return []
+                
+            bundle = response.json()
+            results = []
+            if 'entry' in bundle:
+                for entry in bundle['entry']:
+                    if 'resource' in entry:
+                        results.append(entry['resource'])
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error searching {resource_type}: {e}")
+            return []
+
     def create_patient_resource(
         self,
         first_name: str,

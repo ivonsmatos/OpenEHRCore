@@ -732,7 +732,7 @@ def create_response_view(request):
 @api_view(['GET'])
 @authentication_classes([KeycloakAuthentication])
 @permission_classes([IsAuthenticated])
-@require_role('paciente')
+@require_role('paciente', 'admin', 'medico')
 def patient_dashboard(request):
     """
     Retorna resumo para o dashboard do paciente.

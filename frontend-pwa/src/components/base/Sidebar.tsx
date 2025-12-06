@@ -9,7 +9,10 @@ import {
     FileText,
     LogOut,
     Activity,
-    Menu
+    Menu,
+    UserPlus,
+    MessageSquare,
+    Bed
 } from 'lucide-react';
 import { colors, spacing } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
@@ -30,8 +33,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         { label: 'Pacientes', icon: <Users size={20} />, route: '/patients' },
         { label: 'Agenda', icon: <Calendar size={20} />, route: '/scheduling' },
         { label: 'Check-in', icon: <Activity size={20} />, route: '/checkin' },
+        { label: 'Internação', icon: <Bed size={20} />, route: '/ipd' },
         { label: 'Financeiro', icon: <DollarSign size={20} />, route: '/finance' },
+
         { label: 'Documentos', icon: <FileText size={20} />, route: '/documents' },
+        { label: 'Visitantes', icon: <UserPlus size={20} />, route: '/visitors' },
+        { label: 'Chat', icon: <MessageSquare size={20} />, route: '/chat' },
         { label: 'Portal Paciente', icon: <Users size={20} />, route: '/portal' }, // Demo link
     ];
 

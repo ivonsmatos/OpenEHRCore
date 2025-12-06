@@ -13,6 +13,9 @@ import { PatientPortalWorkspace } from './components/patient/PatientPortalWorksp
 import FinancialWorkspace from './components/financial/FinancialWorkspace';
 import ClinicalDocumentWorkspace from './components/documents/ClinicalDocumentWorkspace';
 import { DashboardWorkspace } from './components/analytics/DashboardWorkspace';
+import VisitorsWorkspace from './components/workspaces/VisitorsWorkspace';
+import ChatWorkspace from './components/workspaces/ChatWorkspace';
+import BedManagementWorkspace from './components/workspaces/BedManagementWorkspace';
 import AppShell from './components/base/AppShell';
 import { spacing } from './theme/colors';
 
@@ -33,6 +36,9 @@ const ProtectedRoutes: React.FC = () => {
                 <Route path="/portal" element={<PatientPortalWorkspace />} />
                 <Route path="/finance" element={<FinancialWorkspace />} />
                 <Route path="/documents" element={<ClinicalDocumentWorkspace />} />
+                <Route path="/visitors" element={<VisitorsWorkspace />} />
+                <Route path="/chat" element={<ChatWorkspace />} />
+                <Route path="/ipd" element={<BedManagementWorkspace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </AppShell>

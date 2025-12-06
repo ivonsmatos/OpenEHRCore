@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { colors, spacing } from '../../theme/colors';
 import Card from '../base/Card';
-import { Activity, Users, Clipboard, UserPlus } from 'lucide-react';
+import { Activity, Users, Clipboard, UserPlus, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import LoadingVitalSign from '../base/LoadingVitalSign';
@@ -87,6 +87,36 @@ const MedicalDashboard: React.FC = () => {
 
     const conditionsData = clinicalData?.top_conditions || [];
 
+
+    const handleDownloadReport = async () => {
+        try {
+            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+            const response = await fetch(`${API_BASE}/analytics/report/`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(pdfBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `relatorio_gerencial_${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
+            } else {
+                alert('Erro ao gerar relatório');
+            }
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('Erro ao baixar relatório');
+        }
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
 
@@ -97,6 +127,24 @@ const MedicalDashboard: React.FC = () => {
                     <p style={{ fontSize: '0.875rem', color: colors.text.tertiary }}>Bem-vindo ao Sistema de Gestão Hospitalar</p>
                 </div>
                 <div style={{ display: 'flex', gap: spacing.sm }}>
+                    <button
+                        onClick={handleDownloadReport}
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: colors.primary.medium,
+                            color: '#FFF',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontWeight: 500
+                        }}
+                    >
+                        <Download size={18} />
+                        Baixar Relatório (PDF)
+                    </button>
                     <button style={{ padding: '8px 16px', backgroundColor: '#EFF6FF', color: colors.primary.medium, border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Home</button>
                     <button style={{ padding: '8px 16px', backgroundColor: 'transparent', color: colors.text.secondary, border: 'none', cursor: 'pointer' }}>Dashboard</button>
                 </div>
@@ -181,7 +229,7 @@ const MedicalDashboard: React.FC = () => {
                             {/* Legend placeholders */}
                         </div>
                     </div>
-                    <div style={{ height: '300px', width: '100%', minHeight: '300px' }}>
+                    <div style={{ width: '99%', height: '300px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={surveyChartData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
@@ -198,7 +246,7 @@ const MedicalDashboard: React.FC = () => {
                 {/* Heart Surgeries / Clinical Stats */}
                 <Card padding="lg">
                     <h3 style={{ fontWeight: 600, color: colors.text.primary, marginBottom: spacing.lg }}>Tratamentos Médicos (Top Condições)</h3>
-                    <div style={{ height: '300px', width: '100%', minHeight: '300px' }}>
+                    <div style={{ width: '99%', height: '300px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={conditionsData}>
                                 <defs>

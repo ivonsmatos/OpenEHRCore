@@ -2,7 +2,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd
 
 router = DefaultRouter()
 router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
@@ -93,6 +93,26 @@ urlpatterns = [
     path('analytics/kpi/', views_analytics.get_kpi_metrics, name='analytics-kpi'),
     path('analytics/survey/', views_analytics.get_survey_metrics, name='analytics-survey'),
     path('analytics/admissions/', views_analytics.get_admissions_metrics, name='analytics-admissions'),
+    path('analytics/report/', views_analytics.generate_analytics_report, name='analytics-report'),
+
+    # Sprint 14: Visitors
+    path('visitors/', views_visitors.list_visitors, name='list_visitors'),
+    path('visitors/create/', views_visitors.create_visitor, name='create_visitor'),
+
+    # Sprint 15: Chat (Gap Analysis)
+    path('chat/channels/', views_chat.list_channels, name='list_channels'),
+    path('chat/channels/create/', views_chat.create_channel, name='create_channel'),
+    path('chat/messages/', views_chat.list_messages, name='list_messages'),
+    path('chat/send/', views_chat.send_message, name='send_message'),
+
+    # Sprint 16: Inpatient Management (Bed Management)
+    path('ipd/locations/', views_ipd.list_locations, name='list_locations'),
+    path('ipd/occupancy/', views_ipd.get_occupancy, name='get_occupancy'),
+    path('ipd/admit/', views_ipd.admit_patient, name='admit_patient'),
+    path('ipd/bed/<str:location_id>/details/', views_ipd.get_bed_details, name='get_bed_details'),
+    path('ipd/discharge/', views_ipd.discharge_patient, name='discharge_patient'),
+    path('ipd/bed/<str:location_id>/clean/', views_ipd.finish_cleaning, name='finish_cleaning'),
 ]
+
 
 urlpatterns += router.urls
