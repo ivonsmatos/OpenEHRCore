@@ -4,12 +4,15 @@ import { Sparkles, AlertTriangle, X } from 'lucide-react';
 import { colors, spacing } from '../../theme/colors';
 import Card from '../base/Card';
 
+import { useAuth } from '../../hooks/useAuth';
+
 interface AICopilotProps {
     patientId: string;
     onClose?: () => void;
 }
 
 const AICopilot: React.FC<AICopilotProps> = ({ patientId, onClose }) => {
+    const { token } = useAuth();
     const [summary, setSummary] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -18,19 +21,26 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId, onClose }) => {
         const fetchSummary = async () => {
             try {
                 setLoading(true);
-                const token = localStorage.getItem('token');
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/summary/${patientId}/`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
-                if (!response.ok) throw new Error('Falha ao gerar resumo');
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({ error: 'Falha ao conectar' }));
+                    throw new Error(errData.error || 'Falha ao gerar resumo');
+                }
 
                 const data = await response.json();
                 setSummary(data.summary);
-            } catch (err) {
-                setError("Não foi possível conectar ao o serviço de IA.");
+            } catch (err: any) {
+                // If message contains "Patient not found" or "404", be specific
+                let msg = err.message || "Não foi possível conectar ao serviço de IA.";
+                if (msg.includes("404") || msg.includes("not found")) {
+                    msg = "Paciente não encontrado. Verifique se o ID é válido.";
+                }
+                setError(msg);
                 console.error(err);
             } finally {
                 setLoading(false);

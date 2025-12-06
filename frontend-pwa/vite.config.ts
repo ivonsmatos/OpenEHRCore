@@ -7,20 +7,11 @@ export default defineConfig({
     port: 5173,
     open: false,
     proxy: {
-      '/financial': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-        rewrite: (path) => `/api/v1${path}`,
-      },
       '/api': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
+        secure: false,
       },
-      '/analytics': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-        rewrite: (path) => `/api/v1${path}`,
-      }
     },
   },
   build: {

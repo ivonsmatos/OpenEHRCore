@@ -285,6 +285,22 @@ export interface FHIRObservation {
     system?: string;
     code?: string;
   };
+  component?: Array<{
+    code: {
+      coding: Array<{
+        system: string;
+        code: string;
+        display?: string;
+      }>;
+      text?: string;
+    };
+    valueQuantity: {
+      value: number;
+      unit?: string;
+      system?: string;
+      code?: string;
+    };
+  }>;
   effectiveDateTime?: string;
   [key: string]: any;
 }
@@ -299,14 +315,44 @@ export function getObservationName(obs: FHIRObservation): string {
 }
 
 /**
- * Extrai o valor formatado (ex: "120 mmHg")
+ * Extrai o valor formatado (ex: "120 mmHg" ou "120/80 mmHg")
  */
 export function getObservationValue(obs: FHIRObservation): string {
+  // 1. Caso ValueQuantity simples (Peso, Altura, Temp)
   if (obs.valueQuantity) {
-    const val = obs.valueQuantity.value;
+    let val = obs.valueQuantity.value;
     const unit = obs.valueQuantity.unit || "";
+
+    // Rounding logic: Max 2 decimals, remove trailing zeros
+    if (typeof val === 'number') {
+      const rounded = +val.toFixed(2); // Unary plus converts back to number
+      return `${rounded} ${unit}`.trim();
+    }
     return `${val} ${unit}`.trim();
   }
+
+  // 2. Caso Componentes (Pressão Arterial)
+  // Blood Pressure usually stores Systolic (8480-6) and Diastolic (8462-4) in components
+  if (obs.component && obs.component.length > 0) {
+    const systolic = obs.component.find(c => c.code?.coding?.some(acc => acc.code === '8480-6'));
+    const diastolic = obs.component.find(c => c.code?.coding?.some(acc => acc.code === '8462-4'));
+
+    if (systolic?.valueQuantity && diastolic?.valueQuantity) {
+      const sysVal = Math.round(systolic.valueQuantity.value);
+      const diaVal = Math.round(diastolic.valueQuantity.value);
+      const unit = systolic.valueQuantity.unit || "mmHg";
+      return `${sysVal}/${diaVal} ${unit}`;
+    }
+
+    // Generic fallback for other components: show first component value
+    const first = obs.component[0];
+    if (first.valueQuantity) {
+      const val = +first.valueQuantity.value.toFixed(2);
+      const unit = first.valueQuantity.unit || "";
+      return `${val} ${unit}`;
+    }
+  }
+
   return "Sem valor";
 }
 

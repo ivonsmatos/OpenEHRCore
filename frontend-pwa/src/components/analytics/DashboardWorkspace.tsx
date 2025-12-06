@@ -9,29 +9,31 @@ import { colors, spacing } from '../../theme/colors';
 import Card from '../base/Card';
 import { Activity, Users, Clipboard, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
+import { useAuth } from '../../hooks/useAuth';
 import LoadingVitalSign from '../base/LoadingVitalSign';
 
 const MedicalDashboard: React.FC = () => {
     const navigate = useNavigate();
+    const { token } = useAuth();
     const [kpiData, setKpiData] = useState<any>(null);
     const [surveyData, setSurveyData] = useState<any>(null);
     const [clinicalData, setClinicalData] = useState<any>(null);
+    const [admissionsData, setAdmissionsData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const token = localStorage.getItem('token');
                 const headers = {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
                 };
 
+                const API_BASE = 'http://localhost:8000/api/v1';
                 const [resKpi, resSurvey, resClin] = await Promise.all([
-                    fetch(`/api/v1/analytics/kpi/`, { headers }),
-                    fetch(`/api/v1/analytics/survey/`, { headers }),
-                    fetch(`/api/v1/analytics/clinical/`, { headers })
+                    fetch(`${API_BASE}/analytics/kpi/`, { headers }),
+                    fetch(`${API_BASE}/analytics/survey/`, { headers }),
+                    fetch(`${API_BASE}/analytics/clinical/`, { headers })
                 ]);
 
                 if (resKpi.status === 401) {
@@ -57,6 +59,12 @@ const MedicalDashboard: React.FC = () => {
                     try {
                         setClinicalData(await resClin.json());
                     } catch (e) { console.error("Clinical JSON Error", e); }
+                }
+
+                // Fetch Admissions
+                const resAdm = await fetch(`${API_BASE}/analytics/admissions/`, { headers });
+                if (resAdm.ok) {
+                    setAdmissionsData(await resAdm.json());
                 }
             } catch (err) {
                 console.error("Failed to load dashboard data", err);
@@ -223,30 +231,31 @@ const MedicalDashboard: React.FC = () => {
                             <th style={{ padding: '12px' }}>Nome</th>
                             <th style={{ padding: '12px' }}>Médico</th>
                             <th style={{ padding: '12px' }}>Data Admissão</th>
-                            <th style={{ padding: '12px' }}>Doença</th>
+                            <th style={{ padding: '12px' }}>Motivo</th>
                             <th style={{ padding: '12px' }}>Quarto</th>
                             <th style={{ padding: '12px' }}>Ação</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
-                            <td style={{ padding: '12px' }}>1</td>
-                            <td style={{ padding: '12px', fontWeight: 500 }}>Jens Brincker</td>
-                            <td style={{ padding: '12px' }}>Dr. Kenny Josh</td>
-                            <td style={{ padding: '12px' }}>27/05/2024</td>
-                            <td style={{ padding: '12px' }}><span style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: '#D1FAE5', color: '#065F46', fontSize: '0.75rem' }}>INFLUENZA</span></td>
-                            <td style={{ padding: '12px' }}>101</td>
-                            <td style={{ padding: '12px' }}>✏️</td>
-                        </tr>
-                        <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
-                            <td style={{ padding: '12px' }}>2</td>
-                            <td style={{ padding: '12px', fontWeight: 500 }}>Mark Hay</td>
-                            <td style={{ padding: '12px' }}>Dr. Mark</td>
-                            <td style={{ padding: '12px' }}>26/05/2017</td>
-                            <td style={{ padding: '12px' }}><span style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: '#FEF3C7', color: '#92400E', fontSize: '0.75rem' }}>CHOLERA</span></td>
-                            <td style={{ padding: '12px' }}>105</td>
-                            <td style={{ padding: '12px' }}>✏️</td>
-                        </tr>
+                        {admissionsData.length > 0 ? admissionsData.map((adm: any) => (
+                            <tr key={adm.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                                <td style={{ padding: '12px' }}>{adm.no}</td>
+                                <td style={{ padding: '12px', fontWeight: 500 }}>{adm.name}</td>
+                                <td style={{ padding: '12px' }}>{adm.doctor}</td>
+                                <td style={{ padding: '12px' }}>{adm.date}</td>
+                                <td style={{ padding: '12px' }}>
+                                    <span style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: '#D1FAE5', color: '#065F46', fontSize: '0.75rem' }}>
+                                        {adm.condition}
+                                    </span>
+                                </td>
+                                <td style={{ padding: '12px' }}>{adm.room}</td>
+                                <td style={{ padding: '12px', cursor: 'pointer' }} onClick={() => navigate(`/patients/${adm.patient_id}`)}>✏️</td>
+                            </tr>
+                        )) : (
+                            <tr>
+                                <td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF' }}>Nenhuma admissão recente encontrada.</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </Card>

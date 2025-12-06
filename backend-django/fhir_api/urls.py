@@ -92,6 +92,7 @@ urlpatterns = [
     path('analytics/operational/', views_analytics.get_operational_metrics),
     path('analytics/kpi/', views_analytics.get_kpi_metrics, name='analytics-kpi'),
     path('analytics/survey/', views_analytics.get_survey_metrics, name='analytics-survey'),
+    path('analytics/admissions/', views_analytics.get_admissions_metrics, name='analytics-admissions'),
 ]
 
 urlpatterns += router.urls

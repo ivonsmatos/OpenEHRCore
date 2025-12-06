@@ -89,3 +89,20 @@ def get_survey_metrics(request):
         from django.http import JsonResponse
         return JsonResponse({"error": "Failed to generate analytics", "detail": str(e)}, status=500)
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_admissions_metrics(request):
+    """
+    GET /api/v1/analytics/admissions/
+    Retorna lista de internacoes recentes.
+    """
+    try:
+        service = AnalyticsService()
+        data = service.get_recent_admissions()
+        return Response(data, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error serving admissions analytics: {e}")
+        from django.http import JsonResponse
+        return JsonResponse({"error": "Failed to generate analytics", "detail": str(e)}, status=500)
+

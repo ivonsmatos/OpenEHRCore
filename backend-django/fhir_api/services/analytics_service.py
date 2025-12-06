@@ -190,3 +190,85 @@ class AnalyticsService:
              ]
         }
 
+    def get_recent_admissions(self) -> List[Dict[str, Any]]:
+        """
+        Retorna lista de admissões recentes para o Dashboard.
+        """
+        # Fetch encounters with patient included
+        try:
+            response = self.session.get(
+                f"{self.base_url}/Encounter",
+                params={
+                    "_count": 20,
+                    "_sort": "-_lastUpdated",
+                    "_include": "Encounter:subject"
+                },
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            bundle = response.json()
+            
+            encounters = []
+            patients_map = {}
+            
+            # Separate encounters and patients from bundle
+            if "entry" in bundle:
+                for entry in bundle["entry"]:
+                    resource = entry.get("resource", {})
+                    resource_type = resource.get("resourceType")
+                    
+                    if resource_type == "Encounter":
+                        encounters.append(resource)
+                    elif resource_type == "Patient":
+                        patients_map[resource.get("id")] = resource
+        except Exception as e:
+            logger.error(f"Error fetching encounters: {e}")
+            encounters = []
+            patients_map = {}
+        
+        admissions = []
+        for i, enc in enumerate(encounters):
+            # Extract data
+            patient_ref = enc.get("subject", {})
+            patient_id = patient_ref.get('reference', '').split('/')[-1] if patient_ref.get('reference') else None
+            
+            # Try to get patient name from included patients or display
+            patient_name = patient_ref.get("display")
+            if not patient_name and patient_id and patient_id in patients_map:
+                patient_resource = patients_map[patient_id]
+                if "name" in patient_resource:
+                    name_obj = patient_resource["name"][0]
+                    given = " ".join(name_obj.get("given", []))
+                    family = name_obj.get("family", "")
+                    patient_name = f"{given} {family}".strip()
+            
+            if not patient_name:
+                patient_name = f"Patient {patient_id or '?'}"
+            
+            practitioner_ref = enc.get("participant", [{}])[0].get("individual", {})
+            doctor_name = practitioner_ref.get("display") or "Dr. Plantão"
+            
+            period_start = enc.get("period", {}).get("start", "")
+            # Format date
+            date_str = period_start[:10] if period_start else "N/A"
+            
+            # Condition? Encounter usually doesn't have condition directly, but 'reasonCode'
+            reason = "Check-up"
+            if enc.get("reasonCode"):
+                reason = enc["reasonCode"][0].get("text") or enc["reasonCode"][0].get("coding", [{}])[0].get("display", "Check-up")
+            
+            # Mock Room (not standard in Encounter unless location)
+            room = f"{100 + (i % 20)}"
+            
+            admissions.append({
+                "id": enc.get("id"),
+                "no": i + 1,
+                "name": patient_name,
+                "patient_id": patient_id,  # Added for navigation
+                "doctor": doctor_name,
+                "date": date_str,
+                "condition": reason,
+                "room": room
+            })
+            
+        return admissions
