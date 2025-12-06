@@ -5,6 +5,7 @@ import { colors, spacing } from '../../theme/colors';
 
 interface PrescriptionFormProps {
     encounterId?: string | null;
+    patientId?: string;
     onSuccess?: () => void;
 }
 
@@ -19,13 +20,61 @@ const COMMON_MEDICATIONS = [
     { code: '311584', display: 'Metformina 500mg' },
 ];
 
-export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({ encounterId, onSuccess }) => {
+export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({ encounterId, patientId, onSuccess }) => {
     const { createPrescription, loading } = useEncounters();
 
     const [selectedMedication, setSelectedMedication] = useState<string>('');
     const [customMedication, setCustomMedication] = useState<string>('');
     const [dosageInstruction, setDosageInstruction] = useState<string>('');
     const [status, setStatus] = useState<string>('active');
+
+    // AI Interaction Check
+    const [interactionAlerts, setInteractionAlerts] = useState<any[]>([]);
+    const [checkingInteractions, setCheckingInteractions] = useState(false);
+
+    const checkInteractions = async (medicationName: string) => {
+        if (!medicationName || !patientId) return;
+
+        try {
+            setCheckingInteractions(true);
+            setInteractionAlerts([]); // Clear previous
+
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/interactions/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    new_medication: medicationName,
+                    patient_id: patientId
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setInteractionAlerts(data.alerts || []);
+            }
+        } catch (err) {
+            console.error("Failed to check interactions", err);
+        } finally {
+            setCheckingInteractions(false);
+        }
+    };
+
+    // Trigger check when selecting dropdown
+    const handleMedicationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        setSelectedMedication(val);
+
+        if (val && val !== 'other') {
+            const med = COMMON_MEDICATIONS.find(c => c.code === val);
+            if (med) checkInteractions(med.display);
+        } else {
+            setInteractionAlerts([]);
+        }
+    };
 
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -105,7 +154,7 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({ encounterId,
                     <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Medicamento</label>
                     <select
                         value={selectedMedication}
-                        onChange={(e) => setSelectedMedication(e.target.value)}
+                        onChange={handleMedicationChange}
                         style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
                     >
                         <option value="">Selecione...</option>
@@ -126,6 +175,33 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({ encounterId,
                             style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
                             placeholder="Ex: Cefalexina 500mg"
                         />
+                    </div>
+                )}
+
+                {/* Interaction Alerts */}
+                {checkingInteractions && (
+                    <div style={{ fontSize: '0.8rem', color: colors.text.tertiary }}>
+                        Verificando interações medicamentosas...
+                    </div>
+                )}
+
+                {interactionAlerts.length > 0 && (
+                    <div style={{
+                        padding: spacing.md,
+                        backgroundColor: '#FEF2F2',
+                        border: `1px solid ${colors.alert.critical}`,
+                        borderRadius: '6px'
+                    }}>
+                        <h4 style={{ margin: '0 0 8px 0', color: colors.alert.critical, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            ⚠️ Alerta de Interação Medicamentosa
+                        </h4>
+                        <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.85rem', color: colors.text.secondary }}>
+                            {interactionAlerts.map((alert, idx) => (
+                                <li key={idx} style={{ marginBottom: '4px' }}>
+                                    <strong>{alert.title}:</strong> {alert.description}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 )}
 

@@ -16,17 +16,45 @@ export const usePatients = () => {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        total_count: 0,
+        total_pages: 1
+    });
 
-    const fetchPatients = async () => {
+    const fetchPatients = async (page = 1) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${API_URL}/patients/`);
-            setPatients(response.data);
+            const response = await axios.get(`${API_URL}/patients/?page=${page}`);
+            // Check if backend returns paginated response
+            if (response.data.results) {
+                setPatients(response.data.results);
+                setPagination({
+                    current_page: response.data.current_page,
+                    total_count: response.data.count,
+                    total_pages: Math.ceil(response.data.count / response.data.page_size)
+                });
+            } else {
+                // Fallback for flat list
+                setPatients(response.data);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erro ao carregar pacientes');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const nextPage = () => {
+        if (pagination.current_page < pagination.total_pages) {
+            fetchPatients(pagination.current_page + 1);
+        }
+    };
+
+    const prevPage = () => {
+        if (pagination.current_page > 1) {
+            fetchPatients(pagination.current_page - 1);
         }
     };
 
@@ -35,7 +63,7 @@ export const usePatients = () => {
         setError(null);
         try {
             const response = await axios.post(`${API_URL}/patients/`, data);
-            await fetchPatients(); // Recarregar lista
+            await fetchPatients(pagination.current_page); // Recarregar página atual
             return response.data;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erro ao criar paciente');
@@ -50,7 +78,7 @@ export const usePatients = () => {
         setError(null);
         try {
             const response = await axios.put(`${API_URL}/patients/${id}/`, data);
-            await fetchPatients(); // Recarregar lista
+            await fetchPatients(pagination.current_page);
             return response.data;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erro ao atualizar paciente');
@@ -65,7 +93,7 @@ export const usePatients = () => {
         setError(null);
         try {
             await axios.delete(`${API_URL}/patients/${id}/`);
-            await fetchPatients(); // Recarregar lista
+            await fetchPatients(pagination.current_page);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erro ao excluir paciente');
             throw err;
@@ -89,14 +117,17 @@ export const usePatients = () => {
     };
 
     useEffect(() => {
-        fetchPatients();
+        fetchPatients(1);
     }, []);
 
     return {
         patients,
         loading,
         error,
+        pagination,
         fetchPatients,
+        nextPage,
+        prevPage,
         createPatient,
         updatePatient,
         deletePatient,

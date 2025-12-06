@@ -1,7 +1,11 @@
 
 import os
+import sys
 import django
 from django.conf import settings
+
+# Add current directory to path
+sys.path.append(os.getcwd())
 
 # Setup Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
@@ -21,6 +25,10 @@ def test_analytics():
         print("Testing Clinical Insights...")
         clin_data = service.get_clinical_insights()
         print(f"Clinical Data: {clin_data}")
+        
+        print("Testing Operational Metrics...")
+        ops_data = service.get_operational_metrics()
+        print(f"Operational Data: {ops_data}")
         
     except Exception as e:
         print(f"ERROR: {e}")

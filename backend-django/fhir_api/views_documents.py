@@ -80,7 +80,8 @@ def documents_list_create(request):
             
         except Exception as e:
             logger.error(f"Error listing documents: {str(e)}")
-            return Response({"error": "Failed to list documents"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            from django.http import JsonResponse
+            return JsonResponse({"error": "Failed to list documents", "detail": str(e)}, status=500)
 
     elif request.method == 'POST':
         return create_composition_internal(request)
@@ -130,7 +131,8 @@ def create_composition_internal(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         logger.error(f"Error creating composition: {str(e)}")
-        return Response({"error": "Internal Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        from django.http import JsonResponse
+        return JsonResponse({"error": "Internal Error", "detail": str(e)}, status=500)
 
 # --------------------------------------------------------------------------
 # 2. DELETAR DOCUMENTO

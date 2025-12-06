@@ -12,7 +12,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from .services.fhir_core import FHIRService, FHIRServiceException
-from .auth import KeycloakAuthentication, require_role, get_keycloak_token
+from .authentication import KeycloakAuthentication
+from .auth import require_role, get_keycloak_token
 
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ def health_check(request):
     GET /api/v1/health/
     """
     try:
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         fhir_service.health_check()
         
         return Response({
@@ -103,28 +104,29 @@ def login(request):
 def manage_patients(request):
     """
     Gerencia pacientes (Listar e Criar).
-    
-    GET /api/v1/patients/
-    - Retorna lista de pacientes
-    - Query params: ?name=João
-    
-    POST /api/v1/patients/
-    - Cria novo paciente
     """
     fhir_service = FHIRService()
 
     # 1. LISTAR PACIENTES (GET)
     if request.method == 'GET':
         try:
-            name = request.query_params.get('name')
-            patients = fhir_service.search_patients(name=name)
+            page = int(request.query_params.get('page', 1))
+            page_size = 20
+            offset = (page - 1) * page_size
+
+            data = fhir_service.search_patients(name=request.query_params.get('name'), offset=offset, count=page_size)
+            patients = data.get("results", [])
+            total = data.get("total", 0)
             
             # Simplificar resposta para o frontend
             results = []
             for p in patients:
+                # Safe extraction
+                p = p or {}
+                
                 # Extrair nome completo
                 name_text = "Sem nome"
-                if p.get("name"):
+                if p.get("name") and isinstance(p["name"], list) and len(p["name"]) > 0:
                     given = " ".join(p["name"][0].get("given", []))
                     family = p["name"][0].get("family", "")
                     name_text = f"{given} {family}".strip()
@@ -148,10 +150,26 @@ def manage_patients(request):
                     "phone": phone
                 })
                 
-            return Response(results, status=status.HTTP_200_OK)
+            from django.http import JsonResponse
+            return JsonResponse({
+                "count": total,
+                "current_page": page,
+                "page_size": page_size,
+                "results": results
+            }, status=200)
             
         except FHIRServiceException as e:
-            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            from django.http import JsonResponse
+            return JsonResponse({"error": str(e)}, status=503)
+        except Exception as e:
+            logger.error(f"Unexpected error listing patients: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            from django.http import JsonResponse
+            return JsonResponse({
+                "error": "Erro interno ao listar pacientes",
+                "detail": str(e)
+            }, status=500)
 
     # 2. CRIAR PACIENTE (POST)
     elif request.method == 'POST':
@@ -214,7 +232,7 @@ def get_patient(request, patient_id):
         user_info = request.user
         logger.info(f"Acessando paciente {patient_id}. Método: {request.method}. Usuário: {user_info.get('preferred_username')}")
         
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         
         if request.method == 'GET':
             patient = fhir_service.get_patient_by_id(patient_id)
@@ -281,7 +299,7 @@ def create_encounter(request):
                 "error": "Campo obrigatório ausente: patient_id"
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         
         result = fhir_service.create_encounter_resource(
             patient_id=data.get('patient_id'),
@@ -313,7 +331,7 @@ def get_encounters(request, patient_id):
     GET /api/v1/patients/{patient_id}/encounters/
     """
     try:
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         encounters = fhir_service.get_encounters_by_patient_id(patient_id)
         return Response(encounters, status=status.HTTP_200_OK)
     except FHIRServiceException as e:
@@ -356,7 +374,7 @@ def create_observation(request):
                     "error": f"Campo obrigatório ausente: {field}"
                 }, status=status.HTTP_400_BAD_REQUEST)
         
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         
         result = fhir_service.create_observation_resource(
             patient_id=data.get('patient_id'),
@@ -403,8 +421,9 @@ def get_observations(request, patient_id):
     GET /api/v1/patients/{patient_id}/observations/
     """
     try:
-        fhir_service = FHIRService()
-        observations = fhir_service.get_observations_by_patient_id(patient_id)
+        category = request.query_params.get('category')
+        fhir_service = FHIRService(request.user)
+        observations = fhir_service.get_observations_by_patient_id(patient_id, category=category)
         
         return Response(observations, status=status.HTTP_200_OK)
     
@@ -422,7 +441,7 @@ def get_observations(request, patient_id):
 def create_condition(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_condition_resource(
             patient_id=data.get('patient_id'),
             code=data.get('code'),
@@ -444,7 +463,7 @@ def create_condition(request):
 @permission_classes([IsAuthenticated])
 def get_conditions(request, patient_id):
     try:
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         conditions = fhir_service.get_conditions_by_patient_id(patient_id)
         return Response(conditions, status=status.HTTP_200_OK)
     except FHIRServiceException as e:
@@ -461,7 +480,7 @@ def get_conditions(request, patient_id):
 def create_allergy(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_allergy_resource(
             patient_id=data.get('patient_id'),
             code=data.get('code'),
@@ -483,7 +502,7 @@ def create_allergy(request):
 @permission_classes([IsAuthenticated])
 def get_allergies(request, patient_id):
     try:
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         allergies = fhir_service.get_allergies_by_patient_id(patient_id)
         return Response(allergies, status=status.HTTP_200_OK)
     except FHIRServiceException as e:
@@ -500,7 +519,7 @@ def get_allergies(request, patient_id):
 def create_appointment(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_appointment_resource(
             patient_id=data.get('patient_id'),
             status=data.get('status', 'booked'),
@@ -521,7 +540,7 @@ def create_appointment(request):
 @permission_classes([IsAuthenticated])
 def get_appointments(request, patient_id):
     try:
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         appointments = fhir_service.get_appointments_by_patient_id(patient_id)
         return Response(appointments, status=status.HTTP_200_OK)
     except FHIRServiceException as e:
@@ -538,7 +557,7 @@ def get_appointments(request, patient_id):
 def create_medication_request(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_medication_request_resource(
             patient_id=data.get('patient_id'),
             medication_code=data.get('medication_code'),
@@ -563,7 +582,7 @@ def create_medication_request(request):
 def create_service_request(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_service_request_resource(
             patient_id=data.get('patient_id'),
             code=data.get('code'),
@@ -587,7 +606,7 @@ def create_service_request(request):
 def create_clinical_impression(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_clinical_impression_resource(
             patient_id=data.get('patient_id'),
             summary=data.get('summary'),
@@ -609,7 +628,7 @@ def create_clinical_impression(request):
 def create_schedule(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_schedule_resource(
             practitioner_id=data.get('practitioner_id'),
             actor_display=data.get('actor_display'),
@@ -630,7 +649,7 @@ def create_schedule(request):
 def create_slot(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_slot_resource(
             schedule_id=data.get('schedule_id'),
             start=data.get('start'),
@@ -654,7 +673,7 @@ def get_slots(request):
         end = request.query_params.get('end')
         status_param = request.query_params.get('status', 'free')
         
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         slots = fhir_service.search_slots(start=start, end=end, status=status_param)
         return Response(slots, status=status.HTTP_200_OK)
     except FHIRServiceException as e:
@@ -671,7 +690,7 @@ def get_slots(request):
 def create_questionnaire_view(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_questionnaire(
             title=data.get('title'),
             items=data.get('items', []),
@@ -691,7 +710,7 @@ def create_questionnaire_view(request):
 def create_response_view(request):
     try:
         data = request.data
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         result = fhir_service.create_questionnaire_response(
             questionnaire_id=data.get('questionnaire_id'),
             patient_id=data.get('patient_id'),
@@ -720,7 +739,7 @@ def patient_dashboard(request):
     """
     try:
         patient_id = request.user.sub
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         
         # 1. Próximos agendamentos
         appointments = fhir_service.get_appointments_by_patient_id(patient_id)
@@ -749,7 +768,7 @@ def patient_dashboard(request):
 def get_my_appointments(request):
     try:
         patient_id = request.user.sub
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         appointments = fhir_service.get_appointments_by_patient_id(patient_id)
         return Response(appointments, status=status.HTTP_200_OK)
     except Exception as e:
@@ -763,7 +782,7 @@ def get_my_appointments(request):
 def get_my_exams(request):
     try:
         patient_id = request.user.sub
-        fhir_service = FHIRService()
+        fhir_service = FHIRService(request.user)
         observations = fhir_service.get_observations_by_patient_id(patient_id)
         return Response(observations, status=status.HTTP_200_OK)
     except Exception as e:

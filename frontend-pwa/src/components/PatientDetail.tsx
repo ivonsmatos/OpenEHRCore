@@ -10,10 +10,12 @@ import AllergyList from "./clinical/AllergyList";
 import EncounterList from "./clinical/EncounterList";
 import AppointmentList from "./scheduling/AppointmentList";
 import { colors, spacing } from "../theme/colors";
-import { Activity } from "lucide-react";
+import { Activity, Download, ShieldCheck } from "lucide-react";
 import ClinicalWorkspace from './clinical/ClinicalWorkspace';
 import ImmunizationWorkspace from './clinical/ImmunizationWorkspace';
 import DiagnosticResultWorkspace from './clinical/DiagnosticResultWorkspace';
+import AuditLogWorkspace from './clinical/AuditLogWorkspace';
+import AICopilot from './clinical/AICopilot';
 import {
   FHIRPatient,
   getPatientSummary,
@@ -44,7 +46,7 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
   const { patient, loading: propLoading, error: propError, onEdit } = props;
 
   // State for view switching
-  const [view, setView] = useState<'overview' | 'clinical' | 'immunization' | 'diagnostic'>('overview');
+  const [view, setView] = useState<'overview' | 'clinical' | 'immunization' | 'diagnostic' | 'audit'>('overview');
 
   // Hook para buscar dados
   const { getPatient, deletePatient, loading: hookLoading, error: hookError } = usePatients();
@@ -92,6 +94,30 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
       // Assuming PatientForm can handle editing via state or separate route
       // For now, let's navigate to a hypothetical edit route or reuse new with state
       navigate('/patients/new', { state: { patient: currentPatient } });
+    }
+  };
+
+  const handleExport = async () => {
+    if (!currentPatient?.id) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/patients/${currentPatient.id}/export/`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error('Falha no export');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `patient_${currentPatient.id}_export.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      alert("Erro ao exportar dados: " + err);
     }
   };
 
@@ -144,13 +170,6 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
   return (
     <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
       <main style={{ maxWidth: "1200px", margin: "0 auto", padding: spacing.md }}>
-        <Button
-          variant="secondary"
-          onClick={() => navigate('/')}
-          style={{ marginBottom: spacing.md }}
-        >
-          &larr; Voltar para Lista de Pacientes
-        </Button>
 
         <div style={{
           backgroundColor: colors.primary.medium,
@@ -179,6 +198,15 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
             <Button onClick={() => setView(view === 'clinical' ? 'overview' : 'clinical')} style={{ backgroundColor: 'white', color: colors.primary.dark }}>
               ▶ {view === 'clinical' ? 'Fechar Atendimento' : 'Iniciar Atendimento'}
             </Button>
+
+            <Button variant="secondary" onClick={handleExport} style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Download size={16} /> Exportar
+            </Button>
+
+            <Button variant="secondary" onClick={() => setView('audit')} style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <ShieldCheck size={16} /> Audit
+            </Button>
+
             <Button variant="secondary" onClick={handleEdit} style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white', backgroundColor: 'transparent' }}>
               ✎ Editar
             </Button>
@@ -240,6 +268,11 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
 
         {view === 'overview' && (
           <>
+            {/* AI Copilot Section */}
+            <div style={{ marginBottom: spacing.lg }}>
+              <AICopilot patientId={mockPatient.id} />
+            </div>
+
             {/* Section: Sinais Vitais */}
             <section style={{ marginBottom: spacing.xl }}>
               <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.primary.medium}`, paddingLeft: spacing.sm }}>
@@ -259,10 +292,10 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
                       Módulos Clínicos
                     </h3>
                     <div className="flex gap-2 flex-wrap">
-                      <Button variant="outline" onClick={() => setView('immunization')}>
+                      <Button variant="secondary" onClick={() => setView('immunization')}>
                         💉 Vacinas
                       </Button>
-                      <Button variant="outline" onClick={() => setView('diagnostic')}>
+                      <Button variant="secondary" onClick={() => setView('diagnostic')}>
                         📑 Resultados de Exames
                       </Button>
                     </div>
@@ -325,6 +358,15 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
               ← Voltar para Visão Geral
             </Button>
             <DiagnosticResultWorkspace />
+          </div>
+        )}
+
+        {view === 'audit' && (
+          <div className="mt-4">
+            <Button variant="ghost" onClick={() => setView('overview')} className="mb-4">
+              ← Voltar para Visão Geral
+            </Button>
+            {mockPatient.id && <AuditLogWorkspace patientId={mockPatient.id} />}
           </div>
         )}
 

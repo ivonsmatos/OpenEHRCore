@@ -26,6 +26,7 @@ from fhirclient.models.observation import Observation
 from fhirclient.models.quantity import Quantity
 from fhirclient.models.fhirdate import FHIRDate
 from fhirclient.models.fhirdatetime import FHIRDateTime
+from fhirclient.models.fhirinstant import FHIRInstant
 from fhirclient.models.fhirreference import FHIRReference
 from fhirclient.models.condition import Condition
 from fhirclient.models.allergyintolerance import AllergyIntolerance
@@ -33,7 +34,11 @@ from fhirclient.models.appointment import Appointment
 from fhirclient.models.coverage import Coverage
 from fhirclient.models.invoice import Invoice
 from fhirclient.models.account import Account
+from fhirclient.models.account import Account
 from fhirclient.models.money import Money
+from fhirclient.models.provenance import Provenance
+from fhirclient.models.provenance import ProvenanceAgent
+
 
 
 logger = logging.getLogger(__name__)
@@ -55,7 +60,7 @@ class FHIRService:
     - Logging de todas as operações
     """
 
-    def __init__(self):
+    def __init__(self, user: Optional[Any] = None):
         self.base_url = settings.FHIR_SERVER_URL
         self.timeout = settings.FHIR_SERVER_TIMEOUT
         self.session = requests.Session()
@@ -63,6 +68,7 @@ class FHIRService:
             'Content-Type': 'application/fhir+json',
             'Accept': 'application/fhir+json',
         })
+        self.user = user # Contexto do usuário para auditoria (Provenance)
 
     def health_check(self) -> bool:
         """
@@ -175,6 +181,14 @@ class FHIRService:
             patient_id = result.get("id")
             logger.info(f"Patient created successfully: ID={patient_id}")
             
+            # --- AUDITORIA (PROVENANCE) ---
+            if self.user:
+                self.create_provenance_resource(
+                    target_reference=f"Patient/{patient_id}",
+                    activity="CREATE",
+                    agent_name=str(self.user)
+                )
+
             return {
                 "resourceType": "Patient",
                 "id": patient_id,
@@ -314,18 +328,24 @@ class FHIRService:
             logger.error(f"Error deleting Patient {patient_id}: {str(e)}")
             raise FHIRServiceException(f"Failed to delete Patient: {str(e)}")
 
-    def search_patients(self, name: Optional[str] = None) -> List[Dict[str, Any]]:
+    def search_patients(self, name: Optional[str] = None, offset: int = 0, count: int = 20) -> Dict[str, Any]:
         """
-        Busca pacientes no servidor FHIR.
+        Busca pacientes no servidor FHIR com paginação.
         
         Args:
-            name: Nome para busca parcial (opcional)
+            name: Nome para busca parcial
+            offset: Deslocamento inicial (pular N registros)
+            count: Número máximo de registros para retornar
             
         Returns:
-            Lista de recursos Patient
+            Dict com total, links e lista de resultados
         """
         try:
-            params = {"_sort": "-_lastUpdated"}
+            params = {
+                "_sort": "-_lastUpdated",
+                "_count": count,
+                "_offset": offset
+            }
             if name:
                 params["name"] = name
                 
@@ -344,8 +364,10 @@ class FHIRService:
                     if "resource" in entry:
                         patients.append(entry["resource"])
                         
-            logger.info(f"Search patients (name={name}): found {len(patients)}")
-            return patients
+            return {
+                "total": bundle.get("total", 0),
+                "results": patients
+            }
             
         except requests.RequestException as e:
             logger.error(f"Error searching patients: {str(e)}")
@@ -1508,3 +1530,130 @@ class FHIRService:
         except requests.RequestException as e:
             logger.error(f"Error searching {resource_type}: {str(e)}")
             raise FHIRServiceException(f"Failed to search {resource_type}: {str(e)}")
+
+    def get_observations_by_patient_id(self, patient_id: str, category: Optional[str] = None) -> List[Dict[str, Any]]:
+        params = {"patient": f"Patient/{patient_id}"}
+        if category:
+            params["category"] = category
+        return self.search_resources("Observation", params)
+
+    def get_allergies_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
+        return self.search_resources("AllergyIntolerance", {"patient": f"Patient/{patient_id}"})
+
+    def get_medications_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
+        return self.search_resources("MedicationRequest", {"subject": f"Patient/{patient_id}"})
+
+    def get_encounters_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
+        return self.search_resources("Encounter", {"subject": f"Patient/{patient_id}"})
+
+    def get_appointments_by_patient_id(self, patient_id: str) -> List[Dict[str, Any]]:
+        return self.search_resources("Appointment", {"actor": f"Patient/{patient_id}"})
+
+
+
+
+    def create_provenance_resource(
+        self,
+        target_reference: str, # "Patient/123"
+        activity: str, # "CREATE", "UPDATE", "DELETE"
+        agent_name: str,
+    ) -> None:
+        """
+        Cria registro de auditoria (Provenance).
+        """
+        try:
+            provenance = Provenance()
+            
+            # Target (o que foi modificado)
+            provenance.target = [FHIRReference(jsondict={"reference": target_reference})]
+            
+            # Recorded
+            # Provenance.recorded is (instant), requires FHIRInstant
+            provenance.recorded = FHIRInstant(datetime.utcnow().isoformat() + "Z")
+            
+            # Activity (Reason)
+            # Simplificação: Usar text para descrever a ação por enquanto
+            code_concept = CodeableConcept()
+            code_concept.text = activity
+            provenance.reason = [code_concept]
+            
+            # Agent (Quem fez)
+            agent = ProvenanceAgent()
+            agent.who = FHIRReference(jsondict={"display": agent_name})
+            # Se tivéssemos Practitioner ID, usaríamos aqui: {"reference": f"Practitioner/{id}"}
+            provenance.agent = [agent]
+            
+            # Enviar
+            logger.info(f"Auditing {activity} on {target_reference} by {agent_name}")
+            self.session.post(
+                f"{self.base_url}/Provenance",
+                json=provenance.as_json(),
+                timeout=self.timeout
+            )
+        except Exception as e:
+            # Auditoria não deve bloquear a operação principal, mas deve ser logada
+            logger.error(f"Failed to create Provenance for {target_reference}: {str(e)}")
+
+    def export_patient_data(self, patient_id: str) -> Dict[str, Any]:
+        """
+        Gera um Bundle contendo todos os dados clínicos do paciente.
+        Simula a operação $everything.
+        """
+        try:
+            logger.info(f"Starting Data Export for Patient {patient_id}...")
+            
+            # 1. Patient
+            patient = self.get_patient_by_id(patient_id)
+            
+            # 2. Encounters
+            encounters = self.get_encounters_by_patient_id(patient_id)
+            
+            # 3. Observations
+            observations = self.get_observations_by_patient_id(patient_id)
+            
+            # 4. Conditions
+            conditions = self.get_conditions_by_patient_id(patient_id)
+            
+            # 5. Allergies
+            allergies = self.get_allergies_by_patient_id(patient_id)
+            
+            # 6. Medications
+            medications = self.get_medications_by_patient_id(patient_id)
+
+            # 7. Appointments (Extra)
+            appointments = self.get_appointments_by_patient_id(patient_id)
+
+            # Montar Bundle
+            bundle = {
+                "resourceType": "Bundle",
+                "type": "collection",
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "entry": []
+            }
+            
+            def add_entry(resource):
+                bundle["entry"].append({"resource": resource})
+                
+            add_entry(patient)
+            for enc in encounters: add_entry(enc)
+            for obs in observations: add_entry(obs)
+            for cond in conditions: add_entry(cond)
+            for alg in allergies: add_entry(alg)
+            for med in medications: add_entry(med)
+            for app in appointments: add_entry(app)
+            
+            logger.info(f"Export Bundle created with {len(bundle['entry'])} resources.")
+            
+            # Audit Export action
+            if self.user:
+                self.create_provenance_resource(
+                    target_reference=f"Patient/{patient_id}",
+                    activity="EXPORT",
+                    agent_name=str(self.user)
+                )
+                
+            return bundle
+            
+        except Exception as e:
+            logger.error(f"Error exporting patient data: {str(e)}")
+            raise FHIRServiceException(f"Failed to export data: {str(e)}")

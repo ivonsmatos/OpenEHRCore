@@ -6,7 +6,7 @@ import Card from './base/Card';
 import Button from './base/Button';
 
 export const PatientList: React.FC = () => {
-    const { patients, loading, error } = usePatients();
+    const { patients, loading, error, pagination, nextPage, prevPage } = usePatients();
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
@@ -172,6 +172,35 @@ export const PatientList: React.FC = () => {
             }}>
                 {filteredPatients.length} {filteredPatients.length === 1 ? 'paciente' : 'pacientes'}
                 {searchTerm && ` encontrado${filteredPatients.length === 1 ? '' : 's'}`}
+            </div>
+
+            {/* Paginação */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: spacing.md,
+                marginTop: spacing.lg
+            }}>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={prevPage}
+                    disabled={pagination.current_page === 1 || loading}
+                >
+                    ← Anterior
+                </Button>
+                <div style={{ fontSize: '0.875rem', color: colors.text.secondary }}>
+                    Página {pagination.current_page} de {pagination.total_pages}
+                </div>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={nextPage}
+                    disabled={pagination.current_page === pagination.total_pages || loading}
+                >
+                    Próxima →
+                </Button>
             </div>
         </div>
     );

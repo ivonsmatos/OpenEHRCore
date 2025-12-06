@@ -1,9 +1,8 @@
 
 from django.urls import path
-from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical
-
 from rest_framework.routers import DefaultRouter
+from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai
 
 router = DefaultRouter()
 router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
@@ -70,13 +69,29 @@ urlpatterns = [
     path('documents/<str:composition_id>/pdf/', views_documents.generate_pdf, name='generate_pdf'),
     
     # Sprint 9: Analytics
-    path('analytics/dashboard/', views_analytics.dashboard_stats, name='dashboard_stats'),
+    # Sprint 9: Analytics (Deprecated/Replaced)
+    # path('analytics/dashboard/', views_analytics.dashboard_stats, name='dashboard_stats'),
 
     # Sprint 10: Immunization & Diagnostic Results
     path('immunizations/', views_clinical.create_immunization, name='create_immunization'),
     path('patients/<str:patient_id>/immunizations/', views_clinical.get_immunizations, name='get_immunizations'),
     path('diagnostic-reports/', views_clinical.create_diagnostic_report, name='create_diagnostic_report'),
     path('patients/<str:patient_id>/diagnostic-reports/', views_clinical.get_diagnostic_reports, name='get_diagnostic_reports'),
+
+    # Sprint 11: Export Data & Audit
+    path('patients/<str:patient_id>/export/', views_export.export_patient_data_view, name='export_patient_data'),
+    path('audit/logs/', views_audit.get_audit_logs, name='get_audit_logs'),
+    
+    # Sprint 12: AI
+    path('ai/summary/<str:patient_id>/', views_ai.get_patient_summary, name='ai_summary'),
+    path('ai/interactions/', views_ai.check_interactions, name='ai_interactions'),
+
+    # Sprint 13: Analytics
+    path('analytics/population/', views_analytics.get_population_metrics),
+    path('analytics/clinical/', views_analytics.get_clinical_metrics),
+    path('analytics/operational/', views_analytics.get_operational_metrics),
+    path('analytics/kpi/', views_analytics.get_kpi_metrics, name='analytics-kpi'),
+    path('analytics/survey/', views_analytics.get_survey_metrics, name='analytics-survey'),
 ]
 
 urlpatterns += router.urls

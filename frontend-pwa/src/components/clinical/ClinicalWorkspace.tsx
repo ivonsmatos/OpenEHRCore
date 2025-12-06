@@ -183,7 +183,7 @@ export const ClinicalWorkspace: React.FC = () => {
                         {activeTab === 'vitals' && <VitalSignsForm encounterId={encounterId} />}
                         {activeTab === 'conditions' && <ConditionForm encounterId={encounterId} />}
                         {activeTab === 'allergies' && <AllergyForm encounterId={encounterId} />}
-                        {activeTab === 'prescriptions' && <PrescriptionForm encounterId={encounterId} />}
+                        {activeTab === 'prescriptions' && <PrescriptionForm encounterId={encounterId} patientId={id} />}
                         {activeTab === 'exams' && <ExamForm encounterId={encounterId} />}
                     </Card>
                 </main>
