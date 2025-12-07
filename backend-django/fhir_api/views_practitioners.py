@@ -4,7 +4,7 @@ FHIR R4 Compliant
 """
 import logging
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 
 from .services.fhir_core import FHIRService
