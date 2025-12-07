@@ -1,7 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import paramiko
+import sys
+
+HOST = "45.151.122.234"
+USER = "root"
+PASS = "Protonsysdba@1986"
+
+def upload_sftp():
+    t = paramiko.Transport((HOST, 22))
+    t.connect(username=USER, password=PASS)
+    sftp = paramiko.SFTPClient.from_transport(t)
+    
+    hook_content = """import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || 'http://45.151.122.234:8000/api/v1';
 
 export interface Patient {
     id: string;
@@ -26,7 +38,7 @@ export const usePatients = () => {
         setLoading(true);
         setError(null);
         try {
-            // Use new list endpoint that supports filtering
+            // Use new list endpoint that supports filtering parameters
             const params = new URLSearchParams();
             params.append('page', page.toString());
             if (search) params.append('name', search);
@@ -141,3 +153,17 @@ export const usePatients = () => {
         getPatient,
     };
 };
+"""
+    
+    remote_path = "/opt/openehrcore/frontend-pwa/src/hooks/usePatients.ts"
+    print(f"Uploading to {remote_path} via SFTP...")
+    
+    with sftp.open(remote_path, 'w') as f:
+        f.write(hook_content)
+        
+    print("Done.")
+    sftp.close()
+    t.close()
+
+if __name__ == "__main__":
+    upload_sftp()

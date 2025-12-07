@@ -1,7 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import paramiko
+import sys
+
+HOST = "45.151.122.234"
+USER = "root"
+PASS = "Protonsysdba@1986"
+
+def upload_hook():
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(HOST, username=USER, password=PASS)
+    
+    # Updated content
+    hook_content = """import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || 'http://45.151.122.234:8000/api/v1';
 
 export interface Patient {
     id: string;
@@ -141,3 +154,23 @@ export const usePatients = () => {
         getPatient,
     };
 };
+""" 
+    
+    remote_path = "/opt/openehrcore/frontend-pwa/src/hooks/usePatients.ts"
+    
+    # Use python script on remote to write file to avoid shell escaping issues
+    remote_writer = f"""
+import os
+with open('{remote_path}', 'w', encoding='utf-8') as f:
+    f.write({repr(hook_content)})
+print("Uploaded usePatients.ts")
+"""
+    client.exec_command("echo \"" + remote_writer.replace('"', '\\"') + "\" > /tmp/write_hook.py")
+    stdin, stdout, stderr = client.exec_command("python3 /tmp/write_hook.py")
+    print(stdout.read().decode())
+    print(stderr.read().decode())
+    
+    client.close()
+
+if __name__ == "__main__":
+    upload_hook()
