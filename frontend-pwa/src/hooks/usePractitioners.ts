@@ -16,6 +16,7 @@ export const usePractitioners = () => {
         try {
             const params = new URLSearchParams();
             if (filters?.name) params.append('name', filters.name);
+            if (filters?.identifier) params.append('identifier', filters.identifier);
             if (filters?.active !== null && filters?.active !== undefined) {
                 params.append('active', String(filters.active));
             }

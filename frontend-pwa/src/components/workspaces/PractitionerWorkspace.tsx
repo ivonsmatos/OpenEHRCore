@@ -14,9 +14,11 @@ const PractitionerWorkspace: React.FC = () => {
     const [showForm, setShowForm] = useState(false);
     const [filters, setFilters] = useState<PractitionerFilters>({
         name: '',
+        identifier: '',
         active: null,
     });
     const [searchTerm, setSearchTerm] = useState('');
+    const [crmSearch, setCrmSearch] = useState('');
 
     useEffect(() => {
         loadPractitioners();
@@ -32,7 +34,11 @@ const PractitionerWorkspace: React.FC = () => {
     };
 
     const handleSearch = () => {
-        setFilters({ ...filters, name: searchTerm });
+        setFilters({
+            ...filters,
+            name: searchTerm,
+            identifier: crmSearch
+        });
         loadPractitioners();
     };
 
@@ -85,8 +91,8 @@ const PractitionerWorkspace: React.FC = () => {
             {/* Search and Filters */}
             <Card style={{ marginBottom: spacing.lg }}>
                 <div style={{ display: 'flex', gap: spacing.md, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                    {/* Search */}
-                    <div style={{ flex: 1, minWidth: '250px' }}>
+                    {/* Name Search */}
+                    <div style={{ flex: 1, minWidth: '200px' }}>
                         <label style={{
                             display: 'block',
                             marginBottom: spacing.xs,
@@ -95,25 +101,54 @@ const PractitionerWorkspace: React.FC = () => {
                         }}>
                             Buscar por nome
                         </label>
-                        <div style={{ display: 'flex', gap: spacing.sm }}>
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                placeholder="Digite o nome..."
-                                style={{
-                                    flex: 1,
-                                    padding: spacing.sm,
-                                    border: `1px solid ${colors.border.light}`,
-                                    borderRadius: '8px',
-                                    fontSize: '1rem',
-                                }}
-                            />
-                            <Button onClick={handleSearch} variant="secondary">
-                                <Search size={18} />
-                            </Button>
-                        </div>
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                            placeholder="Digite o nome..."
+                            style={{
+                                width: '100%',
+                                padding: spacing.sm,
+                                border: `1px solid ${colors.border.light}`,
+                                borderRadius: '8px',
+                                fontSize: '1rem',
+                            }}
+                        />
+                    </div>
+
+                    {/* CRM Search */}
+                    <div style={{ flex: 1, minWidth: '200px' }}>
+                        <label style={{
+                            display: 'block',
+                            marginBottom: spacing.xs,
+                            fontWeight: 500,
+                            color: colors.text.primary
+                        }}>
+                            Buscar por CRM
+                        </label>
+                        <input
+                            type="text"
+                            value={crmSearch}
+                            onChange={(e) => setCrmSearch(e.target.value.toUpperCase())}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                            placeholder="Ex: CRM-SP-123456"
+                            style={{
+                                width: '100%',
+                                padding: spacing.sm,
+                                border: `1px solid ${colors.border.light}`,
+                                borderRadius: '8px',
+                                fontSize: '1rem',
+                            }}
+                        />
+                    </div>
+
+                    {/* Search Button */}
+                    <div>
+                        <Button onClick={handleSearch} variant="secondary">
+                            <Search size={18} style={{ marginRight: spacing.xs }} />
+                            Buscar
+                        </Button>
                     </div>
 
                     {/* Status Filter */}

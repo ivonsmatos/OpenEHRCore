@@ -86,6 +86,7 @@ export interface PractitionerFormData {
 
 export interface PractitionerFilters {
     name?: string;
+    identifier?: string; // CRM search
     active?: boolean | null;
     specialty?: string;
 }
