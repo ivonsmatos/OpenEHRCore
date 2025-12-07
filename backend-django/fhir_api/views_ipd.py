@@ -360,3 +360,139 @@ def finish_cleaning(request, location_id):
     except Exception as e:
         logger.error(f"Error finishing cleaning: {e}")
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+ 
+ 
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+def get_bed_history(request, location_id):
+    """
+    Retrieve the history of a bed including all encounters that occurred in this location.
+    Returns a timeline of patient admissions and discharges.
+    """
+    fhir = FHIRService()
+    
+    try:
+        # Get the location
+        location = fhir.get_resource('Location', location_id)
+        if not location:
+            return Response({'error': 'Location not found'}, status=404)
+        
+        # Search for all encounters at this location
+        encounters = fhir.search_resources('Encounter', {
+            'location': f'Location/{location_id}',
+            '_sort': '-date'
+        })
+        
+        history_entries = []
+        
+        for enc in encounters:
+            # Get patient info
+            patient_ref = enc.get('subject', {}).get('reference', '')
+            patient_id = patient_ref.split('/')[-1] if patient_ref else None
+            patient_name = 'Desconhecido'
+            
+            if patient_id:
+                patient = fhir.get_resource('Patient', patient_id)
+                if patient and patient.get('name'):
+                    name_obj = patient['name'][0]
+                    given = ' '.join(name_obj.get('given', []))
+                    family = name_obj.get('family', '')
+                    patient_name = f"{given} {family}".strip()
+            
+            # Extract period
+            period = enc.get('period', {})
+            start = period.get('start', 'N/A')
+            end = period.get('end', 'Em andamento')
+            
+            # Extract status
+            enc_status = enc.get('status', 'unknown')
+            
+            history_entries.append({
+                'encounter_id': enc.get('id'),
+                'patient_id': patient_id,
+                'patient_name': patient_name,
+                'admission_date': start,
+                'discharge_date': end,
+                'status': enc_status,
+                'type': 'encounter'
+            })
+        
+        return Response({
+            'location_id': location_id,
+            'location_name': location.get('name', 'N/A'),
+            'current_status': location.get('operationalStatus', {}).get('code', 'U'),
+            'history': history_entries,
+            'total_encounters': len(history_entries)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching bed history: {e}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+def get_bed_history(request, location_id):
+    """
+    Retrieve the history of a bed including all encounters that occurred in this location.
+    Returns a timeline of patient admissions and discharges.
+    """
+    fhir = FHIRService()
+    
+    try:
+        # Get the location
+        location = fhir.get_resource('Location', location_id)
+        if not location:
+            return Response({'error': 'Location not found'}, status=404)
+        
+        # Search for all encounters at this location
+        encounters = fhir.search_resources('Encounter', {
+            'location': f'Location/{location_id}',
+            '_sort': '-date'
+        })
+        
+        history_entries = []
+        
+        for enc in encounters:
+            # Get patient info
+            patient_ref = enc.get('subject', {}).get('reference', '')
+            patient_id = patient_ref.split('/')[-1] if patient_ref else None
+            patient_name = 'Desconhecido'
+            
+            if patient_id:
+                patient = fhir.get_resource('Patient', patient_id)
+                if patient and patient.get('name'):
+                    name_obj = patient['name'][0]
+                    given = ' '.join(name_obj.get('given', []))
+                    family = name_obj.get('family', '')
+                    patient_name = f"{given} {family}".strip()
+            
+            # Extract period
+            period = enc.get('period', {})
+            start = period.get('start', 'N/A')
+            end = period.get('end', 'Em andamento')
+            
+            # Extract status
+            enc_status = enc.get('status', 'unknown')
+            
+            history_entries.append({
+                'encounter_id': enc.get('id'),
+                'patient_id': patient_id,
+                'patient_name': patient_name,
+                'admission_date': start,
+                'discharge_date': end,
+                'status': enc_status,
+                'type': 'encounter'
+            })
+        
+        return Response({
+            'location_id': location_id,
+            'location_name': location.get('name', 'N/A'),
+            'current_status': location.get('operationalStatus', {}).get('code', 'U'),
+            'history': history_entries,
+            'total_encounters': len(history_entries)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching bed history: {e}")
+        return Response({'error': str(e)}, status=500)

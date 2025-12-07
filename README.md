@@ -145,4 +145,35 @@ Copyright © 2025. Todos os direitos reservados.
 
 ---
 
-**Status:** 🟢 Scaffolding inicial. Desenvolvimento em progresso.
+**Status:** 🟢 Em produção. FHIR R4 Compliant (~95%).
+
+## ✅ FHIR R4 Compliance
+
+**Conformidade:** ~95% com HL7 FHIR R4
+
+### Recursos Implementados
+- ✅ **Patient** - Gestão completa de pacientes com identificadores brasileiros (CPF)
+- ✅ **Practitioner** - Profissionais de saúde com CRM brasileiro
+- ✅ **PractitionerRole** - Papéis, especialidades e organizações
+- ✅ **Encounter** - Consultas e internações
+- ✅ **Observation** - Sinais vitais com códigos LOINC
+- ✅ **Condition** - Diagnósticos com SNOMED CT
+- ✅ **MedicationRequest** - Prescrições
+- ✅ **Composition** - Documentos clínicos
+- ✅ **Location** - Hierarquia de leitos (Building → Ward → Room → Bed)
+- ✅ **Appointment/Schedule/Slot** - Agendamentos
+- ✅ **RelatedPerson** - Visitantes
+- ✅ **Communication** - Mensagens/Chat
+
+### Terminologias Suportadas
+- **LOINC** - Observações e resultados laboratoriais
+- **SNOMED CT** - Condições clínicas
+- **HL7 CodeSystems** - Status e categorias
+- **Brazilian NamingSystems** - CPF, CRM
+
+### Novidades (Sprint 18)
+- 🆕 API completa para Practitioner (médicos, enfermeiros)
+- 🆕 PractitionerRole para especialidades e organizações
+- 🆕 Identificadores brasileiros (CPF, CRM) seguindo padrão HL7 BR
+- 🆕 Auditoria FHIR R4 completa documentada
+

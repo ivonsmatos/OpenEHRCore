@@ -10,6 +10,7 @@ interface CardProps {
   style?: React.CSSProperties;
   onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onMouseLeave?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  title?: string;
 }
 
 /**
@@ -30,6 +31,7 @@ export const Card: React.FC<CardProps> = ({
   style,
   onMouseEnter,
   onMouseLeave,
+  title,
 }) => {
   const paddingMap = {
     none: "0px",
@@ -55,6 +57,16 @@ export const Card: React.FC<CardProps> = ({
         ...style,
       }}
     >
+      {title && (
+        <h3 style={{
+          margin: `0 0 ${spacing.md} 0`,
+          fontSize: '1.1rem',
+          fontWeight: 600,
+          color: colors.text.primary
+        }}>
+          {title}
+        </h3>
+      )}
       {children}
     </div>
   );

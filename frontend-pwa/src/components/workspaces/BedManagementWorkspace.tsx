@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../base/Card';
@@ -14,7 +13,7 @@ interface LocationNode {
     id: string;
     resourceType: string;
     name: string;
-    status_code: string; // 'O', 'U', 'C'
+    status_code: string; // 'O', 'U', 'K', 'I'
     physicalType?: { coding: { code: string, display: string }[] };
     children?: LocationNode[];
 }
@@ -26,7 +25,7 @@ interface Patient {
 
 const BedManagementWorkspace: React.FC = () => {
     const navigate = useNavigate();
-    const { token, logout } = useAuth(); // Use auth hook
+    const { token, logout } = useAuth();
     const [locations, setLocations] = useState<LocationNode[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -78,7 +77,6 @@ const BedManagementWorkspace: React.FC = () => {
             const res = await fetch(`${API_BASE}/ipd/occupancy/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (res.status === 401) return; // Handled by fetchLocations usually
             if (res.ok) setStats(await res.json());
         } catch (err) { console.error(err); }
     };
@@ -88,7 +86,6 @@ const BedManagementWorkspace: React.FC = () => {
             const res = await fetch(`${API_BASE}/patients/?page=1`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (res.status === 401) return;
             if (res.ok) {
                 const data = await res.json();
                 setPatients(data.results.map((p: any) => ({
@@ -131,11 +128,6 @@ const BedManagementWorkspace: React.FC = () => {
                 fetchLocations(); // Refresh
                 fetchStats();
             } else {
-                if (res.status === 401) {
-                    alert("Sessão expirada.");
-                    logout();
-                    return;
-                }
                 alert("Erro ao internar");
             }
         } catch (err) { console.error(err); }
@@ -144,75 +136,58 @@ const BedManagementWorkspace: React.FC = () => {
     const getBedColor = (status: string) => {
         switch (status) {
             case 'O': return '#ef4444'; // Red (Occupied)
-            case 'C': return '#f59e0b'; // Yellow (Cleaning)
+            case 'K': return '#f59e0b'; // Yellow (Cleaning)
             case 'U': return '#10b981'; // Green (Free)
+            case 'I': return '#6b7280'; // Gray (Inactive/Blocked)
             default: return '#9ca3af';
         }
     };
 
-    const renderBed = (bed: LocationNode) => (
-        <div
-            key={bed.id}
-            onClick={() => handleBedClick(bed)}
-            style={{
-                width: '80px',
-                height: '100px',
-                backgroundColor: 'white',
-                border: `2px solid ${getBedColor(bed.status_code)}`,
-                borderRadius: borderRadius.md,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: spacing.sm,
-                cursor: 'pointer',
-                position: 'relative'
-            }}
-        >
-            <Bed size={24} color={getBedColor(bed.status_code)} />
-            <span style={{ fontSize: '0.75rem', marginTop: 4, textAlign: 'center' }}>{bed.name.replace('Leito ', '')}</span>
-            {bed.status_code === 'O' && <User size={12} style={{ position: 'absolute', top: 4, right: 4 }} />}
-        </div>
-    );
-
-    const renderRoom = (room: LocationNode) => (
-        <div key={room.id} style={{ margin: spacing.md, padding: spacing.md, backgroundColor: '#f9fafb', borderRadius: borderRadius.md }}>
-            <h4 style={{ marginBottom: spacing.sm }}>{room.name}</h4>
-            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                {room.children?.map(child => {
-                    // Check if child is a Bed by code 'bd' or name convention as fallback
-                    const isBed = child.physicalType?.coding?.some(c => c.code === 'bd') || child.name.startsWith('Leito');
-                    if (isBed) return renderBed(child);
-                    // Nested rooms? Unlikely but recursion is safe
-                    return renderBed(child);
-                })}
-            </div>
-        </div>
-    );
-
-    const renderWard = (ward: LocationNode) => (
-        <Card key={ward.id} title={ward.name} style={{ marginBottom: spacing.lg }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                {ward.children?.map(child => {
-                    const isRoom = child.physicalType?.coding?.some(c => c.code === 'ro') || child.name.startsWith('Quarto');
-                    if (isRoom) return renderRoom(child);
-                    // Ward might have direct beds
-                    return renderBed(child);
-                })}
-            </div>
-        </Card>
-    );
-
-    return (
-        <div style={{ padding: spacing.lg }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg }}>
-                {/* Header content */}
-                <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Gestão de Leitos</h1>
-                    <p style={{ color: colors.text.secondary }}>Visualização em tempo real da ocupação hospitalar</p>
+    const renderBed = (bed: LocationNode) => {
+        const color = getBedColor(bed.status_code || 'U');
+        return (
+            <div
+                key={bed.id}
+                onClick={() => handleBedClick(bed)}
+                style={{
+                    width: 100,
+                    height: 120,
+                    margin: spacing.sm,
+                    border: `2px solid ${color}`,
+                    borderRadius: borderRadius.md,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    backgroundColor: 'white',
+                    position: 'relative'
+                }}
+            >
+                <div style={{ position: 'absolute', top: 5, right: 5 }}>
+                    {bed.status_code === 'O' && <User size={14} color={color} />}
+                    {bed.status_code === 'K' && <Activity size={14} color={color} />}
                 </div>
 
-                {/* Stats Summary */}
+                <Bed size={32} color={color} style={{ marginBottom: spacing.xs }} />
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text.primary, textAlign: 'center' }}>
+                    {bed.name.replace('Leito ', '')}
+                </span>
+                <span style={{ fontSize: '0.7rem', color: colors.text.secondary }}>
+                    {bed.status_code === 'O' ? 'OCUPADO' : bed.status_code === 'K' ? 'LIMPEZA' : bed.status_code === 'I' ? 'BLOQ.' : 'LIVRE'}
+                </span>
+            </div>
+        );
+    };
+
+    return (
+        <div style={{ padding: spacing.xl }}>
+            {/* Header and Stats */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xl }}>
+                <div>
+                    <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: colors.text.primary }}>Gestão de Leitos</h1>
+                    <p style={{ color: colors.text.secondary }}>Visualização em tempo real da ocupação hospitalar</p>
+                </div>
                 <div style={{ display: 'flex', gap: spacing.md }}>
                     <Card style={{ padding: spacing.sm, minWidth: 100, textAlign: 'center' }}>
                         <div style={{ color: '#10b981', fontWeight: 'bold' }}>{stats.free}</div>
@@ -227,17 +202,15 @@ const BedManagementWorkspace: React.FC = () => {
                         <div style={{ fontSize: '0.8rem' }}>Limpeza</div>
                     </Card>
                     <Card style={{ padding: spacing.sm, minWidth: 100, textAlign: 'center' }}>
+                        <div style={{ color: '#6b7280', fontWeight: 'bold' }}>{stats.total - (stats.free + stats.occupied + stats.cleaning)}</div>
+                        <div style={{ fontSize: '0.8rem' }}>Bloqueados</div>
+                    </Card>
+                    <Card style={{ padding: spacing.sm, minWidth: 100, textAlign: 'center' }}>
                         <div style={{ fontWeight: 'bold' }}>{stats.occupancy_rate}%</div>
                         <div style={{ fontSize: '0.8rem' }}>Taxa Ocup.</div>
                     </Card>
                 </div>
             </div>
-
-            {error && (
-                <div style={{ padding: spacing.md, backgroundColor: '#fee2e2', color: '#b91c1c', borderRadius: borderRadius.md, marginBottom: spacing.md }}>
-                    {error}
-                </div>
-            )}
 
             {loading ? <p>Carregando mapa...</p> : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xl }}>
@@ -256,6 +229,7 @@ const BedManagementWorkspace: React.FC = () => {
                         const occupied = allBeds.filter(b => b.status_code === 'O');
                         const cleaning = allBeds.filter(b => b.status_code === 'K');
                         const free = allBeds.filter(b => b.status_code === 'U');
+                        const blocked = allBeds.filter(b => b.status_code === 'I');
 
                         const renderSection = (title: string, color: string, list: LocationNode[]) => (
                             <Card style={{ marginBottom: spacing.lg }}>
@@ -273,6 +247,7 @@ const BedManagementWorkspace: React.FC = () => {
                                 {renderSection('Em Uso / Ocupados', '#ef4444', occupied)}
                                 {renderSection('Em Higienização', '#f59e0b', cleaning)}
                                 {renderSection('Liberados / Livres', '#10b981', free)}
+                                {renderSection('Bloqueados / Manutenção', '#6b7280', blocked)}
                             </>
                         );
                     })()}
@@ -298,7 +273,6 @@ const BedManagementWorkspace: React.FC = () => {
                     <div style={{ backgroundColor: 'white', padding: spacing.lg, borderRadius: borderRadius.md, width: '400px' }}>
                         <h3>Internar Paciente</h3>
                         <p>Leito: <b>{selectedBed.name}</b></p>
-
                         <div style={{ margin: `${spacing.md} 0` }}>
                             <label>Selecione o Paciente:</label>
                             <select
@@ -312,7 +286,6 @@ const BedManagementWorkspace: React.FC = () => {
                                 ))}
                             </select>
                         </div>
-
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing.sm }}>
                             <button onClick={() => setShowAdmitModal(false)} style={{ padding: spacing.sm }}>Cancelar</button>
                             <button

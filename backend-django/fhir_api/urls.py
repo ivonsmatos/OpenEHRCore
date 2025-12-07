@@ -2,7 +2,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners
 
 router = DefaultRouter()
 router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
@@ -112,6 +112,15 @@ urlpatterns = [
     path('ipd/bed/<str:location_id>/details/', views_ipd.get_bed_details, name='get_bed_details'),
     path('ipd/discharge/', views_ipd.discharge_patient, name='discharge_patient'),
     path('ipd/bed/<str:location_id>/clean/', views_ipd.finish_cleaning, name='finish_cleaning'),
+    path('ipd/transfer/', views_ipd.transfer_patient, name='transfer_patient'),
+    path('ipd/bed/<str:location_id>/block/', views_ipd.block_bed, name='block_bed'),
+    path('ipd/bed/<str:location_id>/history/', views_ipd.get_bed_history, name='get_bed_history'),
+    
+    # Sprint 18: Practitioner Management (FHIR Compliance)
+    path('practitioners/', views_practitioners.create_practitioner, name='create_practitioner'),
+    path('practitioners/list/', views_practitioners.list_practitioners, name='list_practitioners'),
+    path('practitioners/<str:practitioner_id>/', views_practitioners.get_practitioner, name='get_practitioner'),
+    path('practitioner-roles/', views_practitioners.create_practitioner_role, name='create_practitioner_role'),
 ]
 
 
