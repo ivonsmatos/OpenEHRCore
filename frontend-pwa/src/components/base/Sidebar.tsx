@@ -12,7 +12,8 @@ import {
     Menu,
     UserPlus,
     MessageSquare,
-    Bed
+    Bed,
+    Stethoscope
 } from 'lucide-react';
 import { colors, spacing } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
@@ -31,6 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     const menuItems = [
         { label: 'Dashboard', icon: <LayoutDashboard size={20} />, route: '/' },
         { label: 'Pacientes', icon: <Users size={20} />, route: '/patients' },
+        { label: 'Profissionais', icon: <Stethoscope size={20} />, route: '/practitioners' },
         { label: 'Agenda', icon: <Calendar size={20} />, route: '/scheduling' },
         { label: 'Check-in', icon: <Activity size={20} />, route: '/checkin' },
         { label: 'Internação', icon: <Bed size={20} />, route: '/ipd' },

@@ -16,6 +16,7 @@ import { DashboardWorkspace } from './components/analytics/DashboardWorkspace';
 import VisitorsWorkspace from './components/workspaces/VisitorsWorkspace';
 import ChatWorkspace from './components/workspaces/ChatWorkspace';
 import BedManagementWorkspace from './components/workspaces/BedManagementWorkspace';
+import PractitionerWorkspace from './components/workspaces/PractitionerWorkspace';
 import AppShell from './components/base/AppShell';
 import { spacing } from './theme/colors';
 
@@ -31,6 +32,7 @@ const ProtectedRoutes: React.FC = () => {
                 <Route path="/patients/new" element={<PatientForm />} />
                 <Route path="/patients/:id" element={<PatientDetail loading={false} error={undefined} />} />
                 <Route path="/patients/:id/encounter/new" element={<ClinicalWorkspace />} />
+                <Route path="/practitioners" element={<PractitionerWorkspace />} />
                 <Route path="/scheduling" element={<SchedulingWorkspace />} />
                 <Route path="/checkin" element={<CheckInWorkspace />} />
                 <Route path="/portal" element={<PatientPortalWorkspace />} />
