@@ -212,6 +212,144 @@ def manage_patients(request):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def search_patients_advanced(request):
+    """
+    Advanced patient search with FHIR R4 compliant parameters.
+    
+    Sprint 20: FHIR Advanced Search
+    
+    GET /api/v1/patients/search/
+    
+    Query Parameters (FHIR R4 Standard):
+        - name: Search by patient name (partial match)
+        - identifier: Search by CPF or other identifier
+        - birthdate: Filter by birth date (exact: YYYY-MM-DD, or range: ge2000-01-01, le2010-12-31)
+        - gender: Filter by gender (male, female, other, unknown)
+        - _count: Number of results per page (default: 20, max: 100)
+        - _getpagesoffset: Pagination offset (default: 0)
+    
+    Examples:
+        /api/v1/patients/search/?name=Silva
+        /api/v1/patients/search/?identifier=12345678901
+        /api/v1/patients/search/?gender=female&birthdate=ge1990-01-01
+        /api/v1/patients/search/?name=João&_count=10&_getpagesoffset=20
+    
+    Returns:
+        {
+            "total": 45,
+            "count": 20,
+            "offset": 0,
+            "results": [...]
+        }
+    """
+    try:
+        fhir_service = FHIRService(request.user)
+        
+        # Build FHIR search parameters
+        params = {}
+        
+        # Name search (partial match)
+        if request.query_params.get('name'):
+            params['name'] = request.query_params['name']
+        
+        # Identifier search (CPF, etc.)
+        if request.query_params.get('identifier'):
+            params['identifier'] = request.query_params['identifier']
+        
+        # Birth date filter (supports exact or range)
+        if request.query_params.get('birthdate'):
+            params['birthdate'] = request.query_params['birthdate']
+        
+        # Gender filter
+        if request.query_params.get('gender'):
+            gender = request.query_params['gender'].lower()
+            if gender in ['male', 'female', 'other', 'unknown']:
+                params['gender'] = gender
+            else:
+                return Response({
+                    "error": f"Invalid gender value. Must be one of: male, female, other, unknown"
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Pagination
+        count = min(int(request.query_params.get('_count', 20)), 100)  # Max 100
+        offset = int(request.query_params.get('_getpagesoffset', 0))
+        
+        params['_count'] = str(count)
+        if offset > 0:
+            params['_getpagesoffset'] = str(offset)
+        
+        # Execute search
+        results = fhir_service.search_resources('Patient', params)
+        
+        # Format response
+        formatted_results = []
+        for p in results:
+            p = p or {}
+            
+            # Extract name
+            name_text = "Sem nome"
+            if p.get("name") and isinstance(p["name"], list) and len(p["name"]) > 0:
+                given = " ".join(p["name"][0].get("given", []))
+                family = p["name"][0].get("family", "")
+                name_text = f"{given} {family}".strip()
+            
+            # Extract contact info
+            email = None
+            phone = None
+            for t in p.get("telecom", []):
+                if t.get("system") == "email":
+                    email = t.get("value")
+                elif t.get("system") == "phone":
+                    phone = t.get("value")
+            
+            # Extract CPF
+            cpf = None
+            for identifier in p.get("identifier", []):
+                if "cpf" in identifier.get("system", "").lower():
+                    cpf = identifier.get("value")
+                    break
+            
+            formatted_results.append({
+                "id": p.get("id"),
+                "resourceType": "Patient",
+                "name": name_text,
+                "birthDate": p.get("birthDate"),
+                "gender": p.get("gender"),
+                "email": email,
+                "phone": phone,
+                "cpf": cpf
+            })
+        
+        return Response({
+            "total": len(results),
+            "count": count,
+            "offset": offset,
+            "results": formatted_results
+        }, status=status.HTTP_200_OK)
+        
+    except ValueError as e:
+        return Response({
+            "error": f"Invalid parameter value: {str(e)}"
+        }, status=status.HTTP_400_BAD_REQUEST)
+    except FHIRServiceException as e:
+        logger.error(f"FHIR error in advanced search: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception as e:
+        logger.error(f"Unexpected error in advanced search: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({
+            "error": "Erro interno ao buscar pacientes",
+            "detail": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
 @api_view(['GET', 'PUT', 'DELETE'])
 @authentication_classes([KeycloakAuthentication])
 @permission_classes([IsAuthenticated])

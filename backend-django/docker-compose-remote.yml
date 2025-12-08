@@ -1,0 +1,146 @@
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: openehr_postgres
+    environment:
+      POSTGRES_DB: hapi_fhir
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: keycloak,mattermost
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d hapi_fhir" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - openehr_network
+
+  hapi-fhir:
+    image: hapiproject/hapi:v7.2.0
+    container_name: openehr_hapi_fhir
+    environment:
+      hapi.fhir.fhir_version: R4
+      hapi.fhir.validation.enabled: "true"
+      hapi.fhir.narrative_enabled: "true"
+      server.compression.enabled: "true"
+      spring.datasource.url: jdbc:postgresql://postgres:5432/hapi_fhir
+      spring.datasource.username: ${POSTGRES_USER}
+      spring.datasource.password: ${POSTGRES_PASSWORD}
+      spring.datasource.driver-class-name: org.postgresql.Driver
+      spring.jpa.database-platform: org.hibernate.dialect.PostgreSQLDialect
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - openehr_network
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    container_name: openehr_keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY: "edge"
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8180:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: start-dev
+    networks:
+      - openehr_network
+    restart: unless-stopped
+
+  django:
+    build:
+      context: ../backend-django
+      dockerfile: Dockerfile
+    container_name: openehr_django
+    environment:
+      DEBUG: "False"
+      ALLOWED_HOSTS: "*"
+      CSRF_TRUSTED_ORIGINS: "http://45.151.122.234,http://localhost"
+      FHIR_SERVER_URL: http://hapi-fhir:8080/fhir
+      KEYCLOAK_URL: http://keycloak:8080
+      POSTGRES_NAME: hapi_fhir
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    ports:
+      - "8000:8000"
+    depends_on:
+      - hapi-fhir
+      - keycloak
+      - postgres
+    networks:
+      - openehr_network
+
+  frontend:
+    build:
+      context: ../frontend-pwa
+      dockerfile: Dockerfile
+    container_name: openehr_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - django
+    networks:
+      - openehr_network
+
+  mattermost:
+    image: mattermost/mattermost-team-edition:latest
+    container_name: mattermost
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 200
+    read_only: false
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./volumes/mattermost/config:/mattermost/config:rw
+      - ./volumes/mattermost/data:/mattermost/data:rw
+      - ./volumes/mattermost/logs:/mattermost/logs:rw
+      - ./volumes/mattermost/plugins:/mattermost/plugins:rw
+      - ./volumes/mattermost/client/plugins:/mattermost/client/plugins:rw
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - MM_SQLSETTINGS_DRIVERNAME=postgres
+      - MM_SQLSETTINGS_DATASOURCE=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/mattermost?sslmode=disable&connect_timeout=10
+      - MM_BLEVESTTINGS_INDEXDIR=/mattermost/bleve-indexes
+      - MM_SERVICESETTINGS_SITEURL=http://localhost:8065
+      - MM_SERVICESETTINGS_ALLOWCORSFROM=*
+      - MM_SECURITYSETTINGS_CONTENTSECURITYPOLICY=frame-ancestors 'self' http://localhost:5173 http://localhost:3000
+    ports:
+      - "8065:8065"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - openehr_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  openehr_network:
+    driver: bridge

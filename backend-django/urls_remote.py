@@ -2,7 +2,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent
 
 router = DefaultRouter()
 router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
@@ -18,22 +18,18 @@ urlpatterns = [
     
     # Patient endpoints
     path('patients/', views_auth.manage_patients, name='manage_patients'),
-    path('patients/search/', views_auth.search_patients_advanced, name='search_patients_advanced'),  # Sprint 20
     path('patients/<str:patient_id>/', views_auth.get_patient, name='get_patient'),
     
     # Encounter endpoints
     path('encounters/', views_auth.create_encounter, name='create_encounter'),
-    path('encounters/search/', views_search.search_encounters, name='search_encounters'),  # Sprint 20
     path('patients/<str:patient_id>/encounters/', views_auth.get_encounters, name='get_encounters'),
     
     # Observation endpoints
     path('observations/', views_auth.create_observation, name='create_observation'),
-    path('observations/search/', views_search.search_observations, name='search_observations'),  # Sprint 20
     path('patients/<str:patient_id>/observations/', views_auth.get_observations, name='get_observations'),
     
     # Condition endpoints
     path('conditions/', views_auth.create_condition, name='create_condition'),
-    path('conditions/search/', views_search.search_conditions, name='search_conditions'),  # Sprint 20
     path('patients/<str:patient_id>/conditions/', views_auth.get_conditions, name='get_conditions'),
     
     # Allergy endpoints

@@ -152,6 +152,7 @@ Copyright © 2025. Todos os direitos reservados.
 **Conformidade:** ~95% com HL7 FHIR R4
 
 ### Recursos Implementados
+
 - ✅ **Patient** - Gestão completa de pacientes com identificadores brasileiros (CPF)
 - ✅ **Practitioner** - Profissionais de saúde com CRM brasileiro
 - ✅ **PractitionerRole** - Papéis, especialidades e organizações
@@ -166,14 +167,24 @@ Copyright © 2025. Todos os direitos reservados.
 - ✅ **Communication** - Mensagens/Chat
 
 ### Terminologias Suportadas
+
 - **LOINC** - Observações e resultados laboratoriais
 - **SNOMED CT** - Condições clínicas
 - **HL7 CodeSystems** - Status e categorias
 - **Brazilian NamingSystems** - CPF, CRM
 
-### Novidades (Sprint 18)
-- 🆕 API completa para Practitioner (médicos, enfermeiros)
-- 🆕 PractitionerRole para especialidades e organizações
-- 🆕 Identificadores brasileiros (CPF, CRM) seguindo padrão HL7 BR
-- 🆕 Auditoria FHIR R4 completa documentada
+### Novidades (Sprint 18 & 19)
 
+- 🆕 **Sprint 18 - QA & FHIR R4 Compliance**
+  - API completa para Practitioner (médicos, enfermeiros)
+  - PractitionerRole para especialidades e organizações
+  - Identificadores brasileiros (CPF, CRM) seguindo padrão HL7 BR
+  - Auditoria FHIR R4 completa documentada
+  - Suite de testes de conformidade FHIR
+- 🆕 **Sprint 19 - Practitioner Frontend**
+  - Interface completa de gerenciamento de profissionais
+  - Formulário de cadastro com validação (CRM, email)
+  - Busca por nome e CRM
+  - Filtros por status (ativo/inativo)
+  - Componentes React testados e documentados
+  - Hook `usePractitioners` para integração com API
