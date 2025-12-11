@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { colors, spacing } from '../../theme/colors';
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import Breadcrumbs from './Breadcrumbs';
+import { UserProfileDropdown } from './UserProfileDropdown';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -52,8 +53,8 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
             border: `1px solid ${colors.border.default}`
           }}>
             <Search size={16} color={colors.text.tertiary} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Buscar pacientes, prontuários..."
               style={{
                 border: 'none',
@@ -68,12 +69,12 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
           {/* Right Actions: Notifications & Profile */}
           <div style={{ display: 'flex', alignItems: 'center', gap: spacing.lg }}>
-            <button style={{ 
-              background: 'none', 
-              border: 'none', 
-              cursor: 'pointer', 
+            <button style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
               position: 'relative',
-              color: colors.text.secondary 
+              color: colors.text.secondary
             }}>
               <Bell size={20} />
               <span style={{
@@ -87,28 +88,8 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
               }} />
             </button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                backgroundColor: colors.primary.light,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: colors.primary.dark
-              }}>
-                <User size={18} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.text.primary }}>
-                  {user?.name || 'Usuário'}
-                </span>
-                <span style={{ fontSize: '0.7rem', color: colors.text.tertiary }}>
-                  {user?.roles?.[0] || 'Staff'}
-                </span>
-              </div>
-            </div>
+            {/* User Profile Dropdown */}
+            <UserProfileDropdown />
           </div>
         </header>
 

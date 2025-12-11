@@ -8,7 +8,7 @@ import json
 from datetime import datetime, timedelta
 
 BASE_URL = "http://localhost:8000/api/v1"
-FHIR_BASE = "http://localhost:8065/fhir"
+FHIR_BASE = "http://localhost:8080/fhir"
 
 # Test credentials
 USERNAME = "dev"

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Card from '../base/Card';
 import { colors, spacing, borderRadius } from '../../theme/colors';
-import { User, Bed, Activity, CheckCircle, Clock } from 'lucide-react';
+import { User, Bed, Activity } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import BedDetailsModal from './BedDetailsModal';
 
@@ -24,10 +23,9 @@ interface Patient {
 }
 
 const BedManagementWorkspace: React.FC = () => {
-    const navigate = useNavigate();
     const { token, logout } = useAuth();
     const [locations, setLocations] = useState<LocationNode[]>([]);
-    const [error, setError] = useState<string | null>(null);
+    const [_error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: 0, occupied: 0, free: 0, cleaning: 0, occupancy_rate: 0 });
 
@@ -290,7 +288,7 @@ const BedManagementWorkspace: React.FC = () => {
                             <button onClick={() => setShowAdmitModal(false)} style={{ padding: spacing.sm }}>Cancelar</button>
                             <button
                                 onClick={handleAdmit}
-                                style={{ padding: spacing.sm, backgroundColor: colors.primary.medium, color: 'white', border: 'none', borderRadius: borderRadius.sm }}
+                                style={{ padding: spacing.sm, backgroundColor: colors.primary.medium, color: 'white', border: 'none', borderRadius: borderRadius.soft }}
                             >
                                 Confirmar Internação
                             </button>

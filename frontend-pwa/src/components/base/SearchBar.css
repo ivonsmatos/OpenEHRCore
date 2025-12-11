@@ -1,0 +1,108 @@
+.search-bar {
+  width: 100%;
+}
+
+.search-bar__container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--color-background, #ffffff);
+  border: 2px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  padding: 0 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.search-bar__container:focus-within {
+  border-color: var(--color-primary, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.search-bar__icon {
+  font-size: 1.1rem;
+  color: var(--color-text-secondary, #64748b);
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.search-bar__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 14px 0;
+  font-size: 0.95rem;
+  color: var(--color-text, #1e293b);
+  background: transparent;
+}
+
+.search-bar__input::placeholder {
+  color: var(--color-text-placeholder, #94a3b8);
+}
+
+.search-bar__loader {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+}
+
+.search-bar__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border, #e2e8f0);
+  border-top-color: var(--color-primary, #6366f1);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.search-bar__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-background-hover, #f1f5f9);
+  color: var(--color-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.75rem;
+}
+
+.search-bar__clear:hover {
+  background: var(--color-danger-light, #fee2e2);
+  color: var(--color-danger, #ef4444);
+}
+
+.search-bar__clear:focus {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
+}
+
+/* Variants */
+.search-bar--compact .search-bar__container {
+  padding: 0 12px;
+}
+
+.search-bar--compact .search-bar__input {
+  padding: 10px 0;
+  font-size: 0.875rem;
+}
+
+.search-bar--large .search-bar__container {
+  padding: 0 20px;
+}
+
+.search-bar--large .search-bar__input {
+  padding: 18px 0;
+  font-size: 1.1rem;
+}

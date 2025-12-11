@@ -58,7 +58,12 @@ class FHIRService:
     - Validação de dados antes de enviar
     - Tratamento de erros padronizado
     - Logging de todas as operações
+    - Cache para buscas frequentes (TTL 5 minutos)
     """
+    
+    # Cache class-level para buscas (shared entre instâncias)
+    _cache: Dict[str, tuple] = {}
+    _cache_ttl_seconds = 300  # 5 minutos
 
     def __init__(self, user: Optional[Any] = None):
         self.base_url = settings.FHIR_SERVER_URL
@@ -69,6 +74,55 @@ class FHIRService:
             'Accept': 'application/fhir+json',
         })
         self.user = user # Contexto do usuário para auditoria (Provenance)
+
+    @classmethod
+    def _get_cache_key(cls, resource_type: str, params: Dict[str, Any]) -> str:
+        """Gera chave única para cache baseada no tipo e parâmetros."""
+        sorted_params = sorted((params or {}).items())
+        return f"{resource_type}:{str(sorted_params)}"
+    
+    @classmethod
+    def _is_cache_valid(cls, cache_key: str) -> bool:
+        """Verifica se o cache ainda é válido (não expirou)."""
+        if cache_key not in cls._cache:
+            return False
+        cached_time, _ = cls._cache[cache_key]
+        return (datetime.now() - cached_time).total_seconds() < cls._cache_ttl_seconds
+    
+    @classmethod
+    def _get_from_cache(cls, cache_key: str) -> Optional[List[Dict[str, Any]]]:
+        """Retorna dados do cache se válido."""
+        if cls._is_cache_valid(cache_key):
+            _, data = cls._cache[cache_key]
+            logger.debug(f"Cache HIT: {cache_key}")
+            return data
+        return None
+    
+    @classmethod
+    def _set_cache(cls, cache_key: str, data: List[Dict[str, Any]]) -> None:
+        """Armazena dados no cache."""
+        cls._cache[cache_key] = (datetime.now(), data)
+        logger.debug(f"Cache SET: {cache_key}")
+    
+    @classmethod
+    def clear_cache(cls, resource_type: Optional[str] = None) -> int:
+        """
+        Limpa o cache. Se resource_type for especificado, limpa apenas desse tipo.
+        
+        Returns:
+            int: Número de entradas removidas
+        """
+        if resource_type:
+            keys_to_remove = [k for k in cls._cache if k.startswith(f"{resource_type}:")]
+            for key in keys_to_remove:
+                del cls._cache[key]
+            logger.info(f"Cache cleared for {resource_type}: {len(keys_to_remove)} entries removed")
+            return len(keys_to_remove)
+        else:
+            count = len(cls._cache)
+            cls._cache.clear()
+            logger.info(f"Cache fully cleared: {count} entries removed")
+            return count
 
     def health_check(self) -> bool:
         """
@@ -123,17 +177,25 @@ class FHIRService:
             logger.error(f"Error creating {resource_type}: {str(e)}")
             raise FHIRServiceException(f"Error creating {resource_type}: {str(e)}")
 
-    def search_resources(self, resource_type: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def search_resources(self, resource_type: str, params: Dict[str, Any] = None, use_cache: bool = True) -> List[Dict[str, Any]]:
         """
-        Busca genérica de recursos FHIR.
+        Busca genérica de recursos FHIR com suporte a cache.
         
         Args:
             resource_type: Tipo do recurso (Ex: 'RelatedPerson')
             params: Dicionário de parâmetros de busca
+            use_cache: Se True, usa cache (padrão). Se False, força busca no servidor.
             
         Returns:
             Lista de recursos encontrados
         """
+        # Verificar cache primeiro
+        if use_cache:
+            cache_key = self._get_cache_key(resource_type, params)
+            cached_data = self._get_from_cache(cache_key)
+            if cached_data is not None:
+                return cached_data
+        
         try:
             response = self.session.get(
                 f"{self.base_url}/{resource_type}",
@@ -151,11 +213,23 @@ class FHIRService:
                 for entry in bundle['entry']:
                     if 'resource' in entry:
                         results.append(entry['resource'])
+            
+            # Armazenar no cache
+            if use_cache:
+                cache_key = self._get_cache_key(resource_type, params)
+                self._set_cache(cache_key, results)
+            
             return results
             
         except Exception as e:
             logger.error(f"Error searching {resource_type}: {e}")
             return []
+    
+    def search_resources_no_cache(self, resource_type: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """
+        Busca de recursos FHIR sem cache. Útil para dados que precisam estar sempre atualizados.
+        """
+        return self.search_resources(resource_type, params, use_cache=False)
 
     def create_patient_resource(
         self,

@@ -1,11 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { theme } from '../../theme/colors';
 import { Button } from '../base/Button';
-import Calendar from 'lucide-react/dist/esm/icons/calendar';
-import Video from 'lucide-react/dist/esm/icons/video';
-import FileText from 'lucide-react/dist/esm/icons/file-text';
-import Activity from 'lucide-react/dist/esm/icons/activity';
+import { Calendar, Video, FileText, Activity } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 

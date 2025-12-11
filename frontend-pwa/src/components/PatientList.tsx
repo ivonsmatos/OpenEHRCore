@@ -1,19 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePatients } from '../hooks/usePatients';
-import { colors, spacing, borderRadius } from '../theme/colors';
+import { usePatients, PatientSearchFilters } from '../hooks/usePatients';
 import Card from './base/Card';
 import Button from './base/Button';
+import SearchBar from './base/SearchBar';
+import AdvancedFilters, { FilterConfig } from './base/AdvancedFilters';
+import PaginatedResults from './base/PaginatedResults';
+import './PatientList.css';
 
 export const PatientList: React.FC = () => {
-    const { patients, loading, error, pagination, nextPage, prevPage } = usePatients();
+    const {
+        patients,
+        loading,
+        error,
+        pagination,
+        fetchPatients,
+        goToPage,
+        setPageSize
+    } = usePatients();
+
     const [searchTerm, setSearchTerm] = useState('');
+    const [advancedFilters, setAdvancedFilters] = useState<Record<string, any>>({});
     const navigate = useNavigate();
 
-    const filteredPatients = patients.filter(patient =>
-        patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filter configurations for AdvancedFilters component
+    const filterConfigs: FilterConfig[] = useMemo(() => [
+        {
+            key: 'identifier',
+            label: 'CPF',
+            type: 'text',
+            placeholder: 'Ex: 123.456.789-00'
+        },
+        {
+            key: 'gender',
+            label: 'Gênero',
+            type: 'select',
+            options: [
+                { value: 'male', label: 'Masculino' },
+                { value: 'female', label: 'Feminino' },
+                { value: 'other', label: 'Outro' },
+                { value: 'unknown', label: 'Não informado' }
+            ]
+        },
+        {
+            key: 'birthdate',
+            label: 'Data de Nascimento',
+            type: 'daterange',
+        }
+    ], []);
+
+    // Execute search with current filters
+    const executeSearch = useCallback((query: string) => {
+        setSearchTerm(query);
+        const filters: PatientSearchFilters = { name: query };
+
+        // Parse advanced filters
+        if (advancedFilters.identifier) {
+            filters.identifier = advancedFilters.identifier;
+        }
+        if (advancedFilters.gender) {
+            filters.gender = advancedFilters.gender;
+        }
+        if (advancedFilters.birthdate) {
+            const [start, end] = advancedFilters.birthdate.split(',');
+            if (start) filters.birthdateGe = start;
+            if (end) filters.birthdateLe = end;
+        }
+
+        fetchPatients(1, pagination.page_size, filters);
+    }, [advancedFilters, fetchPatients, pagination.page_size]);
+
+    // Apply advanced filters
+    const handleApplyFilters = useCallback(() => {
+        executeSearch(searchTerm);
+    }, [executeSearch, searchTerm]);
+
+    // Clear all filters
+    const handleClearFilters = useCallback(() => {
+        setAdvancedFilters({});
+        setSearchTerm('');
+        fetchPatients(1, pagination.page_size, {});
+    }, [fetchPatients, pagination.page_size]);
+
+    // Handle page change
+    const handlePageChange = useCallback((page: number) => {
+        goToPage(page);
+    }, [goToPage]);
+
+    // Handle page size change
+    const handlePageSizeChange = useCallback((size: number) => {
+        setPageSize(size);
+    }, [setPageSize]);
 
     const calculateAge = (birthDate: string) => {
         const today = new Date();
@@ -26,41 +103,28 @@ export const PatientList: React.FC = () => {
         return age;
     };
 
-    if (loading) {
+    if (loading && patients.length === 0) {
         return (
-            <div style={{ textAlign: 'center', padding: spacing.xl }}>
-                <div style={{ fontSize: '2rem', marginBottom: spacing.md }}>⟳</div>
+            <div className="patient-list__loading">
+                <div className="patient-list__loading-spinner">⟳</div>
                 <p>Carregando pacientes...</p>
             </div>
         );
     }
 
     return (
-        <div style={{ padding: spacing.xl }}>
+        <div className="patient-list">
             {/* Header com busca e botão novo */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: spacing.lg,
-                gap: spacing.md,
-                flexWrap: 'wrap'
-            }}>
-                <input
-                    type="text"
-                    placeholder="🔍 Buscar paciente por nome ou ID..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{
-                        flex: 1,
-                        minWidth: '300px',
-                        padding: '12px 16px',
-                        fontSize: '1rem',
-                        border: `1px solid ${colors.border.default}`,
-                        borderRadius: borderRadius.base,
-                        fontFamily: 'inherit',
-                    }}
-                />
+            <div className="patient-list__header">
+                <div className="patient-list__search-wrapper">
+                    <SearchBar
+                        placeholder="🔍 Buscar paciente por nome..."
+                        onSearch={executeSearch}
+                        loading={loading}
+                        initialValue={searchTerm}
+                        debounceMs={300}
+                    />
+                </div>
                 <Button
                     variant="primary"
                     size="md"
@@ -70,71 +134,56 @@ export const PatientList: React.FC = () => {
                 </Button>
             </div>
 
+            {/* Filtros avançados */}
+            <AdvancedFilters
+                filters={filterConfigs}
+                values={advancedFilters}
+                onChange={setAdvancedFilters}
+                onApply={handleApplyFilters}
+                onClear={handleClearFilters}
+                defaultCollapsed={true}
+            />
+
             {/* Mensagem de erro */}
             {error && (
-                <div style={{
-                    backgroundColor: `${colors.alert.critical}15`,
-                    border: `1px solid ${colors.alert.critical}`,
-                    color: colors.alert.critical,
-                    padding: spacing.md,
-                    borderRadius: borderRadius.base,
-                    marginBottom: spacing.lg,
-                }}>
+                <div className="patient-list__error">
                     {error}
                 </div>
             )}
 
             {/* Lista de pacientes */}
-            {filteredPatients.length === 0 ? (
+            {patients.length === 0 ? (
                 <Card padding="lg" elevation="base">
-                    <div style={{ textAlign: 'center', padding: spacing.xl, color: colors.text.tertiary }}>
-                        <div style={{ fontSize: '3rem', marginBottom: spacing.md }}>👤</div>
-                        <p style={{ fontSize: '1.125rem', marginBottom: spacing.sm }}>
-                            {searchTerm ? 'Nenhum paciente encontrado' : 'Nenhum paciente cadastrado'}
+                    <div className="patient-list__empty">
+                        <div className="patient-list__empty-icon">👤</div>
+                        <p className="patient-list__empty-title">
+                            {searchTerm || Object.keys(advancedFilters).length > 0
+                                ? 'Nenhum paciente encontrado'
+                                : 'Nenhum paciente cadastrado'}
                         </p>
-                        <p style={{ fontSize: '0.875rem' }}>
-                            {searchTerm ? 'Tente outro termo de busca' : 'Clique em "Novo Paciente" para começar'}
+                        <p className="patient-list__empty-subtitle">
+                            {searchTerm || Object.keys(advancedFilters).length > 0
+                                ? 'Tente outros filtros ou termos de busca'
+                                : 'Clique em "Novo Paciente" para começar'}
                         </p>
                     </div>
                 </Card>
             ) : (
-                <div style={{ display: 'grid', gap: spacing.md }}>
-                    {filteredPatients.map((patient) => (
+                <div className="patient-list__grid">
+                    {patients.map((patient) => (
                         <Card
                             key={patient.id}
                             padding="md"
                             elevation="base"
                             onClick={() => navigate(`/patients/${patient.id}`)}
-                            style={{
-                                cursor: 'pointer',
-                                transition: 'all 200ms ease',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-                            }}
+                            className="patient-card"
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="patient-card__content">
                                 <div>
-                                    <h3 style={{
-                                        margin: 0,
-                                        marginBottom: spacing.xs,
-                                        fontSize: '1.125rem',
-                                        fontWeight: 600,
-                                        color: colors.text.primary,
-                                    }}>
+                                    <h3 className="patient-card__name">
                                         👤 {patient.name}
                                     </h3>
-                                    <div style={{
-                                        display: 'flex',
-                                        gap: spacing.md,
-                                        fontSize: '0.875rem',
-                                        color: colors.text.secondary,
-                                    }}>
+                                    <div className="patient-card__info">
                                         <span>ID: {patient.id}</span>
                                         <span>•</span>
                                         <span>{calculateAge(patient.birthDate)} anos</span>
@@ -142,19 +191,12 @@ export const PatientList: React.FC = () => {
                                         <span>{patient.gender === 'male' ? 'Masculino' : patient.gender === 'female' ? 'Feminino' : 'Outro'}</span>
                                     </div>
                                     {patient.email && (
-                                        <div style={{
-                                            marginTop: spacing.xs,
-                                            fontSize: '0.875rem',
-                                            color: colors.text.tertiary,
-                                        }}>
+                                        <div className="patient-card__email">
                                             📧 {patient.email}
                                         </div>
                                     )}
                                 </div>
-                                <div style={{
-                                    fontSize: '1.5rem',
-                                    color: colors.primary.medium,
-                                }}>
+                                <div className="patient-card__arrow">
                                     →
                                 </div>
                             </div>
@@ -163,45 +205,19 @@ export const PatientList: React.FC = () => {
                 </div>
             )}
 
-            {/* Contador */}
-            <div style={{
-                marginTop: spacing.lg,
-                textAlign: 'center',
-                fontSize: '0.875rem',
-                color: colors.text.tertiary,
-            }}>
-                {filteredPatients.length} {filteredPatients.length === 1 ? 'paciente' : 'pacientes'}
-                {searchTerm && ` encontrado${filteredPatients.length === 1 ? '' : 's'}`}
-            </div>
-
             {/* Paginação */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: spacing.md,
-                marginTop: spacing.lg
-            }}>
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={prevPage}
-                    disabled={pagination.current_page === 1 || loading}
-                >
-                    ← Anterior
-                </Button>
-                <div style={{ fontSize: '0.875rem', color: colors.text.secondary }}>
-                    Página {pagination.current_page} de {pagination.total_pages}
+            {pagination.total_count > 0 && (
+                <div className="patient-list__pagination">
+                    <PaginatedResults
+                        total={pagination.total_count}
+                        currentPage={pagination.current_page}
+                        pageSize={pagination.page_size}
+                        onPageChange={handlePageChange}
+                        onPageSizeChange={handlePageSizeChange}
+                        loading={loading}
+                    />
                 </div>
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={nextPage}
-                    disabled={pagination.current_page === pagination.total_pages || loading}
-                >
-                    Próxima →
-                </Button>
-            </div>
+            )}
         </div>
     );
 };

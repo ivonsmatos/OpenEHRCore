@@ -90,24 +90,23 @@ services:
     restart: unless-stopped
   # Django Backend (BFF) - opcional iniciar via docker
   # Descomente para rodar Django em container
-  # django:
-  #   build:
-  #     context: ../backend-django
-  #     dockerfile: Dockerfile
-  #   container_name: openehr_django
-  #   environment:
-  #     DEBUG: "True"
-  #     FHIR_SERVER_URL: http://hapi-fhir:8080/fhir
-  #     KEYCLOAK_URL: http://keycloak:8080
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     - hapi-fhir
-  #     - keycloak
-  #   command: python manage.py runserver 0.0.0.0:8000
-  #   networks:
-  #   networks:
-  #     - openehr_network
+  django:
+    build:
+      context: ../backend-django
+      dockerfile: Dockerfile
+    container_name: openehr_django
+    environment:
+      DEBUG: "True"
+      FHIR_SERVER_URL: http://hapi-fhir:8080/fhir
+      KEYCLOAK_URL: http://keycloak:8080
+    ports:
+      - "8000:8000"
+    depends_on:
+      - hapi-fhir
+      - keycloak
+    command: python manage.py runserver 0.0.0.0:8000
+    networks:
+      - openehr_network
 
   # Serviço de Chat (Mattermost)
   mattermost:

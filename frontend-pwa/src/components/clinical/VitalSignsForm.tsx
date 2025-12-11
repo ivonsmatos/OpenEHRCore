@@ -190,7 +190,7 @@ export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ encounterId, onS
                         type="number"
                         value={formData.heartRate || ''}
                         onChange={(e) => handleChange('heartRate', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.medium}` }}
+                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
                         placeholder="75"
                     />
                 </div>
@@ -200,7 +200,7 @@ export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ encounterId, onS
                         type="number"
                         value={formData.respiratoryRate || ''}
                         onChange={(e) => handleChange('respiratoryRate', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.medium}` }}
+                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
                         placeholder="16"
                     />
                 </div>
@@ -213,7 +213,7 @@ export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ encounterId, onS
                         step="0.1"
                         value={formData.temperature || ''}
                         onChange={(e) => handleChange('temperature', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.medium}` }}
+                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
                         placeholder="36.5"
                     />
                 </div>
@@ -223,7 +223,7 @@ export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ encounterId, onS
                         type="number"
                         value={formData.spo2 || ''}
                         onChange={(e) => handleChange('spo2', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.medium}` }}
+                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
                         placeholder="98"
                     />
                 </div>
@@ -236,7 +236,7 @@ export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ encounterId, onS
                         step="0.1"
                         value={formData.weight || ''}
                         onChange={(e) => handleChange('weight', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.medium}` }}
+                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
                         placeholder="70.5"
                     />
                 </div>
@@ -246,7 +246,7 @@ export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ encounterId, onS
                         type="number"
                         value={formData.height || ''}
                         onChange={(e) => handleChange('height', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.medium}` }}
+                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
                         placeholder="175"
                     />
                 </div>

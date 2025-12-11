@@ -21,7 +21,7 @@ def get_patient_summary(request, patient_id):
     try:
         # 1. Recuperar dados do paciente via FHIRService
         fhir_service = FHIRService(request.user)
-        patient = fhir_service.get_patient(patient_id)
+        patient = fhir_service.get_patient_by_id(patient_id)
         
         if not patient:
             return Response({"error": "Paciente não encontrado"}, status=status.HTTP_404_NOT_FOUND)

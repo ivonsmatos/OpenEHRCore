@@ -1,16 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../base/Header';
 import Button from '../base/Button';
 import CalendarView from './CalendarView';
+import { AvailabilityManager } from './AvailabilityManager';
 import { useScheduling } from '../../hooks/useScheduling';
 import { colors, spacing } from '../../theme/colors';
 
 const SchedulingWorkspace: React.FC = () => {
     const { slots, fetchSlots, createSchedule, createSlot, loading } = useScheduling();
+    const [activeTab, setActiveTab] = useState<'calendar' | 'availability'>('calendar');
 
     useEffect(() => {
         // Carregar slots ao iniciar
-        // TODO: Passar range de datas baseado na view atual
         fetchSlots();
     }, [fetchSlots]);
 
@@ -55,13 +56,55 @@ const SchedulingWorkspace: React.FC = () => {
             </Header>
 
             <main style={{ maxWidth: '1200px', margin: '0 auto', padding: spacing.lg }}>
-                <CalendarView
-                    events={events}
-                    onEventClick={(info) => alert(`Slot clicado: ${info.event.title}`)}
-                />
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: spacing.lg }}>
+                    <button
+                        onClick={() => setActiveTab('calendar')}
+                        style={{
+                            padding: '10px 20px',
+                            background: activeTab === 'calendar' ? colors.primary.medium : 'white',
+                            color: activeTab === 'calendar' ? 'white' : colors.text.primary,
+                            border: `1px solid ${activeTab === 'calendar' ? colors.primary.medium : colors.border.default}`,
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: 500,
+                            transition: 'all 0.15s'
+                        }}
+                    >
+                        📅 Calendário
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('availability')}
+                        style={{
+                            padding: '10px 20px',
+                            background: activeTab === 'availability' ? colors.primary.medium : 'white',
+                            color: activeTab === 'availability' ? 'white' : colors.text.primary,
+                            border: `1px solid ${activeTab === 'availability' ? colors.primary.medium : colors.border.default}`,
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: 500,
+                            transition: 'all 0.15s'
+                        }}
+                    >
+                        ⏰ Configurar Disponibilidade
+                    </button>
+                </div>
+
+                {activeTab === 'calendar' ? (
+                    <CalendarView
+                        events={events}
+                        onEventClick={(info) => alert(`Slot clicado: ${info.event.title}`)}
+                    />
+                ) : (
+                    <AvailabilityManager
+                        practitionerId="demo-practitioner"
+                        practitionerName="Dr. Demo (Clínico Geral)"
+                    />
+                )}
             </main>
         </div>
     );
 };
 
 export default SchedulingWorkspace;
+

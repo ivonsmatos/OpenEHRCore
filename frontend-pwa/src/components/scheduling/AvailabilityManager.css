@@ -1,0 +1,253 @@
+.availability-manager {
+    padding: 24px;
+}
+
+.am-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.am-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.am-title svg {
+    color: #3b82f6;
+    margin-top: 2px;
+}
+
+.am-title h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.am-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* Days Grid */
+.am-days {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.am-day {
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.am-day.active {
+    border-color: #93c5fd;
+    background: #f0f9ff;
+}
+
+.am-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.day-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #374151;
+}
+
+.add-slot-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.add-slot-btn:hover {
+    background: #2563eb;
+}
+
+/* No Slots */
+.no-slots {
+    padding: 16px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* Day Slots */
+.am-day-slots {
+    padding: 8px;
+}
+
+.slot-config {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 6px;
+}
+
+.slot-config:last-child {
+    margin-bottom: 0;
+}
+
+.slot-times {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.time-input {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #6b7280;
+}
+
+.time-input input[type="time"] {
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.time-input input:focus {
+    border-color: #3b82f6;
+}
+
+.time-separator {
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+.slot-duration {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+}
+
+.slot-duration select {
+    appearance: none;
+    padding: 6px 28px 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    background: white;
+    cursor: pointer;
+    outline: none;
+}
+
+.slot-duration svg {
+    position: absolute;
+    right: 8px;
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.slot-count {
+    font-size: 12px;
+    color: #10b981;
+    font-weight: 600;
+    padding: 4px 8px;
+    background: #dcfce7;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.remove-slot-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+    margin-left: auto;
+}
+
+.remove-slot-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* Summary */
+.am-summary {
+    display: flex;
+    gap: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-label {
+    font-size: 12px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .slot-config {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .slot-times {
+        width: 100%;
+    }
+
+    .slot-duration {
+        flex: 1;
+    }
+
+    .am-summary {
+        flex-direction: column;
+        gap: 16px;
+    }
+}

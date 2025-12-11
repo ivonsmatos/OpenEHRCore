@@ -237,7 +237,7 @@ const ClinicalDocumentWorkspace: React.FC = () => {
                 <div className="flex gap-2">
                     {viewMode === 'list' && (
                         <>
-                            <Button variant="secondary" onClick={fetchDocuments} title="Recarregar Lista">
+                            <Button variant="secondary" onClick={fetchDocuments}>
                                 🔄
                             </Button>
                             <Button onClick={() => setViewMode('create')}>

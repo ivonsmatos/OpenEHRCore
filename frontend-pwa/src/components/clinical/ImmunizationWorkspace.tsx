@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../base/Card';
@@ -18,7 +18,6 @@ interface Immunization {
 const ImmunizationWorkspace = () => {
     const { id: patientId } = useParams();
     const { token } = useAuth();
-    const navigate = useNavigate();
     const [immunizations, setImmunizations] = useState<Immunization[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);

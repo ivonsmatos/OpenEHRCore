@@ -12,6 +12,15 @@ export interface Patient {
     phone?: string;
 }
 
+export interface PatientSearchFilters {
+    name?: string;
+    identifier?: string;
+    gender?: string;
+    birthdate?: string;
+    birthdateGe?: string;
+    birthdateLe?: string;
+}
+
 export const usePatients = () => {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(false);
@@ -19,30 +28,41 @@ export const usePatients = () => {
     const [pagination, setPagination] = useState({
         current_page: 1,
         total_count: 0,
-        total_pages: 1
+        total_pages: 1,
+        page_size: 20
     });
+    const [currentFilters, setCurrentFilters] = useState<PatientSearchFilters>({});
 
-    const fetchPatients = useCallback(async (page = 1, search = '') => {
+    const fetchPatients = useCallback(async (page = 1, pageSize = 20, filters: PatientSearchFilters = {}) => {
         setLoading(true);
         setError(null);
+        setCurrentFilters(filters);
         try {
-            // Use new list endpoint that supports filtering
             const params = new URLSearchParams();
-            params.append('page', page.toString());
-            if (search) params.append('name', search);
+            params.append('_count', pageSize.toString());
+            params.append('_getpagesoffset', ((page - 1) * pageSize).toString());
 
-            const response = await axios.get(`${API_URL}/patients/list/`, { params });
+            // Add search filters
+            if (filters.name) params.append('name', filters.name);
+            if (filters.identifier) params.append('identifier', filters.identifier);
+            if (filters.gender) params.append('gender', filters.gender);
+            if (filters.birthdate) params.append('birthdate', filters.birthdate);
+            if (filters.birthdateGe) params.append('birthdate', `ge${filters.birthdateGe}`);
+            if (filters.birthdateLe) params.append('birthdate', `le${filters.birthdateLe}`);
 
-            // Check if backend returns paginated response
+            // Use advanced search endpoint
+            const response = await axios.get(`${API_URL}/patients/search/`, { params });
+
             if (response.data.results) {
                 setPatients(response.data.results);
+                const total = response.data.total || response.data.results.length;
                 setPagination({
-                    current_page: response.data.current_page || page,
-                    total_count: response.data.count || 0,
-                    total_pages: response.data.total_pages || Math.ceil((response.data.count || 0) / (response.data.page_size || 10))
+                    current_page: page,
+                    total_count: total,
+                    total_pages: Math.ceil(total / pageSize),
+                    page_size: pageSize
                 });
             } else {
-                // Fallback for flat list
                 setPatients(response.data);
             }
         } catch (err) {
@@ -55,14 +75,24 @@ export const usePatients = () => {
 
     const nextPage = () => {
         if (pagination.current_page < pagination.total_pages) {
-            fetchPatients(pagination.current_page + 1);
+            fetchPatients(pagination.current_page + 1, pagination.page_size, currentFilters);
         }
     };
 
     const prevPage = () => {
         if (pagination.current_page > 1) {
-            fetchPatients(pagination.current_page - 1);
+            fetchPatients(pagination.current_page - 1, pagination.page_size, currentFilters);
         }
+    };
+
+    const goToPage = (page: number) => {
+        if (page >= 1 && page <= pagination.total_pages) {
+            fetchPatients(page, pagination.page_size, currentFilters);
+        }
+    };
+
+    const setPageSize = (size: number) => {
+        fetchPatients(1, size, currentFilters);
     };
 
     const createPatient = async (data: Partial<Patient>) => {
@@ -135,6 +165,8 @@ export const usePatients = () => {
         fetchPatients,
         nextPage,
         prevPage,
+        goToPage,
+        setPageSize,
         createPatient,
         updatePatient,
         deletePatient,

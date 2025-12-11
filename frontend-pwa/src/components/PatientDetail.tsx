@@ -16,6 +16,9 @@ import ImmunizationWorkspace from './clinical/ImmunizationWorkspace';
 import DiagnosticResultWorkspace from './clinical/DiagnosticResultWorkspace';
 import AuditLogWorkspace from './clinical/AuditLogWorkspace';
 import AICopilot from './clinical/AICopilot';
+import { PatientTimeline } from './clinical/PatientTimeline';
+import { VitalSignsChart } from './clinical/VitalSignsChart';
+import { MedicationHistory } from './clinical/MedicationHistory';
 import {
   FHIRPatient,
   getPatientSummary,
@@ -46,7 +49,7 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
   const { patient, loading: propLoading, error: propError, onEdit } = props;
 
   // State for view switching
-  const [view, setView] = useState<'overview' | 'clinical' | 'immunization' | 'diagnostic' | 'audit'>('overview');
+  const [view, setView] = useState<'overview' | 'clinical' | 'immunization' | 'diagnostic' | 'audit' | 'timeline' | 'vitals-chart' | 'medications'>('overview');
 
   // Hook para buscar dados
   const { getPatient, deletePatient, loading: hookLoading, error: hookError } = usePatients();
@@ -298,6 +301,15 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
                       <Button variant="secondary" onClick={() => setView('diagnostic')}>
                         📑 Resultados de Exames
                       </Button>
+                      <Button variant="secondary" onClick={() => setView('timeline')}>
+                        📋 Timeline Unificada
+                      </Button>
+                      <Button variant="secondary" onClick={() => setView('vitals-chart')}>
+                        📈 Gráficos Vitais
+                      </Button>
+                      <Button variant="secondary" onClick={() => setView('medications')}>
+                        💊 Medicamentos
+                      </Button>
                     </div>
                   </Card>
                 </div>
@@ -367,6 +379,33 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
               ← Voltar para Visão Geral
             </Button>
             {mockPatient.id && <AuditLogWorkspace patientId={mockPatient.id} />}
+          </div>
+        )}
+
+        {view === 'timeline' && (
+          <div className="mt-4">
+            <Button variant="ghost" onClick={() => setView('overview')} className="mb-4">
+              ← Voltar para Visão Geral
+            </Button>
+            <PatientTimeline patientId={mockPatient.id} patientName={summary.name} />
+          </div>
+        )}
+
+        {view === 'vitals-chart' && (
+          <div className="mt-4">
+            <Button variant="ghost" onClick={() => setView('overview')} className="mb-4">
+              ← Voltar para Visão Geral
+            </Button>
+            <VitalSignsChart patientId={mockPatient.id} />
+          </div>
+        )}
+
+        {view === 'medications' && (
+          <div className="mt-4">
+            <Button variant="ghost" onClick={() => setView('overview')} className="mb-4">
+              ← Voltar para Visão Geral
+            </Button>
+            <MedicationHistory patientId={mockPatient.id} />
           </div>
         )}
 

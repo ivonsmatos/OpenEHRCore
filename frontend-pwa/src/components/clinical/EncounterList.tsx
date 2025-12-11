@@ -57,7 +57,7 @@ const EncounterList: React.FC<EncounterListProps> = ({ patientId, onStartEncount
                                     <span style={{
                                         display: 'inline-block',
                                         padding: '2px 8px',
-                                        borderRadius: borderRadius.sm,
+                                        borderRadius: borderRadius.soft,
                                         backgroundColor: encounter.status === 'finished' ? colors.alert.success : colors.alert.warning,
                                         color: '#FFFFFF', // Texto branco para contraste
                                         fontSize: '0.75rem',

@@ -17,6 +17,8 @@ import VisitorsWorkspace from './components/workspaces/VisitorsWorkspace';
 import ChatWorkspace from './components/workspaces/ChatWorkspace';
 import BedManagementWorkspace from './components/workspaces/BedManagementWorkspace';
 import PractitionerWorkspace from './components/workspaces/PractitionerWorkspace';
+import { OrganizationWorkspace } from './components/workspaces/OrganizationWorkspace';
+import { SettingsWorkspace } from './components/settings/SettingsWorkspace';
 import AppShell from './components/base/AppShell';
 import { spacing } from './theme/colors';
 
@@ -41,6 +43,13 @@ const ProtectedRoutes: React.FC = () => {
                 <Route path="/visitors" element={<VisitorsWorkspace />} />
                 <Route path="/chat" element={<ChatWorkspace />} />
                 <Route path="/ipd" element={<BedManagementWorkspace />} />
+                <Route path="/organizations" element={<OrganizationWorkspace />} />
+                <Route path="/profile" element={<SettingsWorkspace section="profile" />} />
+                <Route path="/settings/profile" element={<SettingsWorkspace section="profile" />} />
+                <Route path="/settings/security" element={<SettingsWorkspace section="security" />} />
+                <Route path="/settings/notifications" element={<SettingsWorkspace section="notifications" />} />
+                <Route path="/settings/preferences" element={<SettingsWorkspace section="preferences" />} />
+                <Route path="/help" element={<SettingsWorkspace section="profile" />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </AppShell>

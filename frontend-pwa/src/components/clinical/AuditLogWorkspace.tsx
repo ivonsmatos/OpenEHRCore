@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Card from "../base/Card";
 import { colors, spacing } from "../../theme/colors";
-import { ShieldCheck, History } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 interface AuditLogWorkspaceProps {
     patientId: string;

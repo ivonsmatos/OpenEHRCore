@@ -142,13 +142,17 @@ def create_practitioner(request):
 @permission_classes([IsAuthenticated])
 def list_practitioners(request):
     """
-    List all practitioners
+    List/search practitioners with FHIR R4 compliant parameters
     
-    GET /api/v1/practitioners/
+    GET /api/v1/practitioners/list/
     
     Query params:
-    - name: Filter by name
+    - name: Filter by name (partial match)
+    - identifier: Filter by CRM or other identifier
+    - specialty: Filter by specialty code (SNOMED CT)
     - active: Filter by active status (true/false)
+    - _count: Number of results per page (default: 20, max: 100)
+    - _getpagesoffset: Pagination offset
     """
     try:
         fhir = FHIRService()
@@ -157,14 +161,43 @@ def list_practitioners(request):
         params = {}
         if request.GET.get('name'):
             params['name'] = request.GET['name']
+        if request.GET.get('identifier'):
+            params['identifier'] = request.GET['identifier']
         if request.GET.get('active'):
             params['active'] = request.GET['active']
         
+        # Pagination
+        count = min(int(request.GET.get('_count', 20)), 100)
+        offset = int(request.GET.get('_getpagesoffset', 0))
+        params['_count'] = str(count)
+        if offset > 0:
+            params['_getpagesoffset'] = str(offset)
+        
         practitioners = fhir.search_resources('Practitioner', params)
         
+        # If specialty filter provided, we need to search PractitionerRole
+        specialty = request.GET.get('specialty')
+        if specialty:
+            # Get PractitionerRoles with this specialty
+            role_params = {'specialty': specialty}
+            roles = fhir.search_resources('PractitionerRole', role_params)
+            
+            # Extract practitioner IDs from roles
+            practitioner_ids = set()
+            for role in roles:
+                if role.get('practitioner', {}).get('reference'):
+                    ref = role['practitioner']['reference']
+                    prac_id = ref.split('/')[-1] if '/' in ref else ref
+                    practitioner_ids.add(prac_id)
+            
+            # Filter practitioners by matching IDs
+            practitioners = [p for p in practitioners if p.get('id') in practitioner_ids]
+        
         return Response({
-            "count": len(practitioners),
-            "practitioners": practitioners
+            "total": len(practitioners),
+            "count": count,
+            "offset": offset,
+            "results": practitioners
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
@@ -292,6 +325,101 @@ def create_practitioner_role(request):
         
     except Exception as e:
         logger.error(f"Error creating practitioner role: {e}")
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def list_specialties(request):
+    """
+    List all medical specialties for practitioners
+    
+    GET /api/v1/practitioners/specialties/
+    
+    Returns SNOMED CT coded specialties with Brazilian CBO codes
+    
+    Response:
+    {
+        "specialties": [
+            {
+                "code": "394579002",
+                "display": "Cardiologia",
+                "display_en": "Cardiology",
+                "cbo": "225120"
+            },
+            ...
+        ]
+    }
+    """
+    try:
+        from .validators import get_all_specialties
+        
+        specialties = get_all_specialties()
+        
+        # Sort by display name
+        specialties.sort(key=lambda x: x['display'])
+        
+        return Response({
+            "specialties": specialties,
+            "total": len(specialties)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error listing specialties: {e}")
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def validate_identifier(request):
+    """
+    Validate a Brazilian professional identifier (CRM, CRF, COREN, CRO)
+    
+    POST /api/v1/practitioners/validate-identifier/
+    
+    Body:
+    {
+        "identifier": "CRM-SP-123456"
+    }
+    
+    Response:
+    {
+        "valid": true,
+        "type": "CRM",
+        "formatted": "CRM-SP-123456",
+        "error": null
+    }
+    """
+    try:
+        from .validators import validate_professional_identifier, format_identifier
+        
+        identifier = request.data.get('identifier', '')
+        
+        if not identifier:
+            return Response(
+                {"error": "Campo 'identifier' é obrigatório"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        is_valid, id_type, error = validate_professional_identifier(identifier)
+        
+        return Response({
+            "valid": is_valid,
+            "type": id_type,
+            "formatted": format_identifier(identifier) if is_valid else None,
+            "error": error
+        })
+        
+    except Exception as e:
+        logger.error(f"Error validating identifier: {e}")
         return Response(
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR

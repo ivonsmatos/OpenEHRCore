@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { usePatients, Patient } from '../../hooks/usePatients';
+import { usePatients } from '../../hooks/usePatients';
 import { colors, spacing, borderRadius } from '../../theme/colors';
 import Card from '../base/Card';
 import Button from '../base/Button';
-import Header from '../base/Header';
 import { FHIRPatient, getPatientSummary } from '../../utils/fhirParser';
 
 const PatientForm: React.FC = () => {

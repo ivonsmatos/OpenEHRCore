@@ -13,3 +13,4 @@ reportlab==4.0.7
 Markdown==3.4.3
 ctransformers>=0.2.27
 tqdm>=4.66.0
+PyJWT==2.8.0

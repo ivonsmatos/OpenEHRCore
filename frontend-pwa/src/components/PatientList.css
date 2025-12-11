@@ -1,0 +1,127 @@
+/* PatientList.css - Estilos para lista de pacientes */
+
+.patient-list {
+    padding: var(--spacing-xl, 1.5rem);
+}
+
+/* Estado de carregamento */
+.patient-list__loading {
+    text-align: center;
+    padding: var(--spacing-xl, 1.5rem);
+}
+
+.patient-list__loading-spinner {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-md, 1rem);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Header com busca */
+.patient-list__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md, 1rem);
+    gap: var(--spacing-md, 1rem);
+    flex-wrap: wrap;
+}
+
+.patient-list__search-wrapper {
+    flex: 1;
+    min-width: 300px;
+}
+
+/* Mensagem de erro */
+.patient-list__error {
+    background-color: rgba(220, 53, 69, 0.08);
+    border: 1px solid var(--color-alert-critical, #dc3545);
+    color: var(--color-alert-critical, #dc3545);
+    padding: var(--spacing-md, 1rem);
+    border-radius: var(--border-radius-base, 8px);
+    margin-bottom: var(--spacing-lg, 1.25rem);
+}
+
+/* Estado vazio */
+.patient-list__empty {
+    text-align: center;
+    padding: var(--spacing-xl, 1.5rem);
+    color: var(--color-text-tertiary, #94a3b8);
+}
+
+.patient-list__empty-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md, 1rem);
+}
+
+.patient-list__empty-title {
+    font-size: 1.125rem;
+    margin-bottom: var(--spacing-sm, 0.5rem);
+}
+
+.patient-list__empty-subtitle {
+    font-size: 0.875rem;
+}
+
+/* Grid de pacientes */
+.patient-list__grid {
+    display: grid;
+    gap: var(--spacing-md, 1rem);
+}
+
+/* Card do paciente */
+.patient-card {
+    cursor: pointer;
+    transition: all 200ms ease;
+}
+
+.patient-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.patient-card__content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.patient-card__name {
+    margin: 0;
+    margin-bottom: var(--spacing-xs, 0.25rem);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #0f172a);
+}
+
+.patient-card__info {
+    display: flex;
+    gap: var(--spacing-md, 1rem);
+    font-size: 0.875rem;
+    color: var(--color-text-secondary, #64748b);
+}
+
+.patient-card__email {
+    margin-top: var(--spacing-xs, 0.25rem);
+    font-size: 0.875rem;
+    color: var(--color-text-tertiary, #94a3b8);
+}
+
+.patient-card__arrow {
+    font-size: 1.5rem;
+    color: var(--color-primary-medium, #3b82f6);
+}
+
+/* Paginação */
+.patient-list__pagination {
+    margin-top: var(--spacing-lg, 1.25rem);
+}

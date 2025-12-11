@@ -2,7 +2,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report
 
 router = DefaultRouter()
 router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
@@ -123,12 +123,38 @@ urlpatterns = [
     # Sprint 18: Practitioner Management (FHIR Compliance)
     path('practitioners/', views_practitioners.create_practitioner, name='create_practitioner'),
     path('practitioners/list/', views_practitioners.list_practitioners, name='list_practitioners'),
+    path('practitioners/specialties/', views_practitioners.list_specialties, name='list_specialties'),  # Sprint 21
+    path('practitioners/validate-identifier/', views_practitioners.validate_identifier, name='validate_identifier'),  # Sprint 21
     path('practitioners/<str:practitioner_id>/', views_practitioners.get_practitioner, name='get_practitioner'),
     path('practitioner-roles/', views_practitioners.create_practitioner_role, name='create_practitioner_role'),
     
     # Sprint 24: Consent & Privacy (LGPD)
     path('consents/', views_consent.create_consent, name='create_consent'),
     path('consents/list/', views_consent.list_consents, name='list_consents'),
+    
+    # Sprint 21: Organization (Estrutura Organizacional)
+    path('organizations/', views_organization.manage_organizations, name='manage_organizations'),
+    path('organizations/<str:organization_id>/', views_organization.organization_detail, name='organization_detail'),
+    path('organizations/<str:organization_id>/hierarchy/', views_organization.organization_hierarchy, name='organization_hierarchy'),
+    
+    # Sprint 21: Procedure (Procedimentos Médicos)
+    path('procedures/', views_procedure.manage_procedures, name='manage_procedures'),
+    path('procedures/<str:procedure_id>/', views_procedure.procedure_detail, name='procedure_detail'),
+    path('patients/<str:patient_id>/procedures/', views_procedure.patient_procedures, name='patient_procedures'),
+    
+    # Sprint 21: MedicationRequest Aprimorado (Prescrições)
+    path('medication-requests/', views_medication.manage_medication_requests, name='manage_medication_requests'),
+    path('medication-requests/<str:medication_request_id>/', views_medication.medication_request_detail, name='medication_request_detail'),
+    path('patients/<str:patient_id>/medications/', views_medication.patient_medications, name='patient_medications'),
+    
+    # Sprint 21: HealthcareService (Serviços de Saúde)
+    path('healthcare-services/', views_healthcare_service.manage_healthcare_services, name='manage_healthcare_services'),
+    path('healthcare-services/<str:service_id>/', views_healthcare_service.healthcare_service_detail, name='healthcare_service_detail'),
+    path('organizations/<str:organization_id>/services/', views_healthcare_service.organization_services, name='organization_services'),
+    
+    # Sprint 21: DiagnosticReport CRUD Completo (Laudos/Exames)
+    path('diagnostic-reports-v2/', views_diagnostic_report.manage_diagnostic_reports, name='manage_diagnostic_reports_v2'),
+    path('diagnostic-reports-v2/<str:report_id>/', views_diagnostic_report.diagnostic_report_detail, name='diagnostic_report_detail_v2'),
 ]
 
 
