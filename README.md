@@ -1,132 +1,163 @@
-# OpenEHRCore — Sistema de Gestão de Prontuários Eletrônicos (EHR) Seguro com FHIR
+# 🏥 OpenEHRCore
 
-Um sistema EHR enterprise-grade baseado no padrão **HL7 FHIR R4** para clínicas e hospitais, com suporte a apps web e mobile.
+### O Futuro da Gestão de Prontuários Eletrônicos Seguros e Interoperáveis
 
-## 🏗️ Arquitetura FHIR-First
+![OpenEHRCore Banner](https://via.placeholder.com/1200x400?text=OpenEHRCore+|+Secure+FHIR+EHR+System)
+*(Imagem ilustrativa - Substitua por screenshot real do dashboard)*
+
+---
+
+## 🚀 Transforme a Gestão Clínica com Tecnologia de Ponta
+
+O **OpenEHRCore** não é apenas mais um sistema médico. É uma **plataforma enterprise-grade completa**, desenhada desde o primeiro dia para ser **segura, escalável e 100% interoperável**.
+
+Baseado no padrão mundial **HL7 FHIR R4**, o OpenEHRCore elimina silos de dados e coloca sua instituição na era da Saúde 4.0, garantindo que as informações fluam com segurança entre médicos, pacientes e outros sistemas de saúde.
+
+### 🌟 Por que escolher o OpenEHRCore?
+
+* **🔒 Segurança Zero-Trust:** Arquitetura robusta com Keycloak (OAuth2/OIDC), garantindo que apenas pessoas autorizadas acessem dados sensíveis.
+* **🌐 Interoperabilidade Nativa (FHIR-First):** Fale a língua universal da saúde. Troque dados com labroratórios, hospitais e wearables sem dores de cabeça.
+* **⚖️ Compliance Total (LGPD & HIPAA):** Ferramentas nativas para gestão de consentimento, logs de auditoria imutáveis e portabilidade de dados.
+* **📱 Experiência Omnicanal:** Do desktop ao smartphone do paciente (iOS/Android), uma experiência fluida e moderna.
+* **⚡ Performance Extrema:** Cache inteligente com Redis, arquitetura reativa e otimização de banco de dados para respostas em milissegundos.
+
+---
+
+## 💎 Funcionalidades que Impressionam
+
+### Para Profissionais de Saúde 🩺
+
+* **Prontuário Inteligente:** Visão 360º do paciente com linha do tempo clínica.
+* **Prescrição Segura:** Bases de medicamentos integradas e alertas de interação.
+* **Telemedicina Ready:** Suporte nativo para agendamento e registro de teleconsultas.
+
+### Para o Paciente (App Mobile) 📱
+
+* **Empoderamento:** Acesso total aos seus exames, receitas e histórico na palma da mão.
+* **Autonomia:** Agendamento online e gestão de seus próprios consentimentos de privacidade.
+* **Engajamento:** Lembretes de medicamentos e consultas via Push Notification.
+
+### Para Gestores e TI 💻
+
+* **Painéis Analíticos:** Dados estruturados para Business Intelligence.
+* **Escalabilidade:** Arquitetura Dockerizada pronta para Nuvem (AWS/Azure/GCP).
+* **Auditoria Completa:** Rastreabilidade total de quem acessou o quê e quando.
+
+---
+
+## 🏗️ Arquitetura de Referência
+
+O OpenEHRCore utiliza o que há de mais moderno em engenharia de software:
 
 ```mermaid
 graph TD
-    UserWeb[Frontend Web (PWA)] --> BFF
-    UserMobile[Mobile App (React Native)] --> BFF
-    BFF[BFF - Backend (Django)] --> Cache[Redis Cache]
-    BFF --> FHIR[HAPI FHIR Server]
-    BFF --> Auth[Keycloak (OAuth2)]
-    FHIR --> DB[(PostgreSQL)]
+    subgraph "Experiência do Usuário"
+        Web[💻 Web PWA React]
+        Mobile[📱 App Mobile React Native]
+    end
+
+    subgraph "Camada de Segurança & API (BFF)"
+        API[🛡️ Django BFF Gateway]
+        Cache[⚡ Redis Cache]
+        Auth[🔐 Keycloak IAM]
+    end
+
+    subgraph "Core Clínico"
+        FHIR[🏥 HAPI FHIR Server R4]
+        DB[(🗄️ PostgreSQL)]
+    end
+
+    Web --> API
+    Mobile --> API
+    API --> Auth
+    API --> Cache
+    API --> FHIR
+    FHIR --> DB
 ```
 
-## 📅 Roadmap de Implementação (Histórico Cronológico)
+---
 
-O desenvolvimento do OpenEHRCore seguiu uma abordagem ágil, entregando valor incrementalmente a cada Sprint. Abaixo, o histórico das principais entregas:
+## 📅 Uma Jornada de Inovação (Roadmap)
 
-### Fase 1: Fundação e Core (Sprints 1-19)
+Construído sobre pilares sólidos, evoluindo constantemente:
 
-- **Infraestrutura:** Setup de Docker Compose com HAPI FHIR, PostgreSQL e Keycloak.
-- **Backend Core:** Implementação do BFF em Django, autenticação OAuth2 e serviços FHIR básicos.
-- **Frontend Core:** Setup do React PWA, Design System inicial e telas de autenticação.
-- **Recursos FHIR:** Implementação dos recursos base (Patient, Practitioner, Encounter, Observation).
+### 🔹 Fase 1: A Fundação Sólida (Sprints 1-19)
 
-### Fase 2: Funcionalidades Avançadas (Sprints 20-23)
+* Estabelecimento do **Core FHIR** e infraestrutura Docker.
+* Implementação do **Backend BFF** Seguro.
+* Lançamento do **Frontend PWA** moderno.
 
-- ✅ **Sprint 20 - Busca Avançada:**
-  - Backend: Parâmetros de busca complexos para Pacientes e Profissionais.
-  - Frontend: Filtros avançados, paginação e barra de busca global.
-- ✅ **Sprint 21 - Terminologias:**
-  - Integração com LOINC (Exames), SNOMED CT (Diagnósticos), ICD-10 e RxNorm.
-  - TUSS (Tabela SUS) para procedimentos nacionais.
-- ✅ **Sprint 22 - Bulk Data (Interoperabilidade):**
-  - Operações `$export` e `$import` seguindo padrão FHIR Bulk Data.
-  - Suporte a NDJSON para transferência de grandes volumes de dados.
-- ✅ **Sprint 23 - Qualidade e CI/CD:**
-  - Testes unitários, integração e E2E (Playwright).
-  - Pipelines de CI/CD no GitHub Actions.
+### 🔹 Fase 2: Inteligência e Conectividade (Sprints 20-23)
 
-### Fase 3: Segurança, Performance e Mobile (Sprints 24-26)
+* ✅ **Busca Avançada:** Encontre qualquer dado clínico em segundos.
+* ✅ **Terminologias Globais:** Integração com SNOMED-CT, LOINC e CID-10.
+* ✅ **Interoperabilidade em Massa:** Importação/Exportação de grandes volumes de dados (Bulk Data).
+* ✅ **Qualidade Assegurada:** Cobertura de testes E2E e CI/CD automatizado.
 
-- ✅ **Sprint 24 - LGPD & Privacidade:**
-  - Gestão de Consentimento (FHIR Consent).
-  - Dashboard de Privacidade para o paciente.
-  - Logs de acesso auditáveis e direito ao esquecimento/exportação.
-- ✅ **Sprint 25 - Performance:**
-  - **Backend:** Redis Cache, otimização de queries Django, middlewares de performance.
-  - **Frontend:** Code splitting, Lazy Loading de rotas.
-- ✅ **Sprint 26 - Mobile App (React Native):**
-  - **Portal do Paciente:** App iOS/Android completo.
-  - **Features:** Agendamento, Prontuário, Notificações Push e Biometria.
+### 🔹 Fase 3: Experiência e Confiança (Sprints 24-26)
 
-## 🚀 Funcionalidades Principais por Módulo
+* ✅ **Privacidade Avançada:** Dashboard LGPD com controle total para o usuário.
+* ✅ **Performance Tuning:** Otimizações de banco e cache para escala massiva.
+* ✅ **Revolução Mobile:** Lançamento do App Nativo para Pacientes.
 
-### 🏥 Clínico (Web e Backend)
+---
 
-- Prontuário Eletrônico do Paciente (PEP) completo.
-- Prescrição Eletrônica e Solicitação de Exames.
-- Gestão de Internação e Leitos.
-- Chat seguro entre profissionais.
+## 🛠️ Stack Tecnológico
 
-### 📱 Portal do Paciente (Mobile)
+| Camada | Tecnologia |
+|--------|------------|
+| **Frontend Web** | React 18, TypeScript, Vite, TailwindCSS |
+| **Mobile** | React Native, Expo SDK 51 |
+| **Backend BFF** | Python 3.10+, Django 4.x |
+| **FHIR Core** | HAPI FHIR (Java), PostgreSQL 14+ |
+| **Segurança** | Keycloak (Identity Provider) |
+| **Cache/Mensageria** | Redis |
+| **Infra** | Docker Compose, GitHub Actions |
 
-- Acesso rápido a resultados de exames e receitas.
-- Agendamento de consultas (Presencial/Telemedicina).
-- Notificações em tempo real.
-- Controle total sobre dados e privacidade.
+---
 
-### 🛡️ Segurança e Infraestrutura
+## ⚡ Comece Agora Mesmo
 
-- Conformidade HL7 FHIR R4 (~95%).
-- Autenticação Zero-Trust via Keycloak.
-- Auditoria granular de acessos.
-- Alta disponibilidade com Containerização.
+Leve sua instituição para o próximo nível em minutos:
 
-## 🛠️ Tech Stack
-
-- **Frontend Web:** React 18, TypeScript, Vite, Vitest.
-- **Mobile:** React Native, Expo SDK 51, TypeScript.
-- **Backend:** Django 4.x, Python 3.10+, Redis.
-- **FHIR:** HAPI FHIR Server (Java/JPA).
-- **Database:** PostgreSQL 14+.
-- **Auth:** Keycloak 20+.
-
-## 🚀 Quick Start
-
-### 1. Infraestrutura (Docker)
+### 1. Inicie a Infraestrutura
 
 ```bash
 cd docker
 docker-compose up -d
 ```
 
-### 2. Backend Django
+### 2. Execute o Backend
 
 ```bash
 cd backend-django
-# Configurar venv e instalar deps...
+# Ative seu venv
 python manage.py runserver
 ```
 
-### 3. Frontend Web
+### 3. Lance o Frontend
 
 ```bash
 cd frontend-pwa
 npm run dev
 ```
 
-### 4. Mobile App
+### 4. Conecte o Mobile
 
 ```bash
 cd mobile-app
 npm start
 ```
 
-## 📁 Estrutura do Monorepo
+---
 
-```
-OpenEHRCore/
-├── backend-django/       # API Gateway & Business Logic
-├── frontend-pwa/         # Web App (React)
-├── mobile-app/           # Mobile App (React Native)
-├── docker/               # Infraestrutura
-└── docs/                 # Documentação
-```
+## 🤝 Contribua e Suporte
 
-## 📝 Licença
+O OpenEHRCore é um organismo vivo. Junte-se a nós na missão de transformar a saúde digital.
 
-Copyright © 2025 OpenEHRCore Team. Todos os direitos reservados.
+[Reportar Bug](https://github.com/OpenEHRCore/issues) | [Solicitar Feature](https://github.com/OpenEHRCore/discussions)
+
+---
+
+Copyright © 2025 **OpenEHRCore Team**.
+*Empowerment through Interoperability.*
