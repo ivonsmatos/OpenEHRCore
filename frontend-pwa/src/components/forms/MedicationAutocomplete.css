@@ -1,0 +1,263 @@
+/**
+ * Sprint 21: MedicationAutocomplete Styles
+ */
+
+.medication-autocomplete {
+    position: relative;
+    width: 100%;
+}
+
+.medication-autocomplete__label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary, #1a1a2e);
+    font-size: 0.875rem;
+}
+
+.medication-autocomplete__required {
+    color: var(--color-error, #D91A1A);
+    margin-left: 0.25rem;
+}
+
+.medication-autocomplete__input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.medication-autocomplete__input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: var(--background-paper, #ffffff);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.medication-autocomplete__input:focus {
+    outline: none;
+    border-color: var(--color-primary, #0468BF);
+    box-shadow: 0 0 0 3px rgba(4, 104, 191, 0.15);
+}
+
+.medication-autocomplete__input--error {
+    border-color: var(--color-error, #D91A1A);
+}
+
+.medication-autocomplete__input:disabled {
+    background-color: var(--background-disabled, #f5f5f5);
+    cursor: not-allowed;
+}
+
+.medication-autocomplete__spinner {
+    position: absolute;
+    right: 0.75rem;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--border-color, #e0e0e0);
+    border-top-color: var(--color-primary, #0468BF);
+    border-radius: 50%;
+    animation: medication-spin 0.8s linear infinite;
+}
+
+@keyframes medication-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.medication-autocomplete__clear {
+    position: absolute;
+    right: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: none;
+    background: var(--background-hover, #f0f0f0);
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary, #666);
+    transition: background-color 0.2s ease;
+}
+
+.medication-autocomplete__clear:hover {
+    background: var(--background-active, #e0e0e0);
+    color: var(--text-primary, #1a1a2e);
+}
+
+/* Dropdown */
+.medication-autocomplete__dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    padding: 0;
+    list-style: none;
+    background: var(--background-paper, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.medication-autocomplete__option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-light, #f0f0f0);
+    transition: background-color 0.15s ease;
+}
+
+.medication-autocomplete__option:last-child {
+    border-bottom: none;
+}
+
+.medication-autocomplete__option:hover {
+    background-color: var(--background-hover, #f5f8ff);
+}
+
+.medication-autocomplete__option-name {
+    display: block;
+    font-weight: 500;
+    color: var(--text-primary, #1a1a2e);
+    margin-bottom: 0.25rem;
+}
+
+.medication-autocomplete__option-code {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: var(--text-secondary, #666);
+    background: var(--background-subtle, #f0f0f0);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    margin-right: 0.5rem;
+}
+
+.medication-autocomplete__option-type {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: var(--color-primary, #0468BF);
+    background: var(--color-primary-light, #e8f4fc);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+}
+
+.medication-autocomplete__no-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    padding: 1rem;
+    background: var(--background-paper, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    text-align: center;
+    color: var(--text-secondary, #666);
+    font-size: 0.875rem;
+}
+
+.medication-autocomplete__error {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--color-error, #D91A1A);
+    font-size: 0.75rem;
+}
+
+/* Interaction Warning */
+.medication-autocomplete__warning {
+    margin-top: 0.75rem;
+    padding: 1rem;
+    background: var(--color-warning-bg, #fff8e6);
+    border: 1px solid var(--color-warning, #f5a623);
+    border-radius: 8px;
+}
+
+.medication-autocomplete__warning-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.medication-autocomplete__warning-icon {
+    font-size: 1.25rem;
+}
+
+.medication-autocomplete__warning-close {
+    margin-left: auto;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: none;
+    background: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: var(--text-secondary, #666);
+}
+
+.medication-autocomplete__interactions {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.medication-autocomplete__interaction {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.medication-autocomplete__interaction:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.medication-autocomplete__severity {
+    display: inline-block;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    margin-right: 0.5rem;
+}
+
+.medication-autocomplete__severity--high {
+    background: var(--color-error, #D91A1A);
+    color: white;
+}
+
+.medication-autocomplete__severity--moderate {
+    background: var(--color-warning, #f5a623);
+    color: white;
+}
+
+.medication-autocomplete__severity--low {
+    background: var(--color-info, #2196f3);
+    color: white;
+}
+
+.medication-autocomplete__interaction-drugs {
+    font-weight: 500;
+    color: var(--text-primary, #1a1a2e);
+}
+
+.medication-autocomplete__interaction-desc {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary, #666);
+    line-height: 1.4;
+}
+
+.medication-autocomplete__checking {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary, #666);
+    font-style: italic;
+}

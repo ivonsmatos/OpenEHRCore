@@ -231,3 +231,84 @@ def search_conditions(request):
     except Exception as e:
         logger.error(f"Error searching conditions: {str(e)}")
         return Response({"error": "Erro ao buscar condições"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def search_practitioners(request):
+    """
+    Advanced practitioner search with FHIR R4 compliant parameters.
+    
+    GET /api/v1/practitioners/search/
+    
+    Query Parameters:
+        - name: Filter by practitioner name (partial match)
+        - identifier: Filter by identifier (e.g., CRM number)
+        - specialty: Filter by specialty code
+        - active: Filter by active status (true/false)
+        - organization: Filter by organization ID
+        - _count: Number of results per page (default: 20, max: 100)
+        - _getpagesoffset: Pagination offset
+    
+    Examples:
+        /api/v1/practitioners/search/?name=Silva
+        /api/v1/practitioners/search/?identifier=CRM12345
+        /api/v1/practitioners/search/?specialty=cardiology
+        /api/v1/practitioners/search/?active=true
+    """
+    try:
+        fhir_service = FHIRService(request.user)
+        params = {}
+        
+        # Name filter (partial match)
+        if request.query_params.get('name'):
+            params['name'] = request.query_params['name']
+        
+        # Identifier filter (CRM, CPF, etc.)
+        if request.query_params.get('identifier'):
+            params['identifier'] = request.query_params['identifier']
+        
+        # Specialty filter (searches in PractitionerRole)
+        if request.query_params.get('specialty'):
+            params['specialty'] = request.query_params['specialty']
+        
+        # Active status filter
+        if request.query_params.get('active'):
+            active_val = request.query_params['active'].lower()
+            if active_val in ['true', 'false']:
+                params['active'] = active_val
+            else:
+                return Response({
+                    "error": "Invalid active value. Must be 'true' or 'false'"
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Organization filter
+        if request.query_params.get('organization'):
+            params['organization'] = request.query_params['organization']
+        
+        # Pagination
+        count = min(int(request.query_params.get('_count', 20)), 100)
+        offset = int(request.query_params.get('_getpagesoffset', 0))
+        params['_count'] = str(count)
+        if offset > 0:
+            params['_getpagesoffset'] = str(offset)
+        
+        # Execute search
+        results = fhir_service.search_resources('Practitioner', params)
+        
+        return Response({
+            "total": len(results),
+            "count": count,
+            "offset": offset,
+            "results": results
+        }, status=status.HTTP_200_OK)
+        
+    except ValueError as e:
+        return Response({"error": f"Invalid parameter: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+    except FHIRServiceException as e:
+        logger.error(f"FHIR error searching practitioners: {str(e)}")
+        return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception as e:
+        logger.error(f"Error searching practitioners: {str(e)}")
+        return Response({"error": "Erro ao buscar profissionais"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

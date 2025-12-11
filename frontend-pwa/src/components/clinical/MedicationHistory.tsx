@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
     Pill,
-    Calendar,
     Clock,
     RefreshCw,
     AlertTriangle,

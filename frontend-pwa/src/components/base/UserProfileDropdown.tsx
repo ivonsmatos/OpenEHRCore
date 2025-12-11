@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     User,
-    Settings,
     LogOut,
     UserCircle,
     Shield,
@@ -11,7 +10,6 @@ import {
     HelpCircle,
     ChevronDown
 } from 'lucide-react';
-import { colors, spacing } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
 import './UserProfileDropdown.css';
 

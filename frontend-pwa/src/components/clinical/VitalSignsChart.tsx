@@ -86,7 +86,7 @@ export const VitalSignsChart: React.FC<VitalSignsChartProps> = ({ patientId }) =
             const date = obs.effectiveDateTime?.split('T')[0];
             if (!date) return;
 
-            const existing = dataMap.get(date) || {
+            const existing: VitalReading = dataMap.get(date) || {
                 date,
                 dateDisplay: new Date(date).toLocaleDateString('pt-BR', {
                     day: '2-digit',

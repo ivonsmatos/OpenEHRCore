@@ -4,7 +4,7 @@
  * Catches JavaScript errors anywhere in the child component tree,
  * logs those errors, and displays a fallback UI.
  */
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { colors, spacing, borderRadius } from '../../theme/colors';
 
 interface Props {
@@ -146,7 +146,7 @@ class ErrorBoundary extends Component<Props, State> {
                                 padding: `${spacing.sm} ${spacing.lg}`,
                                 backgroundColor: 'transparent',
                                 color: colors.text.primary,
-                                border: `1px solid ${colors.border.base}`,
+                                border: `1px solid ${colors.border.default}`,
                                 borderRadius: borderRadius.base,
                                 cursor: 'pointer',
                                 fontSize: '0.875rem'

@@ -44,6 +44,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'fhir_api.middleware.rate_limit.RateLimitMiddleware',  # Sprint 22: Rate Limiting
 ]
 
 ROOT_URLCONF = 'openehrcore.urls'
@@ -152,3 +153,7 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+# Rate Limiting Configuration (Sprint 22)
+RATE_LIMIT_ENABLED = config('RATE_LIMIT_ENABLED', default=True, cast=bool)
+

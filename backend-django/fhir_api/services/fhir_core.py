@@ -177,6 +177,41 @@ class FHIRService:
             logger.error(f"Error creating {resource_type}: {str(e)}")
             raise FHIRServiceException(f"Error creating {resource_type}: {str(e)}")
 
+    def update_resource(self, resource_type: str, resource_id: str, resource_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Atualiza qualquer recurso FHIR genericamente.
+        
+        Args:
+            resource_type: Tipo do recurso (Ex: 'Patient')
+            resource_id: ID do recurso a atualizar
+            resource_data: Dict com os dados do recurso
+            
+        Returns:
+            Dict com o recurso atualizado
+        """
+        try:
+            # Garantir que o ID está no payload
+            resource_data['id'] = resource_id
+            
+            logger.info(f"Updating {resource_type}/{resource_id}")
+            response = self.session.put(
+                f"{self.base_url}/{resource_type}/{resource_id}",
+                json=resource_data,
+                timeout=self.timeout
+            )
+            
+            if response.status_code not in [200, 201]:
+                logger.error(f"Failed to update {resource_type}/{resource_id}: {response.text}")
+                raise FHIRServiceException(f"Failed to update {resource_type}: {response.status_code}")
+                
+            result = response.json()
+            logger.info(f"{resource_type}/{resource_id} updated successfully")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error updating {resource_type}/{resource_id}: {str(e)}")
+            raise FHIRServiceException(f"Error updating {resource_type}: {str(e)}")
+
     def search_resources(self, resource_type: str, params: Dict[str, Any] = None, use_cache: bool = True) -> List[Dict[str, Any]]:
         """
         Busca genérica de recursos FHIR com suporte a cache.

@@ -13,7 +13,7 @@ interface AppShellProps {
 
 const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { user } = useAuth();
+  useAuth(); // Keep hook for auth state
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.background.surface }}>

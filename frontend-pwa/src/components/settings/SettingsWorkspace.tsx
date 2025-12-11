@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import {
     User,
     Mail,
-    Phone,
     MapPin,
     Shield,
     Save,
@@ -15,7 +14,6 @@ import {
 } from 'lucide-react';
 import Button from '../base/Button';
 import Card from '../base/Card';
-import { colors, spacing } from '../../theme/colors';
 import './SettingsWorkspace.css';
 
 /**
