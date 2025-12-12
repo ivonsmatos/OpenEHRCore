@@ -1,0 +1,167 @@
+/**
+ * Dark Mode CSS Variables
+ * Sprint 28: UX Improvement
+ * 
+ * Add this to your main CSS file or import in App.tsx
+ */
+
+:root {
+    /* Light Mode (Default) */
+    --primary-color: #4f46e5;
+    --primary-color-hover: #4338ca;
+    --primary-color-light: rgba(79, 70, 229, 0.1);
+
+    --background-color: #ffffff;
+    --surface-color: #f8fafc;
+    --card-bg: #ffffff;
+
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+
+    --border-color: #e2e8f0;
+    --divider-color: #f1f5f9;
+
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --error-color: #ef4444;
+    --info-color: #3b82f6;
+
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --input-focus: #4f46e5;
+
+    --skeleton-bg: #e2e8f0;
+    --skeleton-highlight: #f1f5f9;
+
+    --toggle-bg: #e2e8f0;
+    --toggle-bg-hover: #cbd5e1;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+    --sidebar-bg: #1e293b;
+    --sidebar-text: #e2e8f0;
+    --sidebar-hover: #334155;
+
+    --table-header-bg: #f8fafc;
+    --table-row-hover: #f1f5f9;
+    --table-border: #e2e8f0;
+}
+
+/* Dark Mode */
+[data-theme="dark"],
+.dark {
+    --primary-color: #6366f1;
+    --primary-color-hover: #818cf8;
+    --primary-color-light: rgba(99, 102, 241, 0.15);
+
+    --background-color: #0f172a;
+    --surface-color: #1e293b;
+    --card-bg: #1e293b;
+
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    --border-color: #334155;
+    --divider-color: #1e293b;
+
+    --success-color: #34d399;
+    --warning-color: #fbbf24;
+    --error-color: #f87171;
+    --info-color: #60a5fa;
+
+    --input-bg: #0f172a;
+    --input-border: #334155;
+    --input-focus: #6366f1;
+
+    --skeleton-bg: #334155;
+    --skeleton-highlight: #475569;
+
+    --toggle-bg: #475569;
+    --toggle-bg-hover: #64748b;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+
+    --sidebar-bg: #0f172a;
+    --sidebar-text: #e2e8f0;
+    --sidebar-hover: #1e293b;
+
+    --table-header-bg: #1e293b;
+    --table-row-hover: #334155;
+    --table-border: #334155;
+}
+
+/* Apply background color to body */
+body {
+    background-color: var(--background-color);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Common element overrides for dark mode */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] input::placeholder,
+.dark input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Card styles */
+.card,
+[data-theme="dark"] .card,
+.dark .card {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+/* Table styles */
+table,
+[data-theme="dark"] table,
+.dark table {
+    border-color: var(--table-border);
+}
+
+th {
+    background-color: var(--table-header-bg);
+}
+
+tr:hover {
+    background-color: var(--table-row-hover);
+}
+
+/* Scrollbar dark mode */
+[data-theme="dark"] ::-webkit-scrollbar,
+.dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track,
+.dark ::-webkit-scrollbar-track {
+    background: var(--surface-color);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb,
+.dark ::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}

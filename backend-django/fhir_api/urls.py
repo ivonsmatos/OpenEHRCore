@@ -3,6 +3,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
 from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd
+from .metrics import metrics_view
 
 router = DefaultRouter()
 router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
@@ -10,8 +11,9 @@ router.register(r'financial/accounts', AccountViewSet, basename='account')
 router.register(r'financial/invoices', InvoiceViewSet, basename='invoice')
 
 urlpatterns = [
-    # Health check
+    # Health check and Metrics
     path('health/', views_auth.health_check, name='health_check'),
+    path('metrics/', metrics_view, name='metrics'),
     
     # Autenticação
     path('auth/login/', views_auth.login, name='login'),

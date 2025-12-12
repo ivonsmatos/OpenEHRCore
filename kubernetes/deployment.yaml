@@ -1,0 +1,288 @@
+# ==============================================================================
+# OpenEHRCore Kubernetes Deployment
+# Sprint 28: DevOps Improvement
+# ==============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openehrcore
+  labels:
+    app.kubernetes.io/name: openehrcore
+
+---
+# ==============================================================================
+# ConfigMap - Application Configuration
+# ==============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openehrcore-config
+  namespace: openehrcore
+data:
+  DJANGO_SETTINGS_MODULE: "core.settings"
+  FHIR_SERVER_URL: "http://hapi-fhir-service:8080/fhir"
+  KEYCLOAK_URL: "http://keycloak-service:8080"
+  REDIS_URL: "redis://redis-service:6379/0"
+
+---
+# ==============================================================================
+# Secret - Sensitive Configuration
+# ==============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openehrcore-secrets
+  namespace: openehrcore
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: "your-secure-password"
+  SECRET_KEY: "your-django-secret-key"
+  KEYCLOAK_CLIENT_SECRET: "your-keycloak-secret"
+
+---
+# ==============================================================================
+# Django Backend Deployment
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-backend
+  namespace: openehrcore
+  labels:
+    app: django-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: django-backend
+  template:
+    metadata:
+      labels:
+        app: django-backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: django
+          image: openehrcore/backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: openehrcore-config
+            - secretRef:
+                name: openehrcore-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health/
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health/
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: static-files
+              mountPath: /app/staticfiles
+      volumes:
+        - name: static-files
+          emptyDir: {}
+
+---
+# ==============================================================================
+# Django Service
+# ==============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-service
+  namespace: openehrcore
+spec:
+  selector:
+    app: django-backend
+  ports:
+    - port: 80
+      targetPort: 8000
+      name: http
+  type: ClusterIP
+
+---
+# ==============================================================================
+# HAPI FHIR Deployment
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hapi-fhir
+  namespace: openehrcore
+  labels:
+    app: hapi-fhir
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hapi-fhir
+  template:
+    metadata:
+      labels:
+        app: hapi-fhir
+    spec:
+      containers:
+        - name: hapi-fhir
+          image: hapiproject/hapi:v7.2.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: hapi.fhir.fhir_version
+              value: "R4"
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /fhir/metadata
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hapi-fhir-service
+  namespace: openehrcore
+spec:
+  selector:
+    app: hapi-fhir
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ==============================================================================
+# Redis Deployment
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: openehrcore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: openehrcore
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP
+
+---
+# ==============================================================================
+# Ingress (NGINX)
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openehrcore-ingress
+  namespace: openehrcore
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: openehrcore.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: django-service
+                port:
+                  number: 80
+          - path: /fhir
+            pathType: Prefix
+            backend:
+              service:
+                name: hapi-fhir-service
+                port:
+                  number: 8080
+
+---
+# ==============================================================================
+# Horizontal Pod Autoscaler
+# ==============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: django-hpa
+  namespace: openehrcore
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: django-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
