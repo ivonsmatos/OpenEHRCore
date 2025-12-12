@@ -2,9 +2,6 @@
 
 ### O Futuro da Gestão de Prontuários Eletrônicos Seguros e Interoperáveis
 
-![OpenEHRCore Banner](https://via.placeholder.com/1200x400?text=OpenEHRCore+|+Secure+FHIR+EHR+System)
-*(Imagem ilustrativa - Substitua por screenshot real do dashboard)*
-
 ---
 
 ## 🚀 Transforme a Gestão Clínica com Tecnologia de Ponta
