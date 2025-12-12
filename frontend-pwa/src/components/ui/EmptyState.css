@@ -1,0 +1,130 @@
+/**
+ * EmptyState Component Styles
+ * Sprint 29: UI/UX Improvement
+ */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px;
+    animation: emptyStateFadeIn 0.3s ease-out;
+}
+
+@keyframes emptyStateFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Variants */
+.empty-state--compact {
+    padding: 24px 16px;
+}
+
+.empty-state--compact .empty-state__icon {
+    font-size: 2rem;
+}
+
+.empty-state--compact .empty-state__title {
+    font-size: 1rem;
+}
+
+.empty-state--large {
+    padding: 80px 32px;
+}
+
+.empty-state--large .empty-state__icon {
+    font-size: 5rem;
+}
+
+.empty-state--large .empty-state__title {
+    font-size: 1.5rem;
+}
+
+.empty-state__icon {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+    opacity: 0.9;
+    animation: iconBounce 0.5s ease-out;
+}
+
+@keyframes iconBounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.empty-state__title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+    margin: 0 0 8px 0;
+}
+
+.empty-state__description {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #64748b);
+    margin: 0 0 24px 0;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+.empty-state__action {
+    padding: 12px 24px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
+    background: var(--primary-color, #3b82f6);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.empty-state__action:hover {
+    background: var(--primary-color-hover, #2563eb);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.empty-state__action:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.empty-state__action:active {
+    transform: translateY(0);
+}
+
+/* Dark mode */
+[data-theme="dark"] .empty-state__title {
+    color: var(--text-primary, #f1f5f9);
+}
+
+[data-theme="dark"] .empty-state__description {
+    color: var(--text-secondary, #94a3b8);
+}
+
+[data-theme="dark"] .empty-state__action {
+    background: var(--primary-color, #6366f1);
+}
+
+[data-theme="dark"] .empty-state__action:hover {
+    background: var(--primary-color-hover, #818cf8);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}

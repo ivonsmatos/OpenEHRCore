@@ -1,0 +1,147 @@
+/**
+ * Alert Component Styles
+ * Sprint 29: UI/UX Improvement
+ */
+
+.alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid;
+    animation: alertSlideIn 0.3s ease-out;
+}
+
+@keyframes alertSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Variants */
+.alert--info {
+    background-color: var(--info-bg, #eff6ff);
+    border-color: var(--info-border, #3b82f6);
+    color: var(--info-text, #1e40af);
+}
+
+.alert--success {
+    background-color: var(--success-bg, #f0fdf4);
+    border-color: var(--success-border, #22c55e);
+    color: var(--success-text, #166534);
+}
+
+.alert--warning {
+    background-color: var(--warning-bg, #fffbeb);
+    border-color: var(--warning-border, #f59e0b);
+    color: var(--warning-text, #92400e);
+}
+
+.alert--error {
+    background-color: var(--error-bg, #fef2f2);
+    border-color: var(--error-border, #ef4444);
+    color: var(--error-text, #991b1b);
+}
+
+.alert__icon {
+    flex-shrink: 0;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.alert__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.alert__title {
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+}
+
+.alert__message {
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.alert__dismiss {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: inherit;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    border-radius: 4px;
+}
+
+.alert__dismiss:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.alert__dismiss:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+/* Toast container */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    animation: toastSlideIn 0.3s ease-out;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Dark mode */
+[data-theme="dark"] .alert--info {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-color: #60a5fa;
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .alert--success {
+    background-color: rgba(34, 197, 94, 0.15);
+    border-color: #4ade80;
+    color: #86efac;
+}
+
+[data-theme="dark"] .alert--warning {
+    background-color: rgba(245, 158, 11, 0.15);
+    border-color: #fbbf24;
+    color: #fde68a;
+}
+
+[data-theme="dark"] .alert--error {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: #f87171;
+    color: #fca5a5;
+}
+
+[data-theme="dark"] .alert__dismiss:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}

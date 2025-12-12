@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { colors, spacing, borderRadius } from "../theme/colors";
 import Button from "./base/Button";
 import Card from "./base/Card";
+import "./Login.css";
 
 /**
  * Tela de Login
  *
  * Autenticação com Keycloak via API Django
+ * Sprint 29: Refatorado para usar CSS classes ao invés de inline styles
  */
 export const Login: React.FC = () => {
   const [email, setEmail] = useState("contato@ivonmatos.com.br");
@@ -37,153 +38,53 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: colors.background.surface,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: spacing.lg,
-      }}
-    >
-      {/* Container */}
-      <Card
-        padding="lg"
-        elevation="base"
-        className="w-full max-w-md"
-        style={{
-          maxWidth: "400px",
-        }}
-      >
-        {/* Logo/Title */}
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: spacing.xl,
-          }}
-        >
-          <div
-            style={{
-              fontSize: "2.5rem",
-              marginBottom: spacing.md,
-            }}
-          >
-            🏥
-          </div>
-          <h1
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: 700,
-              color: colors.primary.dark,
-              margin: 0,
-            }}
-          >
-            OpenEHRCore
-          </h1>
-          <p
-            style={{
-              fontSize: "0.875rem",
-              color: colors.text.tertiary,
-              margin: spacing.sm + " 0 0 0",
-            }}
-          >
-            Sistema de Prontuários Eletrônicos
-          </p>
+    <div className="login-page">
+      <Card padding="lg" elevation="base" className="login-card">
+        {/* Header */}
+        <div className="login-header">
+          <div className="login-logo">🏥</div>
+          <h1 className="login-title">OpenEHRCore</h1>
+          <p className="login-subtitle">Sistema de Prontuários Eletrônicos</p>
         </div>
 
-        {/* Formulário */}
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="login-form">
           {/* Email Field */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                color: colors.text.primary,
-                marginBottom: "8px",
-              }}
-            >
+          <div className="login-field">
+            <label htmlFor="email" className="login-label">
               Email ou Usuário
             </label>
             <input
+              id="email"
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="contato@ivonmatos.com.br"
-              style={{
-                width: "100%",
-                padding: "12px",
-                fontSize: "1rem",
-                border: `1px solid ${colors.border.default}`,
-                borderRadius: borderRadius.base,
-                boxSizing: "border-box",
-                fontFamily: "inherit",
-                transition: `all 200ms ease-in-out`,
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = colors.primary.medium;
-                e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary.light}40`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = colors.border.default;
-                e.currentTarget.style.boxShadow = "none";
-              }}
+              className="login-input"
+              autoComplete="username"
             />
           </div>
 
           {/* Password Field */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                color: colors.text.primary,
-                marginBottom: "8px",
-              }}
-            >
+          <div className="login-field">
+            <label htmlFor="password" className="login-label">
               Senha
             </label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="senha123!@#"
-              style={{
-                width: "100%",
-                padding: "12px",
-                fontSize: "1rem",
-                border: `1px solid ${colors.border.default}`,
-                borderRadius: borderRadius.base,
-                boxSizing: "border-box",
-                fontFamily: "inherit",
-                transition: `all 200ms ease-in-out`,
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = colors.primary.medium;
-                e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary.light}40`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = colors.border.default;
-                e.currentTarget.style.boxShadow = "none";
-              }}
+              placeholder="••••••••"
+              className="login-input"
+              autoComplete="current-password"
             />
           </div>
 
           {/* Error Message */}
           {error && (
-            <div
-              style={{
-                backgroundColor: `${colors.alert.critical}15`,
-                border: `1px solid ${colors.alert.critical}`,
-                color: colors.alert.critical,
-                padding: spacing.md,
-                borderRadius: borderRadius.base,
-                fontSize: "0.875rem",
-              }}
-            >
+            <div className="login-error" role="alert">
+              <span className="login-error__icon">⚠️</span>
               {error}
             </div>
           )}
@@ -201,42 +102,16 @@ export const Login: React.FC = () => {
         </form>
 
         {/* Demo Info */}
-        <div
-          style={{
-            marginTop: spacing.xl,
-            padding: spacing.md,
-            backgroundColor: colors.background.muted,
-            borderRadius: borderRadius.base,
-            fontSize: "0.75rem",
-            color: colors.text.tertiary,
-            lineHeight: "1.5rem",
-          }}
-        >
+        <div className="login-demo">
           <strong>Credenciais de Acesso:</strong>
-          <br />
           Email: <code>contato@ivonmatos.com.br</code>
           <br />
           Senha: <code>Protonsysdba@1986</code>
         </div>
 
         {/* Help Link */}
-        <div
-          style={{
-            marginTop: spacing.lg,
-            textAlign: "center",
-            fontSize: "0.875rem",
-          }}
-        >
-          <a
-            href="#"
-            style={{
-              color: colors.primary.medium,
-              textDecoration: "none",
-              fontWeight: 500,
-            }}
-          >
-            Esqueceu sua senha?
-          </a>
+        <div className="login-help">
+          <a href="#">Esqueceu sua senha?</a>
         </div>
       </Card>
     </div>

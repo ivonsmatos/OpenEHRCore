@@ -6,6 +6,7 @@ import Button from './base/Button';
 import SearchBar from './base/SearchBar';
 import AdvancedFilters, { FilterConfig } from './base/AdvancedFilters';
 import PaginatedResults from './base/PaginatedResults';
+import { SkeletonList, NoPatients, NoResults, Alert } from './ui';
 import './PatientList.css';
 
 export const PatientList: React.FC = () => {
@@ -105,9 +106,19 @@ export const PatientList: React.FC = () => {
 
     if (loading && patients.length === 0) {
         return (
-            <div className="patient-list__loading">
-                <div className="patient-list__loading-spinner">⟳</div>
-                <p>Carregando pacientes...</p>
+            <div className="patient-list">
+                <div className="patient-list__header">
+                    <div className="patient-list__search-wrapper">
+                        <SearchBar
+                            placeholder="🔍 Buscar paciente por nome..."
+                            onSearch={executeSearch}
+                            loading={loading}
+                            initialValue={searchTerm}
+                            debounceMs={300}
+                        />
+                    </div>
+                </div>
+                <SkeletonList items={5} />
             </div>
         );
     }
