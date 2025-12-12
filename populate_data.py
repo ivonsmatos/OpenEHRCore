@@ -4,8 +4,8 @@ import datetime
 
 # Configuração
 API_URL = "http://localhost:8000/api/v1"
-USERNAME = "dev"
-PASSWORD = "dev"
+USERNAME = "contato@ivonmatos.com.br"
+PASSWORD = "Protonsysdba@1986"
 PATIENT_ID = "patient-example-001"
 
 def get_token():
@@ -167,17 +167,21 @@ def populate_appointments(token):
     tomorrow = now + datetime.timedelta(days=1)
     next_week = now + datetime.timedelta(days=7)
 
+    # FHIR DateTime format: YYYY-MM-DDTHH:mm:ssZ
+    def fhir_datetime(dt):
+        return dt.strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+
     appointments = [
         {
             "description": "Consulta de Rotina",
-            "start": tomorrow.replace(hour=10, minute=0, second=0).isoformat(),
-            "end": tomorrow.replace(hour=10, minute=30, second=0).isoformat(),
+            "start": fhir_datetime(tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)),
+            "end": fhir_datetime(tomorrow.replace(hour=10, minute=30, second=0, microsecond=0)),
             "status": "booked"
         },
         {
             "description": "Retorno Cardiologista",
-            "start": next_week.replace(hour=14, minute=0, second=0).isoformat(),
-            "end": next_week.replace(hour=14, minute=30, second=0).isoformat(),
+            "start": fhir_datetime(next_week.replace(hour=14, minute=0, second=0, microsecond=0)),
+            "end": fhir_datetime(next_week.replace(hour=14, minute=30, second=0, microsecond=0)),
             "status": "booked"
         }
     ]
