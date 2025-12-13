@@ -1,8 +1,7 @@
-
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7, views_brazil
 from .metrics import metrics_view
 
 router = DefaultRouter()
@@ -457,6 +456,34 @@ urlpatterns = [
     path('hl7/adt/parse', views_hl7.parse_adt, name='hl7_parse_adt'),
     path('hl7/orm/generate', views_hl7.generate_orm, name='hl7_generate_orm'),
     path('hl7/oru/parse', views_hl7.parse_oru, name='hl7_parse_oru'),
+    
+    # ============================================================================
+    # Sprint 37: Brazil Essential Integrations
+    # ============================================================================
+    
+    # PIX Payments
+    path('pix/info', views_brazil.pix_info, name='pix_info'),
+    path('pix/payments/', views_brazil.list_pix_payments, name='list_pix_payments'),
+    path('pix/payments/create/', views_brazil.create_pix_payment, name='create_pix_payment'),
+    path('pix/payments/<str:payment_id>/', views_brazil.get_pix_payment, name='get_pix_payment'),
+    path('pix/webhook/', views_brazil.pix_webhook, name='pix_webhook'),
+    
+    # WhatsApp Business
+    path('whatsapp/info', views_brazil.whatsapp_info, name='whatsapp_info'),
+    path('whatsapp/send/', views_brazil.send_whatsapp_message, name='send_whatsapp'),
+    path('whatsapp/appointment-reminder/', views_brazil.send_appointment_reminder, name='send_appointment_reminder'),
+    path('whatsapp/messages/', views_brazil.list_whatsapp_messages, name='list_whatsapp_messages'),
+    path('whatsapp/webhook/', views_brazil.whatsapp_webhook, name='whatsapp_webhook'),
+    
+    # Telemedicine
+    path('telemedicine/info', views_brazil.telemedicine_info, name='telemedicine_info'),
+    path('telemedicine/sessions/', views_brazil.list_telemedicine_sessions, name='list_telemedicine_sessions'),
+    path('telemedicine/sessions/create/', views_brazil.create_telemedicine_session, name='create_telemedicine_session'),
+    path('telemedicine/sessions/<str:session_id>/', views_brazil.get_telemedicine_session, name='get_telemedicine_session'),
+    path('telemedicine/sessions/<str:session_id>/start', views_brazil.start_telemedicine_session, name='start_telemedicine_session'),
+    path('telemedicine/sessions/<str:session_id>/end', views_brazil.end_telemedicine_session, name='end_telemedicine_session'),
+    path('telemedicine/sessions/<str:session_id>/cancel', views_brazil.cancel_telemedicine_session, name='cancel_telemedicine_session'),
+    path('telemedicine/practitioners/<str:practitioner_id>/upcoming', views_brazil.upcoming_sessions, name='upcoming_telemedicine_sessions'),
 ]
 
 

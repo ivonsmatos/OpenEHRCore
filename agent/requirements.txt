@@ -1,0 +1,15 @@
+# OpenEHRCore Agent Dependencies
+
+# Core
+pyyaml>=6.0
+aiohttp>=3.9.0
+
+# WebSocket support
+websockets>=12.0
+
+# Optional: DICOM support
+# pydicom>=2.4.0
+# pynetdicom>=2.0.0
+
+# Windows service support (optional)
+# pywin32>=306; sys_platform == 'win32'
