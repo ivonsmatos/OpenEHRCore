@@ -1,6 +1,6 @@
 """
 Views for Practitioner (Healthcare Professional) management
-FHIR R4 Compliant
+FHIR R4 Compliant - Integrated with CBO (Classificação Brasileira de Ocupações)
 """
 import logging
 from rest_framework import status
@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.response import Response
 
 from .services.fhir_core import FHIRService
+from .services.cbo_service import cbo_service
 from .auth import KeycloakAuthentication, IsAuthenticated
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ def create_practitioner(request):
     """
     Create a new Practitioner (Healthcare Professional)
     
-    FHIR R4 Compliant - Creates Practitioner resource
+    FHIR R4 Compliant - Creates Practitioner resource with CBO integration
     
     POST /api/v1/practitioners/
     
@@ -33,9 +34,10 @@ def create_practitioner(request):
         "birthDate": "1985-03-20",
         "phone": "(11) 3456-7890",
         "email": "maria.santos@hospital.com",
-        "crm": "CRM-SP-123456",  # Brazilian medical license
-        "qualification_code": "MD",
-        "qualification_display": "Médica Cardiologista"
+        "conselho": "CRM",              # CRM, COREN, CRO, CRF, etc.
+        "numero_conselho": "123456",
+        "uf_conselho": "SP",
+        "codigo_cbo": "2251-25"          # CBO code (optional if qualification_code provided)
     }
     
     Returns:
@@ -97,15 +99,52 @@ def create_practitioner(request):
         if telecom:
             practitioner['telecom'] = telecom
         
-        # Add Brazilian CRM identifier
-        if data.get('crm'):
-            practitioner['identifier'] = [{
-                "system": "http://hl7.org.br/fhir/r4/NamingSystem/crm",
-                "value": data['crm']
-            }]
+        # Build identifier from conselho (CRM, COREN, CRO, etc.)
+        conselho = data.get('conselho', '').upper()
+        numero_conselho = data.get('numero_conselho', '') or data.get('crm', '')
+        uf_conselho = data.get('uf_conselho', 'SP').upper()
         
-        # Add qualification
-        if data.get('qualification_code'):
+        if numero_conselho:
+            # Format identifier based on council type
+            practitioner['identifier'] = [{
+                "use": "official",
+                "system": f"http://www.saude.gov.br/fhir/r4/NamingSystem/BR{conselho or 'CRM'}",
+                "value": f"{numero_conselho}/{uf_conselho}"
+            }]
+            
+            # Add CPF if provided
+            if data.get('cpf'):
+                practitioner['identifier'].append({
+                    "use": "official",
+                    "system": "http://www.saude.gov.br/fhir/r4/NamingSystem/cpf",
+                    "value": data['cpf']
+                })
+        
+        # Build qualification using CBO service
+        codigo_cbo = data.get('codigo_cbo', '')
+        
+        if codigo_cbo:
+            # Use CBO service to generate proper qualification
+            if cbo_service.validar_codigo(codigo_cbo):
+                qualification = cbo_service.gerar_practitioner_qualification(
+                    codigo_cbo=codigo_cbo,
+                    numero_conselho=numero_conselho,
+                    conselho=conselho or 'CRM',
+                    uf=uf_conselho
+                )
+                practitioner['qualification'] = [qualification]
+                
+                # Log CBO usage
+                ocupacao = cbo_service.buscar_por_codigo(codigo_cbo)
+                if ocupacao:
+                    logger.info(f"Practitioner created with CBO {codigo_cbo}: {ocupacao.nome}")
+            else:
+                return Response(
+                    {"error": f"Código CBO inválido: {codigo_cbo}. Use /api/v1/cbo/search/ para buscar códigos válidos."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        elif data.get('qualification_code'):
+            # Fallback to legacy qualification format
             practitioner['qualification'] = [{
                 "code": {
                     "coding": [{
@@ -117,15 +156,24 @@ def create_practitioner(request):
                 }
             }]
             
-            # Add CRM to qualification if provided
-            if data.get('crm'):
+            if numero_conselho:
                 practitioner['qualification'][0]['identifier'] = [{
-                    "system": "http://hl7.org.br/fhir/r4/NamingSystem/crm",
-                    "value": data['crm']
+                    "system": f"http://www.saude.gov.br/fhir/r4/NamingSystem/BR{conselho or 'CRM'}",
+                    "value": f"{numero_conselho}/{uf_conselho}"
                 }]
         
         # Create in FHIR server
         result = fhir.create_resource('Practitioner', practitioner)
+        
+        # Add CBO info to response
+        if codigo_cbo and cbo_service.validar_codigo(codigo_cbo):
+            ocupacao = cbo_service.buscar_por_codigo(codigo_cbo)
+            if ocupacao:
+                result['_cbo'] = {
+                    'codigo': ocupacao.codigo,
+                    'nome': ocupacao.nome,
+                    'familia': ocupacao.familia_nome
+                }
         
         return Response(result, status=status.HTTP_201_CREATED)
         

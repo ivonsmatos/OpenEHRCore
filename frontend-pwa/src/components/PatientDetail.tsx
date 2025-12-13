@@ -10,7 +10,7 @@ import AllergyList from "./clinical/AllergyList";
 import EncounterList from "./clinical/EncounterList";
 import AppointmentList from "./scheduling/AppointmentList";
 import { colors, spacing } from "../theme/colors";
-import { Activity, Download, ShieldCheck } from "lucide-react";
+import { Download, ShieldCheck } from "lucide-react";
 import ClinicalWorkspace from './clinical/ClinicalWorkspace';
 import ImmunizationWorkspace from './clinical/ImmunizationWorkspace';
 import DiagnosticResultWorkspace from './clinical/DiagnosticResultWorkspace';
@@ -19,6 +19,7 @@ import AICopilot from './clinical/AICopilot';
 import { PatientTimeline } from './clinical/PatientTimeline';
 import { VitalSignsChart } from './clinical/VitalSignsChart';
 import { MedicationHistory } from './clinical/MedicationHistory';
+import ClinicalModulesPanel from './clinical/ClinicalModulesPanel';
 import {
   FHIRPatient,
   getPatientSummary,
@@ -288,30 +289,9 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: spacing.lg, marginBottom: spacing.xl }}>
               {/* Módulos e Histórico */}
               <section>
+                {/* Módulos Clínicos com dados reais do FHIR */}
                 <div className="mb-6">
-                  <Card className="p-4 bg-slate-50 border border-slate-200">
-                    <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                      <Activity size={18} className="text-indigo-600" />
-                      Módulos Clínicos
-                    </h3>
-                    <div className="flex gap-2 flex-wrap">
-                      <Button variant="secondary" onClick={() => setView('immunization')}>
-                        💉 Vacinas
-                      </Button>
-                      <Button variant="secondary" onClick={() => setView('diagnostic')}>
-                        📑 Resultados de Exames
-                      </Button>
-                      <Button variant="secondary" onClick={() => setView('timeline')}>
-                        📋 Timeline Unificada
-                      </Button>
-                      <Button variant="secondary" onClick={() => setView('vitals-chart')}>
-                        📈 Gráficos Vitais
-                      </Button>
-                      <Button variant="secondary" onClick={() => setView('medications')}>
-                        💊 Medicamentos
-                      </Button>
-                    </div>
-                  </Card>
+                  <ClinicalModulesPanel patientId={mockPatient.id} />
                 </div>
 
                 <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: spacing.md, color: colors.text.primary, borderLeft: `4px solid ${colors.accent.primary}`, paddingLeft: spacing.sm }}>

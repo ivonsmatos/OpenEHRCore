@@ -2,7 +2,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo
 from .metrics import metrics_view
 
 router = DefaultRouter()
@@ -11,8 +11,10 @@ router.register(r'financial/accounts', AccountViewSet, basename='account')
 router.register(r'financial/invoices', InvoiceViewSet, basename='invoice')
 
 urlpatterns = [
-    # Health check and Metrics
-    path('health/', views_auth.health_check, name='health_check'),
+    # Health Check endpoints (robustos)
+    path('health/', views_health.health_check, name='health_check'),
+    path('health/live/', views_health.health_check_simple, name='health_live'),
+    path('health/ready/', views_health.health_check_ready, name='health_ready'),
     path('metrics/', metrics_view, name='metrics'),
     
     # Autenticação
@@ -221,6 +223,109 @@ urlpatterns = [
     path('lgpd/requests/', views_lgpd.lgpd_requests, name='lgpd_requests'),
     path('lgpd/requests/<str:request_id>/', views_lgpd.lgpd_request_detail, name='lgpd_request_detail'),
     path('lgpd/dashboard/', views_lgpd.lgpd_dashboard, name='lgpd_dashboard'),
+    
+    # ================================================================
+    # Sprint 25: Novos Módulos FHIR
+    # ================================================================
+    
+    # CarePlan - Plano de Cuidados
+    path('careplans/', views_careplan.manage_careplans, name='manage_careplans'),
+    path('careplans/<str:careplan_id>/', views_careplan.careplan_detail, name='careplan_detail'),
+    path('careplans/<str:careplan_id>/activities/', views_careplan.add_careplan_activity, name='add_careplan_activity'),
+    path('patients/<str:patient_id>/careplans/', views_careplan.patient_careplans, name='patient_careplans'),
+    path('goals/', views_careplan.manage_goals, name='manage_goals'),
+    
+    # Composition - Prontuário Estruturado
+    path('compositions/', views_composition.manage_compositions, name='manage_compositions'),
+    path('compositions/types/', views_composition.composition_types, name='composition_types'),
+    path('compositions/<str:composition_id>/', views_composition.composition_detail, name='composition_detail'),
+    path('patients/<str:patient_id>/compositions/', views_composition.patient_compositions, name='patient_compositions'),
+    
+    # ================================================================
+    # Sprint 26: Conformidade Regulatória Brasil
+    # ================================================================
+    
+    # TISS/ANS - Faturamento Operadoras
+    path('tiss/tipos/', views_tiss.tiss_tipos_guia, name='tiss_tipos'),
+    path('tiss/consulta/', views_tiss.gerar_guia_consulta, name='tiss_consulta'),
+    path('tiss/sadt/', views_tiss.gerar_guia_sadt, name='tiss_sadt'),
+    path('tiss/internacao/', views_tiss.gerar_guia_internacao, name='tiss_internacao'),
+    path('tiss/lote/', views_tiss.gerar_lote_tiss, name='tiss_lote'),
+    path('tiss/validar/', views_tiss.validar_guia_tiss, name='tiss_validar'),
+    
+    # RNDS - Rede Nacional de Dados em Saúde
+    path('rnds/status/', views_rnds.rnds_status, name='rnds_status'),
+    path('rnds/paciente/', views_rnds.consultar_paciente_rnds, name='rnds_paciente'),
+    path('rnds/sumario/', views_rnds.enviar_sumario_rnds, name='rnds_sumario'),
+    path('rnds/exame/', views_rnds.enviar_resultado_exame_rnds, name='rnds_exame'),
+    path('rnds/imunizacao/', views_rnds.enviar_imunizacao_rnds, name='rnds_imunizacao'),
+    path('rnds/vacinas/', views_rnds.consultar_vacinas_rnds, name='rnds_vacinas'),
+    
+    # ================================================================
+    # Sprint 27: Integrações Externas
+    # ================================================================
+    
+    # Laboratório
+    path('lab/results/', views_integrations.receber_resultados_lab, name='lab_results'),
+    path('lab/convert-hl7/', views_integrations.converter_hl7_para_fhir, name='lab_convert_hl7'),
+    path('lab/diagnostic-report/', views_integrations.criar_diagnostic_report, name='lab_diagnostic_report'),
+    
+    # PACS / Imagens
+    path('pacs/status/', views_integrations.pacs_status, name='pacs_status'),
+    path('pacs/studies/', views_integrations.buscar_estudos_pacs, name='pacs_studies'),
+    path('pacs/studies/<str:study_uid>/series/', views_integrations.obter_series_estudo, name='pacs_series'),
+    path('pacs/studies/<str:study_uid>/viewer/', views_integrations.obter_viewer_url, name='pacs_viewer'),
+    path('patients/<str:patient_id>/imaging/', views_integrations.estudos_paciente_pacs, name='patient_imaging'),
+    
+    # Farmácia
+    path('pharmacy/process/', views_integrations.processar_prescricao_farmacia, name='pharmacy_process'),
+    path('pharmacy/dispense/', views_integrations.criar_dispensacao, name='pharmacy_dispense'),
+    path('pharmacy/dispense/<str:dispense_id>/deliver/', views_integrations.confirmar_entrega_medicamento, name='pharmacy_deliver'),
+    path('pharmacy/dispense/<str:dispense_id>/return/', views_integrations.registrar_devolucao, name='pharmacy_return'),
+    path('pharmacy/interactions/', views_integrations.verificar_interacoes, name='pharmacy_interactions'),
+    path('pharmacy/report/', views_integrations.relatorio_consumo_farmacia, name='pharmacy_report'),
+    
+    # ================================================================
+    # Sprint 28: Encaminhamentos e Comunicação
+    # ================================================================
+    
+    # Encaminhamentos (ServiceRequest + Task)
+    path('referrals/', views_referral.manage_referrals, name='referrals'),
+    path('referrals/pending/', views_referral.pending_referrals, name='pending_referrals'),
+    path('referrals/<str:referral_id>/', views_referral.referral_detail, name='referral_detail'),
+    path('referrals/<str:referral_id>/accept/', views_referral.accept_referral, name='accept_referral'),
+    path('referrals/<str:referral_id>/complete/', views_referral.complete_referral, name='complete_referral'),
+    path('patients/<str:patient_id>/referrals/', views_referral.patient_referrals, name='patient_referrals'),
+    
+    # Comunicação entre profissionais
+    path('communications/', views_communication.manage_communications, name='communications'),
+    path('communications/request-opinion/', views_communication.request_opinion, name='request_opinion'),
+    path('communications/<str:communication_id>/', views_communication.communication_detail, name='communication_detail'),
+    path('communications/<str:communication_id>/reply/', views_communication.reply_communication, name='reply_communication'),
+    path('practitioners/<str:practitioner_id>/inbox/', views_communication.inbox, name='practitioner_inbox'),
+    path('practitioners/<str:practitioner_id>/sent/', views_communication.sent_messages, name='practitioner_sent'),
+    path('patients/<str:patient_id>/communications/', views_communication.patient_communications, name='patient_communications'),
+    
+    # Notificações Compulsórias (SINAN)
+    path('notifications/', views_notifications.manage_notifications, name='notifications'),
+    path('notifications/conditions/', views_notifications.list_notifiable_conditions, name='notifiable_conditions'),
+    path('notifications/pending/', views_notifications.pending_notifications, name='pending_notifications'),
+    path('notifications/stats/', views_notifications.notification_stats, name='notification_stats'),
+    path('notifications/check/', views_notifications.check_notifiable, name='check_notifiable'),
+    path('notifications/<str:notification_id>/send/', views_notifications.send_to_sinan, name='send_to_sinan'),
+    
+    # ================================================================
+    # CBO - Classificação Brasileira de Ocupações
+    # ================================================================
+    path('cbo/families/', views_cbo.listar_familias_cbo, name='cbo_families'),
+    path('cbo/search/', views_cbo.buscar_ocupacoes_cbo, name='cbo_search'),
+    path('cbo/validate/', views_cbo.validar_cbo, name='cbo_validate'),
+    path('cbo/practitioner-qualification/', views_cbo.gerar_qualification_practitioner, name='cbo_qualification'),
+    path('cbo/doctors/', views_cbo.listar_medicos_cbo, name='cbo_doctors'),
+    path('cbo/nurses/', views_cbo.listar_enfermeiros_cbo, name='cbo_nurses'),
+    path('cbo/dentists/', views_cbo.listar_dentistas_cbo, name='cbo_dentists'),
+    path('cbo/nursing-technicians/', views_cbo.listar_tecnicos_enfermagem_cbo, name='cbo_nursing_technicians'),
+    path('cbo/<str:codigo>/', views_cbo.detalhe_cbo, name='cbo_detail'),
 ]
 
 

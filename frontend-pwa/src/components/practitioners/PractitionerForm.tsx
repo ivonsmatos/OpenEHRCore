@@ -1,7 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { colors, spacing, borderRadius } from '../../theme/colors';
 import { PractitionerFormData } from '../../types/practitioner';
 import Button from '../base/Button';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
+
+interface CBOOcupacao {
+    codigo: string;
+    nome: string;
+    familia: string;
+    familia_nome: string;
+    descricao: string;
+}
 
 interface PractitionerFormProps {
     onSubmit: (data: PractitionerFormData) => Promise<void>;
@@ -21,20 +33,84 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({ onSubmit, onCancel,
         crm: initialData?.crm || '',
         qualification_code: initialData?.qualification_code || 'MD',
         qualification_display: initialData?.qualification_display || '',
+        // New CBO fields
+        conselho: (initialData as any)?.conselho || 'CRM',
+        numero_conselho: (initialData as any)?.numero_conselho || '',
+        uf_conselho: (initialData as any)?.uf_conselho || 'SP',
+        codigo_cbo: (initialData as any)?.codigo_cbo || '',
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
 
-    const validateCRM = (crm: string): boolean => {
-        // Format: CRM-UF-XXXXXX
-        const crmRegex = /^CRM-[A-Z]{2}-\d{4,6}$/;
-        return crmRegex.test(crm);
+    // CBO search state
+    const [cboSearch, setCboSearch] = useState('');
+    const [cboResults, setCboResults] = useState<CBOOcupacao[]>([]);
+    const [cboLoading, setCboLoading] = useState(false);
+    const [showCboDropdown, setShowCboDropdown] = useState(false);
+    const [selectedCbo, setSelectedCbo] = useState<CBOOcupacao | null>(null);
+
+    // Load CBO if editing
+    useEffect(() => {
+        if ((initialData as any)?.codigo_cbo) {
+            loadCboDetails((initialData as any).codigo_cbo);
+        }
+    }, [initialData]);
+
+    const loadCboDetails = async (codigo: string) => {
+        try {
+            const res = await axios.get(`${API_URL}/cbo/${codigo}/`);
+            setSelectedCbo(res.data);
+        } catch (err) {
+            console.error('Erro ao carregar CBO:', err);
+        }
     };
 
-    const validateEmail = (email: string): boolean => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
+    const searchCbo = async (term: string) => {
+        if (term.length < 2) {
+            setCboResults([]);
+            return;
+        }
+
+        setCboLoading(true);
+        try {
+            const res = await axios.get(`${API_URL}/cbo/search/?q=${encodeURIComponent(term)}`);
+            setCboResults(res.data.results || []);
+            setShowCboDropdown(true);
+        } catch (err) {
+            console.error('Erro na busca CBO:', err);
+        } finally {
+            setCboLoading(false);
+        }
+    };
+
+    const loadCboByFamily = async (familia: string) => {
+        setCboLoading(true);
+        try {
+            const res = await axios.get(`${API_URL}/cbo/search/?family=${familia}`);
+            setCboResults(res.data.results || []);
+            setShowCboDropdown(true);
+        } catch (err) {
+            console.error('Erro ao carregar CBO:', err);
+        } finally {
+            setCboLoading(false);
+        }
+    };
+
+    const selectCbo = (ocupacao: CBOOcupacao) => {
+        setSelectedCbo(ocupacao);
+        setFormData({
+            ...formData,
+            codigo_cbo: ocupacao.codigo,
+            qualification_display: ocupacao.nome
+        } as any);
+        setCboSearch('');
+        setShowCboDropdown(false);
+    };
+
+    const clearCbo = () => {
+        setSelectedCbo(null);
+        setFormData({ ...formData, codigo_cbo: '', qualification_display: '' } as any);
     };
 
     const validateForm = (): boolean => {
@@ -48,18 +124,16 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({ onSubmit, onCancel,
             newErrors.given_names = 'Nome é obrigatório';
         }
 
-        if (!formData.crm.trim()) {
-            newErrors.crm = 'CRM é obrigatório';
-        } else if (!validateCRM(formData.crm)) {
-            newErrors.crm = 'Formato inválido. Use: CRM-UF-XXXXXX (ex: CRM-SP-123456)';
+        if (!(formData as any).numero_conselho?.trim()) {
+            newErrors.numero_conselho = 'Número do conselho é obrigatório';
         }
 
-        if (formData.email && !validateEmail(formData.email)) {
+        if (!(formData as any).codigo_cbo?.trim()) {
+            newErrors.codigo_cbo = 'Selecione uma ocupação/especialidade CBO';
+        }
+
+        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = 'Email inválido';
-        }
-
-        if (!formData.qualification_display.trim()) {
-            newErrors.qualification_display = 'Especialidade é obrigatória';
         }
 
         setErrors(newErrors);
@@ -105,6 +179,8 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({ onSubmit, onCancel,
         marginTop: spacing.xs,
     };
 
+    const UF_OPTIONS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+
     return (
         <form onSubmit={handleSubmit} style={{ maxWidth: '600px' }}>
             {/* Prefix */}
@@ -114,12 +190,15 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({ onSubmit, onCancel,
                     value={formData.prefix}
                     onChange={(e) => setFormData({ ...formData, prefix: e.target.value })}
                     style={inputStyle}
+                    aria-label="Prefixo do nome"
                 >
                     <option value="">Selecione...</option>
                     <option value="Dr.">Dr.</option>
                     <option value="Dra.">Dra.</option>
                     <option value="Enf.">Enf.</option>
                     <option value="Enfa.">Enfa.</option>
+                    <option value="Prof.">Prof.</option>
+                    <option value="Profa.">Profa.</option>
                 </select>
             </div>
 
@@ -149,46 +228,182 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({ onSubmit, onCancel,
                 {errors.family_name && <div style={errorStyle}>{errors.family_name}</div>}
             </div>
 
-            {/* CRM */}
+            {/* Conselho Profissional */}
             <div style={{ marginBottom: spacing.md }}>
-                <label style={labelStyle}>CRM *</label>
-                <input
-                    type="text"
-                    value={formData.crm}
-                    onChange={(e) => setFormData({ ...formData, crm: e.target.value.toUpperCase() })}
-                    style={inputStyle}
-                    placeholder="Ex: CRM-SP-123456"
-                />
-                {errors.crm && <div style={errorStyle}>{errors.crm}</div>}
+                <label style={labelStyle}>Conselho Profissional *</label>
+                <div style={{ display: 'flex', gap: spacing.sm }}>
+                    <select
+                        value={(formData as any).conselho || 'CRM'}
+                        onChange={(e) => setFormData({ ...formData, conselho: e.target.value } as any)}
+                        style={{ ...inputStyle, flex: '0 0 120px' }}
+                        aria-label="Tipo de conselho profissional"
+                    >
+                        <option value="CRM">CRM</option>
+                        <option value="COREN">COREN</option>
+                        <option value="CRO">CRO</option>
+                        <option value="CRF">CRF</option>
+                        <option value="CREFITO">CREFITO</option>
+                        <option value="CRN">CRN</option>
+                        <option value="CRFa">CRFa</option>
+                        <option value="CRP">CRP</option>
+                        <option value="CRBM">CRBM</option>
+                        <option value="CRESS">CRESS</option>
+                    </select>
+                    <input
+                        type="text"
+                        value={(formData as any).numero_conselho || ''}
+                        onChange={(e) => setFormData({ ...formData, numero_conselho: e.target.value } as any)}
+                        style={{ ...inputStyle, flex: 1 }}
+                        placeholder="Número (ex: 123456)"
+                    />
+                    <select
+                        value={(formData as any).uf_conselho || 'SP'}
+                        onChange={(e) => setFormData({ ...formData, uf_conselho: e.target.value } as any)}
+                        style={{ ...inputStyle, flex: '0 0 80px' }}
+                        aria-label="UF do conselho"
+                    >
+                        {UF_OPTIONS.map(uf => (
+                            <option key={uf} value={uf}>{uf}</option>
+                        ))}
+                    </select>
+                </div>
+                {errors.numero_conselho && <div style={errorStyle}>{errors.numero_conselho}</div>}
             </div>
 
-            {/* Qualification */}
-            <div style={{ marginBottom: spacing.md }}>
-                <label style={labelStyle}>Qualificação *</label>
-                <select
-                    value={formData.qualification_code}
-                    onChange={(e) => setFormData({ ...formData, qualification_code: e.target.value })}
-                    style={inputStyle}
-                >
-                    <option value="MD">Médico(a)</option>
-                    <option value="RN">Enfermeiro(a)</option>
-                    <option value="PA">Auxiliar de Enfermagem</option>
-                    <option value="PT">Fisioterapeuta</option>
-                    <option value="DT">Dentista</option>
-                </select>
-            </div>
+            {/* CBO - Ocupação/Especialidade */}
+            <div style={{ marginBottom: spacing.md, position: 'relative' }}>
+                <label style={labelStyle}>Ocupação/Especialidade (CBO) *</label>
 
-            {/* Specialty */}
-            <div style={{ marginBottom: spacing.md }}>
-                <label style={labelStyle}>Especialidade *</label>
-                <input
-                    type="text"
-                    value={formData.qualification_display}
-                    onChange={(e) => setFormData({ ...formData, qualification_display: e.target.value })}
-                    style={inputStyle}
-                    placeholder="Ex: Cardiologia, Clínica Geral, etc."
-                />
-                {errors.qualification_display && <div style={errorStyle}>{errors.qualification_display}</div>}
+                {selectedCbo ? (
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: spacing.sm,
+                        background: colors.primary.light || '#e0f2fe',
+                        border: `1px solid ${colors.primary.medium}`,
+                        borderRadius: borderRadius.md,
+                    }}>
+                        <div>
+                            <div style={{ fontWeight: 600, color: colors.primary.medium, fontSize: '0.85rem' }}>
+                                {selectedCbo.codigo}
+                            </div>
+                            <div style={{ fontWeight: 500 }}>{selectedCbo.nome}</div>
+                            <div style={{ fontSize: '0.75rem', color: colors.text.secondary }}>
+                                {selectedCbo.familia_nome}
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={clearCbo}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '1.5rem',
+                                cursor: 'pointer',
+                                color: colors.text.secondary,
+                            }}
+                            aria-label="Limpar seleção CBO"
+                        >
+                            ×
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <input
+                            type="text"
+                            value={cboSearch}
+                            onChange={(e) => {
+                                setCboSearch(e.target.value);
+                                searchCbo(e.target.value);
+                            }}
+                            style={inputStyle}
+                            placeholder="Digite para buscar ocupação..."
+                            onFocus={() => cboResults.length > 0 && setShowCboDropdown(true)}
+                        />
+
+                        {/* Quick access buttons */}
+                        <div style={{ display: 'flex', gap: spacing.xs, marginTop: spacing.xs, flexWrap: 'wrap' }}>
+                            <button type="button" onClick={() => loadCboByFamily('2251')}
+                                style={{ padding: '4px 8px', borderRadius: '12px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>
+                                👨‍⚕️ Médicos
+                            </button>
+                            <button type="button" onClick={() => loadCboByFamily('2235')}
+                                style={{ padding: '4px 8px', borderRadius: '12px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>
+                                👩‍⚕️ Enfermeiros
+                            </button>
+                            <button type="button" onClick={() => loadCboByFamily('2232')}
+                                style={{ padding: '4px 8px', borderRadius: '12px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>
+                                🦷 Dentistas
+                            </button>
+                            <button type="button" onClick={() => loadCboByFamily('2236')}
+                                style={{ padding: '4px 8px', borderRadius: '12px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>
+                                🏃 Fisioterapeutas
+                            </button>
+                            <button type="button" onClick={() => loadCboByFamily('2515')}
+                                style={{ padding: '4px 8px', borderRadius: '12px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>
+                                🧠 Psicólogos
+                            </button>
+                        </div>
+
+                        {/* Dropdown */}
+                        {showCboDropdown && cboResults.length > 0 && (
+                            <ul style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                right: 0,
+                                maxHeight: '250px',
+                                overflowY: 'auto',
+                                background: 'white',
+                                border: `1px solid ${colors.border.light}`,
+                                borderRadius: borderRadius.md,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                listStyle: 'none',
+                                padding: 0,
+                                margin: '4px 0 0',
+                                zIndex: 100,
+                            }}>
+                                {cboResults.map(ocupacao => (
+                                    <li
+                                        key={ocupacao.codigo}
+                                        onClick={() => selectCbo(ocupacao)}
+                                        style={{
+                                            display: 'flex',
+                                            gap: spacing.sm,
+                                            padding: spacing.sm,
+                                            cursor: 'pointer',
+                                            borderBottom: `1px solid ${colors.border.light}`,
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = colors.background.muted || '#f9fafb'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                                    >
+                                        <span style={{
+                                            background: colors.primary.medium,
+                                            color: 'white',
+                                            padding: '2px 6px',
+                                            borderRadius: '4px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            whiteSpace: 'nowrap',
+                                            height: 'fit-content',
+                                        }}>
+                                            {ocupacao.codigo}
+                                        </span>
+                                        <div>
+                                            <div style={{ fontWeight: 500 }}>{ocupacao.nome}</div>
+                                            <div style={{ fontSize: '0.75rem', color: colors.text.secondary }}>
+                                                {ocupacao.descricao}
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </>
+                )}
+
+                {errors.codigo_cbo && <div style={errorStyle}>{errors.codigo_cbo}</div>}
             </div>
 
             {/* Gender */}
@@ -198,6 +413,7 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({ onSubmit, onCancel,
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
                     style={inputStyle}
+                    aria-label="Gênero"
                 >
                     <option value="male">Masculino</option>
                     <option value="female">Feminino</option>
@@ -266,3 +482,4 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({ onSubmit, onCancel,
 };
 
 export default PractitionerForm;
+
