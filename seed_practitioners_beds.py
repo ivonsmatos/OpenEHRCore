@@ -93,7 +93,7 @@ def create_locations_direct():
     hospital = {
         "resourceType": "Location",
         "status": "active",
-        "name": "Hospital OpenEHRCore",
+        "name": "Hospital HealthStack",
         "description": "Hospital geral com todas especialidades",
         "mode": "instance",
         "type": [{
@@ -204,7 +204,7 @@ def create_locations_direct():
 
 def main():
     print("=" * 60)
-    print("🏥 OpenEHRCore - Practitioners & Beds Seed")
+    print("🏥 HealthStack - Practitioners & Beds Seed")
     print("=" * 60)
     
     if not login():

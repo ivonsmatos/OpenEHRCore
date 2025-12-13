@@ -1,5 +1,5 @@
 /**
- * Authentication Client for OpenEHRCore
+ * Authentication Client for HealthStack
  *
  * Handles SMART on FHIR OAuth2 authentication
  */

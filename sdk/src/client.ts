@@ -1,5 +1,5 @@
 /**
- * OpenEHRCore Client - Main entry point
+ * HealthStack Client - Main entry point
  *
  * Unified client that combines FHIR and Auth functionality
  */

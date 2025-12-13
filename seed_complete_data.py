@@ -118,7 +118,7 @@ def random_date(start_year=1950, end_year=2005):
 def create_organization():
     """Create hospital organization."""
     org = {
-        "name": "Hospital OpenEHRCore",
+        "name": "Hospital HealthStack",
         "alias": ["HOC"],
         "type": "prov",
         "active": True,
@@ -460,7 +460,7 @@ def create_invoices(patients):
 
 def main():
     print("=" * 60)
-    print("🏥 OpenEHRCore - Comprehensive Data Seed")
+    print("🏥 HealthStack - Comprehensive Data Seed")
     print("=" * 60)
     
     if not login():

@@ -178,7 +178,7 @@
         "FileLocation": "",
         "EnableWebhookDebugging": true,
         "EnableDiagnostics": true,
-        "EnableSentry": true,
+        "EnableSentry": false,
         "AdvancedLoggingJSON": {},
         "MaxFieldSize": 2048
     },

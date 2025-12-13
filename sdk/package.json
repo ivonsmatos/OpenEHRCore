@@ -1,7 +1,7 @@
 {
-    "name": "@openehrcore/sdk",
+    "name": "@healthstack/sdk",
     "version": "1.0.0",
-    "description": "TypeScript SDK for OpenEHRCore FHIR API",
+    "description": "TypeScript SDK for HealthStack FHIR API",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
     "types": "dist/index.d.ts",

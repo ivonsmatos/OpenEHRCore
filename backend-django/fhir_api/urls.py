@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7, views_brazil
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7, views_brazil, views_agent, views_validation
 from .metrics import metrics_view
 
 router = DefaultRouter()
@@ -484,7 +484,31 @@ urlpatterns = [
     path('telemedicine/sessions/<str:session_id>/end', views_brazil.end_telemedicine_session, name='end_telemedicine_session'),
     path('telemedicine/sessions/<str:session_id>/cancel', views_brazil.cancel_telemedicine_session, name='cancel_telemedicine_session'),
     path('telemedicine/practitioners/<str:practitioner_id>/upcoming', views_brazil.upcoming_sessions, name='upcoming_telemedicine_sessions'),
+    
+    # ============================================================================
+    # Sprint 38: On-Premise Agent Integration
+    # ============================================================================
+    
+    path('agent/hl7/receive', views_agent.receive_hl7_from_agent, name='agent_receive_hl7'),
+    path('agent/register', views_agent.register_agent, name='agent_register'),
+    path('agent/heartbeat', views_agent.agent_heartbeat, name='agent_heartbeat'),
+    path('agent/list', views_agent.list_agents, name='agent_list'),
+    path('agent/messages', views_agent.agent_messages, name='agent_messages'),
+    path('agent/<str:agent_id>/push', views_agent.push_to_agent, name='agent_push'),
+    
+    # ============================================================================
+    # Sprint 38: FHIR Validation (100% FHIR-Native)
+    # ============================================================================
+    
+    path('fhir/validation-info', views_validation.validation_info, name='fhir_validation_info'),
+    path('fhir/validate', views_validation.validate_resource, name='fhir_validate'),
+    path('fhir/validate-bundle', views_validation.validate_bundle, name='fhir_validate_bundle'),
+    path('fhir/quick-validate', views_validation.quick_validate, name='fhir_quick_validate'),
+    path('fhir/check-reference', views_validation.check_reference, name='fhir_check_reference'),
+    path('fhir/profiles/<str:resource_type>', views_validation.list_profiles, name='fhir_list_profiles'),
 ]
 
 
 urlpatterns += router.urls
+
+

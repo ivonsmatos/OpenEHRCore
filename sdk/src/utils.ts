@@ -1,5 +1,5 @@
 /**
- * Utility functions for OpenEHRCore SDK
+ * Utility functions for HealthStack SDK
  */
 
 import type { SearchParams } from './types';

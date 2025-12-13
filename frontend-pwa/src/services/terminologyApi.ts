@@ -167,6 +167,7 @@ export async function validateICD10(code: string): Promise<ICD10Validation> {
         return response.data;
     } catch (error: unknown) {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
+            console.warn(`Recurso não encontrado: ${API_URL}/terminology/icd10/${code}/`); // Log de aviso para depuração
             return { code, valid: false, error: `Código CID-10 '${code}' não encontrado` };
         }
         throw error;

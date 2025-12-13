@@ -8,7 +8,7 @@ from decouple import config
 
 KEYCLOAK_URL = "http://localhost:8180"
 REALM = "master"
-CLIENT_ID = "openehrcore"
+CLIENT_ID = "healthstack"
 # Tente pegar do ambiente ou use vazio para ver se falha
 CLIENT_SECRET = config('KEYCLOAK_CLIENT_SECRET', default='')
 

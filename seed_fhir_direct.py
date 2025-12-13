@@ -53,7 +53,7 @@ def create_patient(i, first_name, last_name, gender, birth_date):
         "identifier": [{
             "use": "official",
             "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "TAX"}]},
-            "system": "http://gov.br/cpf",
+            "system": "http://openehrcore.com.br/cpf",
             "value": generate_cpf()
         }],
         "active": True,

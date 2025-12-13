@@ -5,7 +5,7 @@ import django
 
 # Setup Django
 sys.path.insert(0, 'backend-django')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'openehrcore.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'healthstack.settings')
 django.setup()
 
 from fhir_api.services.analytics_service import AnalyticsService

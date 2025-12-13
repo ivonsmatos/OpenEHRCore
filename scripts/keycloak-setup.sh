@@ -1,9 +1,9 @@
 #!/bin/bash
-# keycloak-setup.sh - Configura Keycloak automaticamente para OpenEHRCore
+# keycloak-setup.sh - Configura Keycloak automaticamente para HealthStack
 
 set -e
 
-echo "🔐 Configurando Keycloak para OpenEHRCore..."
+echo "🔐 Configurando Keycloak para HealthStack..."
 echo ""
 
 # Cores
@@ -16,9 +16,9 @@ NC='\033[0m'
 KEYCLOAK_URL="http://localhost:8180"
 ADMIN_USER="admin"
 ADMIN_PASSWORD="admin_password_123"
-REALM_NAME="openehrcore"
-CLIENT_ID_DJANGO="openehrcore-backend"
-CLIENT_ID_REACT="openehrcore-frontend"
+REALM_NAME="healthstack"
+CLIENT_ID_DJANGO="healthstack-backend"
+CLIENT_ID_REACT="healthstack-frontend"
 REDIRECT_URI_DJANGO="http://localhost:8000/auth/callback"
 REDIRECT_URI_REACT="http://localhost:5173/auth/callback"
 
@@ -65,7 +65,7 @@ curl -s -X POST \
   -d '{
     "realm": "'$REALM_NAME'",
     "enabled": true,
-    "displayName": "OpenEHRCore - Sistema de Prontuários",
+    "displayName": "HealthStack - Sistema de Prontuários",
     "accessTokenLifespan": 3600,
     "refreshTokenLifespan": 86400
   }' > /dev/null 2>&1
@@ -82,7 +82,7 @@ DJANGO_CLIENT_RESPONSE=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{
     "clientId": "'$CLIENT_ID_DJANGO'",
-    "name": "OpenEHRCore Backend (Django)",
+    "name": "HealthStack Backend (Django)",
     "enabled": true,
     "publicClient": false,
     "standardFlowEnabled": true,
@@ -113,7 +113,7 @@ REACT_CLIENT_RESPONSE=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{
     "clientId": "'$CLIENT_ID_REACT'",
-    "name": "OpenEHRCore Frontend (React)",
+    "name": "HealthStack Frontend (React)",
     "enabled": true,
     "publicClient": true,
     "standardFlowEnabled": true,
@@ -137,7 +137,7 @@ for ROLE in "medico" "enfermeiro" "admin" "paciente"; do
       -H "Content-Type: application/json" \
       -d '{
         "name": "'$ROLE'",
-        "description": "Role para '$ROLE' no OpenEHRCore"
+        "description": "Role para '$ROLE' no HealthStack"
       }' > /dev/null 2>&1
     echo -e "  ${GREEN}✓ Role '$ROLE' criado${NC}"
 done

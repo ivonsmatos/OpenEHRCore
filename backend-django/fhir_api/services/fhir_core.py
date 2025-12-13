@@ -306,12 +306,19 @@ class FHIRService:
             # 2. Identificador (CPF como identificador único)
             if cpf:
                 identifier = Identifier()
+                # Use canonical project CPF system for consistency across services
                 identifier.system = "http://openehrcore.com.br/cpf"
                 identifier.value = cpf
                 identifier.type = CodeableConcept()
-                identifier.type.coding = [Coding()]
-                identifier.type.coding[0].system = "http://terminology.hl7.org/CodeSystem/v2-0203"
-                identifier.type.coding[0].code = "CPF"
+                # Provide multiple codings so clients can detect CPF regardless of code used
+                coding_cpf = Coding()
+                coding_cpf.system = "http://terminology.hl7.org/CodeSystem/v2-0203"
+                coding_cpf.code = "CPF"
+                coding_tax = Coding()
+                coding_tax.system = "http://terminology.hl7.org/CodeSystem/v2-0203"
+                coding_tax.code = "TAX"
+                # Keep both codings (CPF and TAX) so external clients can detect either code
+                identifier.type.coding = [coding_cpf, coding_tax]
                 patient.identifier = [identifier]
             
             # 3. Data de nascimento

@@ -6,7 +6,7 @@ import json
 
 # Setup Django
 sys.path.append(os.path.join(os.path.dirname(__file__), '../backend-django'))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'openehrcore.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'healthstack.settings')
 django.setup()
 
 from fhir_api.services.fhir_core import FHIRService

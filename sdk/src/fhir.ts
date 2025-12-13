@@ -1,5 +1,5 @@
 /**
- * FHIR Client for OpenEHRCore
+ * FHIR Client for HealthStack
  *
  * Generic FHIR R4 client for resource operations
  */

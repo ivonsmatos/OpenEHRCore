@@ -1,5 +1,5 @@
 /**
- * @openehrcore/sdk - TypeScript SDK for OpenEHRCore FHIR API
+ * @healthstack/sdk - TypeScript SDK for HealthStack FHIR API
  *
  * Sprint 33: TypeScript SDK + FHIRcast
  */

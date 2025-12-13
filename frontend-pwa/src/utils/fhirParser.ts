@@ -87,15 +87,21 @@ export function getPatientLastName(patient: FHIRPatient): string {
  * Extrai CPF (identifier do sistema CPF)
  */
 export function getPatientCPF(patient: FHIRPatient): string | null {
-  if (!patient.identifier || patient.identifier.length === 0) {
-    return null;
-  }
+  if (!patient.identifier || patient.identifier.length === 0) return null;
 
-  const cpfIdentifier = patient.identifier.find(
-    (id) =>
-      id.system === "http://openehrcore.com.br/cpf" ||
-      id.type?.coding?.[0]?.code === "CPF"
-  );
+  const cpfIdentifier = patient.identifier.find((id) => {
+    const system = (id.system || '').toLowerCase();
+    const codings = id.type?.coding || [];
+
+    const systemMatches = system === 'http://openehrcore.com.br/cpf' || system === 'http://gov.br/cpf' || system === 'http://gov.br/cpf/';
+
+    const codeMatches = codings.some(c => {
+      const code = (c.code || '').toString().toUpperCase();
+      return code === 'CPF' || code === 'TAX';
+    });
+
+    return systemMatches || codeMatches;
+  });
 
   return cpfIdentifier?.value || null;
 }

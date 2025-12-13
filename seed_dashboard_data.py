@@ -258,7 +258,7 @@ def create_ambulatory_appointments(patients, practitioners):
 
 def main():
     print("=" * 60)
-    print("🏥 OpenEHRCore - Dashboard Data Seed")
+    print("🏥 HealthStack - Dashboard Data Seed")
     print("=" * 60)
     
     patients = get_patients()

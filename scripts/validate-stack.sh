@@ -1,9 +1,9 @@
 #!/bin/bash
-# validate-stack.sh - Valida se a stack OpenEHRCore está saudável
+# validate-stack.sh - Valida se a stack HealthStack está saudável
 
 set -e
 
-echo "🔍 Validando OpenEHRCore Stack..."
+echo "🔍 Validando HealthStack Stack..."
 echo ""
 
 # Cores para output
@@ -130,7 +130,7 @@ fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${GREEN}✅ Stack OpenEHRCore validado com sucesso!${NC}"
+echo -e "${GREEN}✅ Stack HealthStack validado com sucesso!${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "📚 Próximos passos:"
