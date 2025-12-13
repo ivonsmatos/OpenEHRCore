@@ -2,7 +2,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7
 from .metrics import metrics_view
 
 router = DefaultRouter()
@@ -390,6 +390,73 @@ urlpatterns = [
     
     # EHR Launch
     path('smart/launch', views_smart.launch, name='smart_launch'),
+    
+    # ============================================================================
+    # FHIRcast (Sprint 34) - Real-time Context Synchronization
+    # ============================================================================
+    
+    # Configuration
+    path('.well-known/fhircast-configuration', views_fhircast.fhircast_well_known, name='fhircast_config'),
+    path('fhircast/events', views_fhircast.event_types, name='fhircast_event_types'),
+    
+    # Sessions
+    path('fhircast/session', views_fhircast.create_session, name='fhircast_create_session'),
+    
+    # Subscriptions
+    path('fhircast/subscribe', views_fhircast.subscribe, name='fhircast_subscribe'),
+    path('fhircast/unsubscribe', views_fhircast.unsubscribe, name='fhircast_unsubscribe'),
+    
+    # Topic Operations
+    path('fhircast/<str:topic>', views_fhircast.get_context, name='fhircast_get_context'),
+    path('fhircast/<str:topic>/publish', views_fhircast.publish_event, name='fhircast_publish'),
+    path('fhircast/<str:topic>/history', views_fhircast.get_history, name='fhircast_history'),
+    path('fhircast/<str:topic>/subscribers', views_fhircast.get_subscribers, name='fhircast_subscribers'),
+    
+    # ============================================================================
+    # Compliance (Sprint 35) - Bias Prevention, Anonymization, ISO 13606-2
+    # ============================================================================
+    
+    # Compliance Status
+    path('compliance/status', views_compliance.compliance_status, name='compliance_status'),
+    
+    # Bias Prevention
+    path('compliance/bias/validate', views_compliance.validate_content, name='bias_validate'),
+    path('compliance/bias/validate-recommendation', views_compliance.validate_recommendation, name='bias_validate_recommendation'),
+    path('compliance/bias/report', views_compliance.bias_audit_report, name='bias_report'),
+    
+    # Anonymization
+    path('compliance/anonymize', views_compliance.anonymize_data, name='anonymize_data'),
+    
+    # ISO 13606-2 Archetypes
+    path('archetypes/', views_compliance.list_archetypes, name='list_archetypes'),
+    path('archetypes/<str:archetype_name>/', views_compliance.get_archetype, name='get_archetype'),
+    path('archetypes/<str:archetype_name>/validate/', views_compliance.validate_archetype_data, name='validate_archetype'),
+    path('archetypes/<str:archetype_name>/to-fhir/', views_compliance.map_to_fhir, name='archetype_to_fhir'),
+    
+    # Terminology Codes
+    path('terminology/codes/', views_compliance.get_terminology_codes, name='terminology_codes'),
+    
+    # ============================================================================
+    # Sprint 36: Questionnaires & Assessments
+    # ============================================================================
+    
+    path('questionnaires/', views_questionnaire.list_questionnaires, name='list_questionnaires'),
+    path('questionnaires/<str:questionnaire_id>/', views_questionnaire.get_questionnaire, name='get_questionnaire'),
+    path('questionnaires/create/', views_questionnaire.create_questionnaire, name='create_questionnaire'),
+    path('questionnaires/<str:questionnaire_id>/responses/', views_questionnaire.submit_response, name='submit_response'),
+    path('questionnaire-responses/', views_questionnaire.get_responses, name='get_responses'),
+    path('questionnaire-responses/<str:response_id>/', views_questionnaire.get_response, name='get_response_detail'),
+    path('patients/<str:patient_id>/assessments/', views_questionnaire.patient_assessments, name='patient_assessments'),
+    
+    # ============================================================================
+    # Sprint 36: HL7 v2.x Integration
+    # ============================================================================
+    
+    path('hl7/info', views_hl7.hl7_info, name='hl7_info'),
+    path('hl7/adt/generate', views_hl7.generate_adt, name='hl7_generate_adt'),
+    path('hl7/adt/parse', views_hl7.parse_adt, name='hl7_parse_adt'),
+    path('hl7/orm/generate', views_hl7.generate_orm, name='hl7_generate_orm'),
+    path('hl7/oru/parse', views_hl7.parse_oru, name='hl7_parse_oru'),
 ]
 
 

@@ -38,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         { label: 'Agenda', icon: <Calendar size={20} />, route: '/scheduling' },
         { label: 'Check-in', icon: <Activity size={20} />, route: '/checkin' },
         { label: 'Internação', icon: <Bed size={20} />, route: '/ipd' },
+        { label: 'Prescrições', icon: <FileText size={20} />, route: '/prescriptions' },
         { label: 'Financeiro', icon: <DollarSign size={20} />, route: '/finance' },
         { label: 'Automações', icon: <Zap size={20} />, route: '/automation' },
         { label: 'Documentos', icon: <FileText size={20} />, route: '/documents' },

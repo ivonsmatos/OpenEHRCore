@@ -116,6 +116,9 @@ const NotificationsPanel = lazyLoad(() => import('./components/regulatory/Notifi
 // Automation (Sprint 29)
 const AutomationPage = lazyLoad(() => import('./pages/AutomationPage'));
 
+// Prescription (Sprint 31)
+const PrescriptionWorkspace = lazyLoad(() => import('./components/clinical/PrescriptionWorkspace'));
+
 /**
  * Rotas protegidas (requerem autenticação)
  */
@@ -156,6 +159,9 @@ const ProtectedRoutes: React.FC = () => {
 
                     {/* Automation (Sprint 29) */}
                     <Route path="/automation" element={<AutomationPage />} />
+
+                    {/* Prescription (Sprint 31) */}
+                    <Route path="/prescriptions" element={<PrescriptionWorkspace />} />
 
                     <Route path="/profile" element={<SettingsWorkspace section="profile" />} />
                     <Route path="/settings/profile" element={<SettingsWorkspace section="profile" />} />

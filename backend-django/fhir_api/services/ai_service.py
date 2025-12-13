@@ -78,8 +78,10 @@ class AIService:
         cond_text = ", ".join([c.get('code', {}).get('text', 'Condição') for c in conditions]) if conditions else "Nenhuma condição crônica registrada"
         med_text = ", ".join([m.get('medicationCodeableConcept', {}).get('text', 'Medicamento') for m in medications]) if medications else "Nenhum medicamento em uso"
 
-        # Construct Prompt (Mistral Format)
-        prompt = f"""<s>[INST] Você é um assistente clínico especializado. Gere um resumo clínico conciso e profissional em Português para o seguinte paciente.
+        # Construct Prompt (Mistral Format) with Bias Prevention Guardrails
+        from .bias_prevention_service import BiasPreventionService
+        
+        base_prompt = f"""Você é um assistente clínico especializado. Gere um resumo clínico conciso e profissional em Português para o seguinte paciente.
         
         Dados do Paciente:
         - Nome: {name}
@@ -90,7 +92,13 @@ class AIService:
         - Condições: {cond_text}
         - Medicamentos em uso: {med_text}
         
-        Sua tarefa: Crie um resumo de 3-5 linhas destacando os pontos principais para um médico ler rapidamente antes da consulta. Use termos técnicos apropriados. [/INST]"""
+        Sua tarefa: Crie um resumo de 3-5 linhas destacando os pontos principais para um médico ler rapidamente antes da consulta. Use termos técnicos apropriados.
+        
+        IMPORTANTE: Base suas recomendações SOMENTE em evidências clínicas. NÃO faça generalizações baseadas em raça, etnia ou condição socioeconômica."""
+        
+        # Add guardrails and format for Mistral
+        guarded_prompt = BiasPreventionService.add_guardrails_to_prompt(base_prompt)
+        prompt = f"<s>[INST] {guarded_prompt} [/INST]"
 
         try:
             if llm:
