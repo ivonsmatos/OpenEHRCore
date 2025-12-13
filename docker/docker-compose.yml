@@ -108,39 +108,8 @@ services:
     networks:
       - openehr_network
 
-  # Serviço de Chat (Mattermost)
-  mattermost:
-    image: mattermost/mattermost-team-edition:latest
-    container_name: mattermost
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    pids_limit: 200
-    read_only: false
-    tmpfs:
-      - /tmp
-    volumes:
-      - ./volumes/mattermost/config:/mattermost/config:rw
-      - ./volumes/mattermost/data:/mattermost/data:rw
-      - ./volumes/mattermost/logs:/mattermost/logs:rw
-      - ./volumes/mattermost/plugins:/mattermost/plugins:rw
-      - ./volumes/mattermost/client/plugins:/mattermost/client/plugins:rw
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      - MM_SQLSETTINGS_DRIVERNAME=postgres
-      - MM_SQLSETTINGS_DATASOURCE=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/mattermost?sslmode=disable&connect_timeout=10
-      - MM_BLEVESTTINGS_INDEXDIR=/mattermost/bleve-indexes
-      - MM_SERVICESETTINGS_SITEURL=http://localhost:8065
-      - MM_SERVICESETTINGS_ALLOWCORSFROM=*
-      # Allow embedding in localhost:5173 (Vite)
-      - MM_SECURITYSETTINGS_CONTENTSECURITYPOLICY=frame-ancestors 'self' http://localhost:5173 http://localhost:3000
-    ports:
-      - "8065:8065"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - openehr_network
+  # NOTE: Mattermost was removed from this project (Sprint removed)
+  # Chat functionality is handled via internal Communication resources (FHIR)
 
 volumes:
   postgres_data:

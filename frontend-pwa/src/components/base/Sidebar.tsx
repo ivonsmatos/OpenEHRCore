@@ -13,7 +13,8 @@ import {
     MessageSquare,
     Bed,
     Stethoscope,
-    Building2
+    Building2,
+    Zap
 } from 'lucide-react';
 import { colors, spacing } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
@@ -38,11 +39,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         { label: 'Check-in', icon: <Activity size={20} />, route: '/checkin' },
         { label: 'Internação', icon: <Bed size={20} />, route: '/ipd' },
         { label: 'Financeiro', icon: <DollarSign size={20} />, route: '/finance' },
-
+        { label: 'Automações', icon: <Zap size={20} />, route: '/automation' },
         { label: 'Documentos', icon: <FileText size={20} />, route: '/documents' },
         { label: 'Visitantes', icon: <UserPlus size={20} />, route: '/visitors' },
         { label: 'Chat', icon: <MessageSquare size={20} />, route: '/chat' },
-        { label: 'Portal Paciente', icon: <Users size={20} />, route: '/portal' }, // Demo link
+        { label: 'Portal Paciente', icon: <Users size={20} />, route: '/portal' },
     ];
 
     return (

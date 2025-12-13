@@ -2,7 +2,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart
 from .metrics import metrics_view
 
 router = DefaultRouter()
@@ -326,6 +326,70 @@ urlpatterns = [
     path('cbo/dentists/', views_cbo.listar_dentistas_cbo, name='cbo_dentists'),
     path('cbo/nursing-technicians/', views_cbo.listar_tecnicos_enfermagem_cbo, name='cbo_nursing_technicians'),
     path('cbo/<str:codigo>/', views_cbo.detalhe_cbo, name='cbo_detail'),
+    
+    # ================================================================
+    # Sprint 29-30: Automation & Billing
+    # ================================================================
+    
+    # Subscriptions (FHIR Webhooks)
+    path('subscriptions/', views_automation.manage_subscriptions, name='subscriptions'),
+    path('subscriptions/<str:subscription_id>/', views_automation.subscription_detail, name='subscription_detail'),
+    
+    # Bots (Automation Engine)
+    path('bots/', views_automation.list_bots, name='bots'),
+    path('bots/history/', views_automation.bot_history, name='bots_history'),
+    path('bots/<str:bot_id>/', views_automation.bot_detail, name='bot_detail'),
+    path('bots/<str:bot_id>/execute/', views_automation.execute_bot, name='execute_bot'),
+    path('bots/<str:bot_id>/history/', views_automation.bot_history, name='bot_history'),
+    
+    # Webhooks (External triggers)
+    path('webhooks/<str:webhook_id>/', views_automation.webhook_receiver, name='webhook_receiver'),
+    
+    # Billing - Coverage (Insurance)
+    path('billing/coverage/', views_billing.manage_coverage, name='billing_coverage'),
+    path('billing/coverage/<str:coverage_id>/', views_billing.coverage_detail, name='billing_coverage_detail'),
+    
+    # Billing - Claims
+    path('billing/claims/', views_billing.manage_claims, name='billing_claims'),
+    path('billing/claims/<str:claim_id>/', views_billing.claim_detail, name='billing_claim_detail'),
+    path('billing/claims/<str:claim_id>/submit/', views_billing.submit_claim, name='billing_submit_claim'),
+    
+    # Billing - Dashboard
+    path('billing/dashboard/', views_billing.billing_dashboard, name='billing_dashboard'),
+    
+    # ============================================================================
+    # e-Prescribing (Sprint 31)
+    # ============================================================================
+    
+    # Drug Search
+    path('prescriptions/drugs/', views_prescription.search_drugs, name='prescription_search_drugs'),
+    path('prescriptions/drugs/<str:drug_code>/', views_prescription.get_drug_details, name='prescription_drug_details'),
+    path('prescriptions/drugs/<str:drug_code>/validate/', views_prescription.validate_controlled_drug, name='prescription_validate_drug'),
+    
+    # Prescriptions
+    path('prescriptions/', views_prescription.create_prescription, name='prescription_create'),
+    path('prescriptions/<str:prescription_id>/sign/', views_prescription.sign_prescription, name='prescription_sign'),
+    
+    # Patient Prescriptions
+    path('patients/<str:patient_id>/prescriptions/', views_prescription.patient_prescriptions, name='patient_prescriptions'),
+    
+    # ============================================================================
+    # SMART on FHIR (Sprint 32)
+    # ============================================================================
+    
+    # SMART Configuration
+    path('smart/scopes/', views_smart.available_scopes, name='smart_scopes'),
+    path('.well-known/smart-configuration', views_smart.smart_configuration, name='smart_config'),
+    path('metadata', views_smart.capability_statement, name='fhir_metadata'),
+    
+    # OAuth2 Endpoints
+    path('smart/authorize', views_smart.authorize, name='smart_authorize'),
+    path('smart/token', views_smart.token, name='smart_token'),
+    path('smart/introspect', views_smart.introspect, name='smart_introspect'),
+    path('smart/revoke', views_smart.revoke, name='smart_revoke'),
+    
+    # EHR Launch
+    path('smart/launch', views_smart.launch, name='smart_launch'),
 ]
 
 

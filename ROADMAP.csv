@@ -1,0 +1,39 @@
+Sprint,Fase,Descrição,Status,Backend,Frontend,Prioridade,Estimativa,Observações
+1,Fundação,Docker & Infraestrutura,✅ Completo,docker-compose.yml,-,-,-,HAPI FHIR + PostgreSQL + Keycloak
+2,Fundação,Django Backend Setup,✅ Completo,settings.py,-,-,-,DRF configurado
+3,Fundação,React Frontend Setup,✅ Completo,-,App.tsx,-,-,Vite + TypeScript
+4,Fundação,Keycloak Auth,✅ Completo,authentication.py,useAuth.ts,-,-,JWT tokens
+5,Fundação,Patient CRUD,✅ Completo,views_auth.py,PatientList.tsx,-,-,FHIR Patient
+6,Clínico,Practitioner/Organization,✅ Completo,views_practitioners.py,PractitionerWorkspace.tsx,-,-,Gestão profissionais
+7,Clínico,Encounter,✅ Completo,views_auth.py,InternmentWorkspace.tsx,-,-,Atendimentos
+8,Clínico,Observation,✅ Completo,views_auth.py,VitalSignsCard.tsx,-,-,Sinais vitais
+9,Clínico,Condition/Allergy,✅ Completo,views_auth.py,PatientDetail.tsx,-,-,Problemas e alergias
+10,Clínico,MedicationRequest,✅ Completo,views_medication.py,PrescriptionCard.tsx,-,-,Prescrições
+11,Avançado,Immunization,✅ Completo,views_clinical.py,ImmunizationWorkspace.tsx,-,-,Vacinas
+12,Avançado,Procedure,✅ Completo,views_procedure.py,-,-,-,Procedimentos
+13,Avançado,DiagnosticReport,✅ Completo,views_diagnostic_report.py,DiagnosticResultWorkspace.tsx,-,-,Laudos
+14,Avançado,DocumentReference,✅ Completo,views_documents.py,DocumentsWorkspace.tsx,-,-,Upload docs
+15,Avançado,Appointment,✅ Completo,views_auth.py,SchedulingWorkspace.tsx,-,-,Agendamento
+16,Brasil,TISS/ANS,✅ Completo,views_tiss.py + tiss_service.py,TISSWorkspace.tsx,-,-,Guias faturamento
+17,Brasil,RNDS,✅ Completo,views_rnds.py + rnds_service.py,RNDSStatus.tsx,-,-,Rede Nacional
+18,Brasil,CBO,✅ Completo,views_cbo.py + cbo_service.py,CBOSelector.tsx,-,-,Classificação ocupações
+19,Brasil,Assinatura ICP,✅ Completo,digital_signature.py,-,-,-,Assinatura digital
+20,Brasil,Notificações Compulsórias,✅ Completo,views_notifications.py,NotificationsPanel.tsx,-,-,Doenças notificação
+21,Performance,Terminologia,✅ Completo,views_terminology.py,-,-,-,ValueSet/CodeSystem
+22,Performance,Bulk Data Export,✅ Completo,views_bulk_data.py,-,-,-,NDJSON export
+23,Performance,LGPD,✅ Completo,views_lgpd.py,LGPDDashboard.tsx,-,-,Consent/anonimização
+24,Performance,Audit,✅ Completo,views_audit_event.py,AuditLogWorkspace.tsx,-,-,Logs auditoria
+25,Performance,Lazy Loading,✅ Completo,-,routes.tsx,-,-,Code splitting
+26,Mobile,Expo App,✅ Completo,-,mobile-app/,-,-,React Native
+-,Pendente,FIX: Dados não carregando,⏳ Pendente,verificar proxy,verificar fetch,🔴 Alta,2h,INVESTIGAR
+-,Pendente,Tratamento erros API,⏳ Pendente,error handlers,error states,🔴 Alta,2h,Feedback usuário
+-,Pendente,Validação CPF real,⏳ Pendente,validators.py,form validation,🔴 Alta,1h,Algoritmo validação
+-,Pendente,Testes E2E,⏳ Pendente,pytest,Cypress/Playwright,🟡 Média,4h,Cobertura completa
+-,Pendente,Internacionalização,⏳ Pendente,-,i18n setup,🟡 Média,3h,EN/ES
+-,Pendente,Export PDF,⏳ Pendente,reportlab,react-pdf,🟡 Média,3h,Documentos
+-,Pendente,Print layouts,⏳ Pendente,-,@media print,🟡 Média,2h,Impressão
+-,Pendente,Dashboard relatórios,⏳ Pendente,views_reports.py,ReportsWorkspace.tsx,🟡 Média,4h,Analytics
+-,Pendente,Dark mode polish,⏳ Pendente,-,theme.css,🟢 Baixa,2h,Ajustar cores
+-,Pendente,Acessibilidade WCAG,⏳ Pendente,-,aria labels,🟢 Baixa,4h,Compliance
+-,Pendente,Documentação API,⏳ Pendente,drf-spectacular,-,🟢 Baixa,3h,Swagger/OpenAPI
+-,Pendente,Onboarding tour,⏳ Pendente,-,react-joyride,🟢 Baixa,3h,Tutorial

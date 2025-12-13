@@ -1,313 +1,162 @@
 """
-Script para popular dados clínicos de exemplo para TODOS os pacientes no HAPI FHIR
-
-Cria dados de exemplo para cada paciente encontrado:
-- Sinais Vitais (Observations)
-- Vacinas (Immunizations)
-- Resultado de Exames (DiagnosticReports)
-- Medicamentos (MedicationRequests)
-- Histórico Clínico (Conditions)
-- Alergias (AllergyIntolerance)
-- Agendamentos (Appointments)
-- Atendimentos (Encounters)
-
-Uso:
-    python populate_clinical_data.py [--max N] [--patient-id ID]
-    
-    --max N       : Limita a N pacientes (default: todos)
-    --patient-id  : Popula apenas para um paciente específico
+Script para popular dados clínicos no HAPI FHIR
+Cria vacinas, medicamentos, exames e atendimentos para todos os pacientes
 """
 
 import requests
-import json
-from datetime import datetime, timedelta
 import random
-import sys
+from datetime import datetime, timedelta
 
-HAPI_FHIR_URL = "http://localhost:8080/fhir"
+FHIR_URL = 'http://localhost:8080/fhir'
 
+# Buscar todos os pacientes
+print('Buscando pacientes...')
+resp = requests.get(f'{FHIR_URL}/Patient?_count=100')
+patients = [e['resource'] for e in resp.json().get('entry', [])]
+print(f'Encontrados {len(patients)} pacientes')
 
-def get_all_patients(max_count=100):
-    """Busca todos os pacientes do HAPI FHIR"""
-    patients = []
-    response = requests.get(f"{HAPI_FHIR_URL}/Patient?_count={max_count}")
-    if response.status_code == 200:
-        bundle = response.json()
-        if bundle.get("entry"):
-            for entry in bundle["entry"]:
-                patients.append(entry["resource"])
-    return patients
+# Vacinas para criar
+vaccines = [
+    {'code': '08', 'display': 'Hepatite B', 'system': 'http://hl7.org/fhir/sid/cvx'},
+    {'code': '03', 'display': 'MMR (Sarampo, Caxumba, Rubeola)', 'system': 'http://hl7.org/fhir/sid/cvx'},
+    {'code': '21', 'display': 'Varicela', 'system': 'http://hl7.org/fhir/sid/cvx'},
+    {'code': '33', 'display': 'Pneumococica', 'system': 'http://hl7.org/fhir/sid/cvx'},
+    {'code': '52', 'display': 'Hepatite A', 'system': 'http://hl7.org/fhir/sid/cvx'},
+    {'code': '140', 'display': 'Influenza (Gripe)', 'system': 'http://hl7.org/fhir/sid/cvx'},
+    {'code': '207', 'display': 'COVID-19 Pfizer', 'system': 'http://hl7.org/fhir/sid/cvx'},
+    {'code': '208', 'display': 'COVID-19 Moderna', 'system': 'http://hl7.org/fhir/sid/cvx'},
+    {'code': '115', 'display': 'Tdap (Tetano, Difteria, Coqueluche)', 'system': 'http://hl7.org/fhir/sid/cvx'},
+    {'code': '10', 'display': 'Poliomielite', 'system': 'http://hl7.org/fhir/sid/cvx'},
+]
 
+# Medicamentos
+medications = [
+    {'code': '197361', 'display': 'Losartana 50mg', 'system': 'http://www.nlm.nih.gov/research/umls/rxnorm'},
+    {'code': '310798', 'display': 'Metformina 850mg', 'system': 'http://www.nlm.nih.gov/research/umls/rxnorm'},
+    {'code': '314076', 'display': 'Omeprazol 20mg', 'system': 'http://www.nlm.nih.gov/research/umls/rxnorm'},
+    {'code': '866514', 'display': 'Sinvastatina 20mg', 'system': 'http://www.nlm.nih.gov/research/umls/rxnorm'},
+    {'code': '197517', 'display': 'AAS 100mg', 'system': 'http://www.nlm.nih.gov/research/umls/rxnorm'},
+    {'code': '198211', 'display': 'Atenolol 50mg', 'system': 'http://www.nlm.nih.gov/research/umls/rxnorm'},
+    {'code': '151110', 'display': 'Dipirona 500mg', 'system': 'http://www.nlm.nih.gov/research/umls/rxnorm'},
+    {'code': '161', 'display': 'Paracetamol 750mg', 'system': 'http://www.nlm.nih.gov/research/umls/rxnorm'},
+]
 
-def get_patient_name(patient):
-    """Extrai nome do paciente"""
-    name = patient.get('name', [{}])[0]
-    given = name.get('given', [''])[0] if name.get('given') else ''
-    family = name.get('family', '')
-    return f"{given} {family}".strip() or f"Paciente {patient['id']}"
+# Exames
+exams = [
+    {'code': '2093-3', 'display': 'Colesterol Total', 'unit': 'mg/dL', 'min': 150, 'max': 250},
+    {'code': '2571-8', 'display': 'Triglicerides', 'unit': 'mg/dL', 'min': 80, 'max': 200},
+    {'code': '2345-7', 'display': 'Glicemia de Jejum', 'unit': 'mg/dL', 'min': 70, 'max': 130},
+    {'code': '718-7', 'display': 'Hemoglobina', 'unit': 'g/dL', 'min': 12, 'max': 17},
+    {'code': '787-2', 'display': 'Hematocrito', 'unit': '%', 'min': 35, 'max': 50},
+    {'code': '6690-2', 'display': 'Leucocitos', 'unit': '10*3/uL', 'min': 4, 'max': 11},
+    {'code': '2160-0', 'display': 'Creatinina', 'unit': 'mg/dL', 'min': 0.6, 'max': 1.3},
+    {'code': '3094-0', 'display': 'Ureia', 'unit': 'mg/dL', 'min': 15, 'max': 45},
+]
 
+dosage_options = ['de manha', 'a noite', '2x ao dia', '3x ao dia']
+reason_options = ['Consulta de rotina', 'Acompanhamento', 'Exames periodicos', 'Queixa de dor', 'Renovacao de receita']
 
-def create_vital_signs(patient_id: str):
-    """Cria sinais vitais de exemplo para os últimos 30 dias"""
-    observations = []
+count_imm = 0
+count_med = 0
+count_obs = 0
+count_enc = 0
+
+for patient in patients[:30]:  # Limitar a 30 para ser rapido
+    patient_id = patient['id']
+    patient_name = patient.get('name', [{}])[0].get('given', [''])[0] if patient.get('name') else 'Paciente'
+    print(f'Populando dados para {patient_name} ({patient_id})...')
     
-    for days_ago in range(30, 0, -5):  # A cada 5 dias
-        date = (datetime.now() - timedelta(days=days_ago)).isoformat()
-        
-        # Pressão Arterial
-        bp = {
-            "resourceType": "Observation",
-            "status": "final",
-            "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/observation-category", "code": "vital-signs"}]}],
-            "code": {"coding": [{"system": "http://loinc.org", "code": "85354-9", "display": "Blood pressure panel"}]},
-            "subject": {"reference": f"Patient/{patient_id}"},
-            "effectiveDateTime": date,
-            "component": [
-                {"code": {"coding": [{"system": "http://loinc.org", "code": "8480-6"}]}, "valueQuantity": {"value": random.randint(110, 145), "unit": "mmHg"}},
-                {"code": {"coding": [{"system": "http://loinc.org", "code": "8462-4"}]}, "valueQuantity": {"value": random.randint(65, 95), "unit": "mmHg"}}
-            ]
-        }
-        observations.append(bp)
-        
-        # Frequência Cardíaca
-        observations.append({
-            "resourceType": "Observation", "status": "final",
-            "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/observation-category", "code": "vital-signs"}]}],
-            "code": {"coding": [{"system": "http://loinc.org", "code": "8867-4", "display": "Heart rate"}]},
-            "subject": {"reference": f"Patient/{patient_id}"},
-            "effectiveDateTime": date,
-            "valueQuantity": {"value": random.randint(58, 105), "unit": "beats/min"}
-        })
-        
-        # Temperatura
-        observations.append({
-            "resourceType": "Observation", "status": "final",
-            "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/observation-category", "code": "vital-signs"}]}],
-            "code": {"coding": [{"system": "http://loinc.org", "code": "8310-5", "display": "Body temperature"}]},
-            "subject": {"reference": f"Patient/{patient_id}"},
-            "effectiveDateTime": date,
-            "valueQuantity": {"value": round(random.uniform(35.8, 37.8), 1), "unit": "°C"}
-        })
-        
-        # SpO2
-        observations.append({
-            "resourceType": "Observation", "status": "final",
-            "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/observation-category", "code": "vital-signs"}]}],
-            "code": {"coding": [{"system": "http://loinc.org", "code": "59408-5", "display": "SpO2"}]},
-            "subject": {"reference": f"Patient/{patient_id}"},
-            "effectiveDateTime": date,
-            "valueQuantity": {"value": random.randint(94, 100), "unit": "%"}
-        })
-    
-    created = 0
-    for obs in observations:
-        if requests.post(f"{HAPI_FHIR_URL}/Observation", json=obs).status_code == 201:
-            created += 1
-    return created
-
-
-def create_immunizations(patient_id: str):
-    """Cria vacinas de exemplo"""
-    vaccines = [
-        {"code": "08", "display": "Hepatite B", "days": -random.randint(100, 400)},
-        {"code": "03", "display": "MMR", "days": -random.randint(50, 200)},
-        {"code": "115", "display": "COVID-19", "days": -random.randint(30, 120)},
-        {"code": "140", "display": "Influenza 2024", "days": -random.randint(10, 60)},
-    ]
-    
-    created = 0
-    for v in vaccines:
+    # Criar 3-5 vacinas aleatorias
+    for vac in random.sample(vaccines, min(random.randint(3, 5), len(vaccines))):
+        days_ago = random.randint(30, 1000)
         imm = {
-            "resourceType": "Immunization", "status": "completed",
-            "vaccineCode": {"coding": [{"system": "http://hl7.org/fhir/sid/cvx", "code": v["code"], "display": v["display"]}]},
-            "patient": {"reference": f"Patient/{patient_id}"},
-            "occurrenceDateTime": (datetime.now() + timedelta(days=v["days"])).strftime("%Y-%m-%d"),
-            "primarySource": True
+            'resourceType': 'Immunization',
+            'status': 'completed',
+            'vaccineCode': {
+                'coding': [vac]
+            },
+            'patient': {'reference': f'Patient/{patient_id}'},
+            'occurrenceDateTime': (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%dT10:00:00Z'),
+            'lotNumber': f'LOT{random.randint(10000, 99999)}',
+            'site': {
+                'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/v3-ActSite', 'code': 'LA', 'display': 'Braco Esquerdo'}]
+            },
+            'performer': [{'actor': {'display': 'Enfermeira Ana'}}]
         }
-        if requests.post(f"{HAPI_FHIR_URL}/Immunization", json=imm).status_code == 201:
-            created += 1
-    return created
-
-
-def create_diagnostic_reports(patient_id: str):
-    """Cria resultados de exames"""
-    exams = [
-        {"code": "58410-2", "display": "Hemograma", "conclusion": "Valores normais"},
-        {"code": "2345-7", "display": "Glicemia", "conclusion": f"Glicemia: {random.randint(80, 120)} mg/dL"},
-        {"code": "2093-3", "display": "Colesterol Total", "conclusion": f"Colesterol: {random.randint(150, 220)} mg/dL"},
+        requests.post(f'{FHIR_URL}/Immunization', json=imm)
+        count_imm += 1
+    
+    # Criar 2-4 medicamentos
+    for med in random.sample(medications, min(random.randint(2, 4), len(medications))):
+        dosage = random.choice(dosage_options)
+        med_req = {
+            'resourceType': 'MedicationRequest',
+            'status': random.choice(['active', 'active', 'completed']),
+            'intent': 'order',
+            'medicationCodeableConcept': {
+                'coding': [med]
+            },
+            'subject': {'reference': f'Patient/{patient_id}'},
+            'authoredOn': (datetime.now() - timedelta(days=random.randint(1, 180))).strftime('%Y-%m-%dT09:00:00Z'),
+            'requester': {'display': 'Dr. Carlos Silva'},
+            'dosageInstruction': [{
+                'text': f'Tomar 1 comprimido {dosage}',
+                'timing': {'repeat': {'frequency': random.choice([1, 2, 3]), 'period': 1, 'periodUnit': 'd'}},
+                'route': {'coding': [{'code': 'PO', 'display': 'Via Oral'}]}
+            }]
+        }
+        requests.post(f'{FHIR_URL}/MedicationRequest', json=med_req)
+        count_med += 1
+    
+    # Criar exames de laboratorio (Observations)
+    for exam in random.sample(exams, min(random.randint(4, 6), len(exams))):
+        days_ago = random.randint(1, 90)
+        obs = {
+            'resourceType': 'Observation',
+            'status': 'final',
+            'category': [{'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/observation-category', 'code': 'laboratory'}]}],
+            'code': {'coding': [{'system': 'http://loinc.org', 'code': exam['code'], 'display': exam['display']}]},
+            'subject': {'reference': f'Patient/{patient_id}'},
+            'effectiveDateTime': (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%dT08:30:00Z'),
+            'valueQuantity': {
+                'value': round(random.uniform(exam['min'], exam['max']), 1),
+                'unit': exam['unit'],
+                'system': 'http://unitsofmeasure.org'
+            }
+        }
+        requests.post(f'{FHIR_URL}/Observation', json=obs)
+        count_obs += 1
+    
+    # Criar 2-3 atendimentos
+    encounter_types = [
+        {'code': 'AMB', 'display': 'Consulta Ambulatorial'},
+        {'code': 'EMER', 'display': 'Emergencia'},
+        {'code': 'HH', 'display': 'Atend. Domiciliar'},
+        {'code': 'IMP', 'display': 'Internacao'},
     ]
-    
-    created = 0
-    for e in exams:
-        report = {
-            "resourceType": "DiagnosticReport", "status": "final",
-            "code": {"coding": [{"system": "http://loinc.org", "code": e["code"], "display": e["display"]}]},
-            "subject": {"reference": f"Patient/{patient_id}"},
-            "effectiveDateTime": (datetime.now() - timedelta(days=random.randint(5, 30))).isoformat(),
-            "conclusion": e["conclusion"]
-        }
-        if requests.post(f"{HAPI_FHIR_URL}/DiagnosticReport", json=report).status_code == 201:
-            created += 1
-    return created
-
-
-def create_medications(patient_id: str):
-    """Cria prescrições de medicamentos"""
-    meds = [
-        {"name": "Losartana 50mg", "status": "active"},
-        {"name": "Metformina 850mg", "status": "active"},
-        {"name": "Omeprazol 20mg", "status": random.choice(["active", "completed"])},
-    ]
-    
-    created = 0
-    for m in meds:
-        med = {
-            "resourceType": "MedicationRequest", "status": m["status"], "intent": "order",
-            "medicationCodeableConcept": {"text": m["name"]},
-            "subject": {"reference": f"Patient/{patient_id}"},
-            "authoredOn": (datetime.now() - timedelta(days=random.randint(1, 60))).isoformat(),
-            "requester": {"display": "Dr. Carlos Mendes"}
-        }
-        if requests.post(f"{HAPI_FHIR_URL}/MedicationRequest", json=med).status_code == 201:
-            created += 1
-    return created
-
-
-def create_conditions(patient_id: str):
-    """Cria condições/problemas de saúde"""
-    conditions = [
-        {"code": "38341003", "display": "Hipertensão", "status": "active"},
-        {"code": "44054006", "display": "Diabetes tipo 2", "status": random.choice(["active", "inactive"])},
-    ]
-    
-    created = 0
-    for c in conditions:
-        cond = {
-            "resourceType": "Condition",
-            "clinicalStatus": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": c["status"]}]},
-            "verificationStatus": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/condition-ver-status", "code": "confirmed"}]},
-            "code": {"coding": [{"system": "http://snomed.info/sct", "code": c["code"], "display": c["display"]}]},
-            "subject": {"reference": f"Patient/{patient_id}"},
-            "recordedDate": (datetime.now() - timedelta(days=random.randint(100, 1000))).strftime("%Y-%m-%d")
-        }
-        if requests.post(f"{HAPI_FHIR_URL}/Condition", json=cond).status_code == 201:
-            created += 1
-    return created
-
-
-def create_allergies(patient_id: str):
-    """Cria alergias"""
-    allergies = [{"display": "Penicilina", "severity": "severe"}, {"display": "Dipirona", "severity": "moderate"}]
-    
-    created = 0
-    for a in allergies:
-        allergy = {
-            "resourceType": "AllergyIntolerance",
-            "clinicalStatus": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical", "code": "active"}]},
-            "code": {"text": a["display"]},
-            "patient": {"reference": f"Patient/{patient_id}"},
-            "reaction": [{"severity": a["severity"]}]
-        }
-        if requests.post(f"{HAPI_FHIR_URL}/AllergyIntolerance", json=allergy).status_code == 201:
-            created += 1
-    return created
-
-
-def create_appointments(patient_id: str):
-    """Cria agendamentos"""
-    created = 0
-    for days in [7, 14, -7]:
-        start = datetime.now().replace(hour=random.randint(8, 16), minute=0) + timedelta(days=days)
-        apt = {
-            "resourceType": "Appointment",
-            "status": "booked" if days > 0 else "fulfilled",
-            "start": start.isoformat(), "end": (start + timedelta(minutes=30)).isoformat(),
-            "participant": [{"actor": {"reference": f"Patient/{patient_id}"}, "status": "accepted"}]
-        }
-        if requests.post(f"{HAPI_FHIR_URL}/Appointment", json=apt).status_code == 201:
-            created += 1
-    return created
-
-
-def create_encounters(patient_id: str):
-    """Cria atendimentos históricos"""
-    created = 0
-    for days_ago in [30, 90]:
+    for _ in range(random.randint(2, 3)):
+        days_ago = random.randint(1, 365)
+        enc_type = random.choice(encounter_types)
+        reason = random.choice(reason_options)
         enc = {
-            "resourceType": "Encounter", "status": "finished",
-            "class": {"code": "AMB"},
-            "subject": {"reference": f"Patient/{patient_id}"},
-            "period": {"start": (datetime.now() - timedelta(days=days_ago)).isoformat()}
+            'resourceType': 'Encounter',
+            'status': 'finished',
+            'class': {'system': 'http://terminology.hl7.org/CodeSystem/v3-ActCode', 'code': enc_type['code'], 'display': enc_type['display']},
+            'type': [{'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/encounter-type', 'code': enc_type['code'], 'display': enc_type['display']}]}],
+            'subject': {'reference': f'Patient/{patient_id}'},
+            'period': {
+                'start': (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%dT09:00:00Z'),
+                'end': (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%dT10:30:00Z')
+            },
+            'reasonCode': [{'text': reason}],
+            'participant': [{'individual': {'display': 'Dr. Carlos Silva'}}]
         }
-        if requests.post(f"{HAPI_FHIR_URL}/Encounter", json=enc).status_code == 201:
-            created += 1
-    return created
+        requests.post(f'{FHIR_URL}/Encounter', json=enc)
+        count_enc += 1
 
-
-def populate_patient(patient_id: str, patient_name: str, index: int):
-    """Popula todos os dados clínicos para um paciente"""
-    print(f"\n[{index}] 👤 {patient_name} (ID: {patient_id})")
-    
-    totals = {
-        "vitals": create_vital_signs(patient_id),
-        "vaccines": create_immunizations(patient_id),
-        "exams": create_diagnostic_reports(patient_id),
-        "meds": create_medications(patient_id),
-        "conditions": create_conditions(patient_id),
-        "allergies": create_allergies(patient_id),
-        "appointments": create_appointments(patient_id),
-        "encounters": create_encounters(patient_id)
-    }
-    
-    total = sum(totals.values())
-    print(f"    ✓ {total} recursos ({totals['vitals']} vitais, {totals['vaccines']} vacinas, {totals['exams']} exames, {totals['meds']} meds, {totals['conditions']} cond, {totals['allergies']} alerg, {totals['appointments']} agend, {totals['encounters']} atend)")
-    return total
-
-
-def main():
-    print("=" * 70)
-    print("🏥 OpenEHRCore - Populando Dados Clínicos para TODOS os Pacientes")
-    print("=" * 70)
-    
-    # Parse argumentos
-    max_patients = None
-    specific_patient = None
-    
-    for i, arg in enumerate(sys.argv[1:], 1):
-        if arg == "--max" and i < len(sys.argv) - 1:
-            max_patients = int(sys.argv[i + 1])
-        elif arg == "--patient-id" and i < len(sys.argv) - 1:
-            specific_patient = sys.argv[i + 1]
-    
-    if specific_patient:
-        # Popular apenas um paciente específico
-        response = requests.get(f"{HAPI_FHIR_URL}/Patient/{specific_patient}")
-        if response.status_code == 200:
-            patient = response.json()
-            populate_patient(specific_patient, get_patient_name(patient), 1)
-        else:
-            print(f"❌ Paciente {specific_patient} não encontrado!")
-        return
-    
-    # Buscar todos os pacientes
-    patients = get_all_patients(max_patients or 100)
-    
-    if not patients:
-        print("\n❌ Nenhum paciente encontrado no HAPI FHIR!")
-        return
-    
-    print(f"\n📋 Encontrados {len(patients)} pacientes")
-    
-    grand_total = 0
-    for idx, patient in enumerate(patients, 1):
-        total = populate_patient(patient["id"], get_patient_name(patient), idx)
-        grand_total += total
-    
-    print("\n" + "=" * 70)
-    print(f"✅ CONCLUÍDO! {grand_total} recursos FHIR criados para {len(patients)} pacientes")
-    print("=" * 70)
-    print(f"\n🔗 Acesse: http://localhost:3000/patients")
-
-
-if __name__ == "__main__":
-    main()
+print(f'\n=== RESUMO ===')
+print(f'Vacinas criadas: {count_imm}')
+print(f'Medicamentos criados: {count_med}')
+print(f'Exames criados: {count_obs}')
+print(f'Atendimentos criados: {count_enc}')
+print(f'TOTAL: {count_imm + count_med + count_obs + count_enc} recursos')

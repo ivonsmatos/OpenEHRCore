@@ -132,7 +132,10 @@ KEYCLOAK_REALM = config('KEYCLOAK_REALM', default='master')
 KEYCLOAK_CLIENT_ID = config('KEYCLOAK_CLIENT_ID', default='openehrcore')
 KEYCLOAK_CLIENT_SECRET = config('KEYCLOAK_CLIENT_SECRET', default='')
 
-# Logging
+# Logging - JSON Estruturado para Produção
+LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -141,19 +144,87 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+        'json': {
+            '()': 'fhir_api.logging.JsonFormatter',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
     },
     'handlers': {
         'console': {
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'verbose' if DEBUG else 'json',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(LOG_DIR / 'openehrcore.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 5,
+            'formatter': 'json',
+        },
+        'file_error': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(LOG_DIR / 'errors.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'json',
+        },
+        'audit': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(LOG_DIR / 'audit.log'),
+            'maxBytes': 50 * 1024 * 1024,  # 50 MB
+            'backupCount': 20,
+            'formatter': 'json',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['console', 'file_error'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'fhir_api': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'fhir_api.audit': {
+            'handlers': ['audit'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'fhir_api.security': {
+            'handlers': ['console', 'file', 'file_error'],
+            'level': 'WARNING',
+            'propagate': False,
         },
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['console', 'file'],
         'level': 'INFO',
     },
 }
 
 # Rate Limiting Configuration (Sprint 22)
 RATE_LIMIT_ENABLED = config('RATE_LIMIT_ENABLED', default=True, cast=bool)
+
 

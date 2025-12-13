@@ -98,6 +98,24 @@ const LGPDDashboard = lazyLoad(() =>
     import('./components/privacy/LGPDDashboard').then(m => ({ default: m.LGPDDashboardComponent }))
 );
 
+// Regulatory Workspaces
+const TISSWorkspace = lazyLoad(() => import('./components/regulatory/TISSWorkspace'));
+const RNDSStatus = lazyLoad(() => import('./components/regulatory/RNDSStatus'));
+
+// Clinical Components
+const CarePlanManager = lazyLoad(() => import('./components/clinical/CarePlanManager'));
+const ReferralWorkspace = lazyLoad(() => import('./components/clinical/ReferralWorkspace'));
+const CompositionEditor = lazyLoad(() => import('./components/clinical/CompositionEditor'));
+
+// Communications
+const MessageInbox = lazyLoad(() => import('./components/communications/MessageInbox'));
+
+// Notifications
+const NotificationsPanel = lazyLoad(() => import('./components/regulatory/NotificationsPanel'));
+
+// Automation (Sprint 29)
+const AutomationPage = lazyLoad(() => import('./pages/AutomationPage'));
+
 /**
  * Rotas protegidas (requerem autenticação)
  */
@@ -122,6 +140,23 @@ const ProtectedRoutes: React.FC = () => {
                     <Route path="/ipd" element={<BedManagementWorkspace />} />
                     <Route path="/organizations" element={<OrganizationWorkspace />} />
                     <Route path="/privacy" element={<LGPDDashboard />} />
+
+                    {/* Regulatory Routes */}
+                    <Route path="/tiss" element={<TISSWorkspace />} />
+                    <Route path="/rnds" element={<RNDSStatus />} />
+                    <Route path="/notifications" element={<NotificationsPanel />} />
+
+                    {/* Clinical Routes */}
+                    <Route path="/careplan" element={<CarePlanManager />} />
+                    <Route path="/referrals" element={<ReferralWorkspace />} />
+                    <Route path="/composition" element={<CompositionEditor patientId="" patientName="" />} />
+
+                    {/* Communications */}
+                    <Route path="/messages" element={<MessageInbox />} />
+
+                    {/* Automation (Sprint 29) */}
+                    <Route path="/automation" element={<AutomationPage />} />
+
                     <Route path="/profile" element={<SettingsWorkspace section="profile" />} />
                     <Route path="/settings/profile" element={<SettingsWorkspace section="profile" />} />
                     <Route path="/settings/security" element={<SettingsWorkspace section="security" />} />

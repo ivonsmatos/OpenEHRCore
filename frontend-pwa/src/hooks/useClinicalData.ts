@@ -132,10 +132,20 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    // Get token from param or localStorage
+    const getAuthHeaders = () => {
+        const authToken = token || localStorage.getItem('access_token');
+        if (authToken) {
+            return { Authorization: `Bearer ${authToken}` };
+        }
+        return {};
+    };
 
     // Fetch sinais vitais
     const fetchVitals = useCallback(async () => {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return;
+
         try {
             const response = await axios.get(`${API_URL}/patients/${patientId}/vitals/`, { headers });
             const vitals = response.data || [];
@@ -164,10 +174,13 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
         } catch (err) {
             console.error('Error fetching vitals:', err);
         }
-    }, [patientId, headers]);
+    }, [patientId, token]);
 
     // Fetch vacinas
     const fetchImmunizations = useCallback(async () => {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return;
+
         try {
             const response = await axios.get(`${API_URL}/patients/${patientId}/immunizations/`, { headers });
             const immunizations = (response.data || []).map((i: any) => ({
@@ -184,10 +197,13 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
         } catch (err) {
             console.error('Error fetching immunizations:', err);
         }
-    }, [patientId, headers]);
+    }, [patientId, token]);
 
     // Fetch medicamentos
     const fetchMedications = useCallback(async () => {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return;
+
         try {
             const response = await axios.get(`${API_URL}/patients/${patientId}/medications/`, { headers });
             const medications = (response.data || []).map((m: any) => ({
@@ -209,10 +225,13 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
         } catch (err) {
             console.error('Error fetching medications:', err);
         }
-    }, [patientId, headers]);
+    }, [patientId, token]);
 
     // Fetch resultados de exames
     const fetchDiagnostics = useCallback(async () => {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return;
+
         try {
             const response = await axios.get(`${API_URL}/patients/${patientId}/diagnostic-reports/`, { headers });
             const diagnostics = (response.data || []).map((d: any) => ({
@@ -236,30 +255,39 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
         } catch (err) {
             console.error('Error fetching diagnostics:', err);
         }
-    }, [patientId, headers]);
+    }, [patientId, token]);
 
     // Fetch condições
     const fetchConditions = useCallback(async () => {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return;
+
         try {
             const response = await axios.get(`${API_URL}/patients/${patientId}/conditions/`, { headers });
             setData(prev => ({ ...prev, conditions: response.data || [] }));
         } catch (err) {
             console.error('Error fetching conditions:', err);
         }
-    }, [patientId, headers]);
+    }, [patientId, token]);
 
     // Fetch alergias
     const fetchAllergies = useCallback(async () => {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return;
+
         try {
             const response = await axios.get(`${API_URL}/patients/${patientId}/allergies/`, { headers });
             setData(prev => ({ ...prev, allergies: response.data || [] }));
         } catch (err) {
             console.error('Error fetching allergies:', err);
         }
-    }, [patientId, headers]);
+    }, [patientId, token]);
 
     // Fetch encounters e construir timeline
     const fetchEncountersAndTimeline = useCallback(async () => {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return;
+
         try {
             const response = await axios.get(`${API_URL}/patients/${patientId}/encounters/`, { headers });
             const encounters = response.data || [];
@@ -285,7 +313,7 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
         } catch (err) {
             console.error('Error fetching encounters:', err);
         }
-    }, [patientId, headers]);
+    }, [patientId, token]);
 
     // Carregar todos os dados
     const refresh = useCallback(async () => {

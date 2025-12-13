@@ -3,6 +3,15 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
+// Helper to get token from localStorage
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        return { Authorization: `Bearer ${token}` };
+    }
+    return {};
+};
+
 export interface Patient {
     id: string;
     name: string;
@@ -34,6 +43,13 @@ export const usePatients = () => {
     const [currentFilters, setCurrentFilters] = useState<PatientSearchFilters>({});
 
     const fetchPatients = useCallback(async (page = 1, pageSize = 20, filters: PatientSearchFilters = {}) => {
+        // Check if user is logged in
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            console.log('No token found, skipping patient fetch');
+            return;
+        }
+
         setLoading(true);
         setError(null);
         setCurrentFilters(filters);
@@ -50,8 +66,11 @@ export const usePatients = () => {
             if (filters.birthdateGe) params.append('birthdate', `ge${filters.birthdateGe}`);
             if (filters.birthdateLe) params.append('birthdate', `le${filters.birthdateLe}`);
 
-            // Use advanced search endpoint
-            const response = await axios.get(`${API_URL}/patients/search/`, { params });
+            // Use advanced search endpoint with explicit headers
+            const response = await axios.get(`${API_URL}/patients/search/`, {
+                params,
+                headers: getAuthHeaders()
+            });
 
             if (response.data.results) {
                 setPatients(response.data.results);
@@ -65,9 +84,10 @@ export const usePatients = () => {
             } else {
                 setPatients(response.data);
             }
-        } catch (err) {
-            console.error(err);
-            setError(err instanceof Error ? err.message : 'Erro ao carregar pacientes');
+        } catch (err: any) {
+            console.error('Error fetching patients:', err);
+            const message = err.response?.data?.error || err.message || 'Erro ao carregar pacientes';
+            setError(message);
         } finally {
             setLoading(false);
         }

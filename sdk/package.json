@@ -1,0 +1,50 @@
+{
+    "name": "@openehrcore/sdk",
+    "version": "1.0.0",
+    "description": "TypeScript SDK for OpenEHRCore FHIR API",
+    "main": "dist/index.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/openehr/openehrcore-sdk"
+    },
+    "keywords": [
+        "fhir",
+        "ehr",
+        "healthcare",
+        "openehr",
+        "smart-on-fhir",
+        "hl7"
+    ],
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts",
+        "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+        "lint": "eslint src/",
+        "test": "vitest",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "axios": "^1.6.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "eslint": "^8.0.0",
+        "tsup": "^8.0.0",
+        "typescript": "^5.0.0",
+        "vitest": "^1.0.0"
+    },
+    "peerDependencies": {},
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "exports": {
+        ".": {
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    }
+}
