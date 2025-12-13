@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Sparkles, AlertTriangle, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { colors, spacing } from '../../theme/colors';
 import Card from '../base/Card';
 
@@ -96,13 +97,30 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId, onClose }) => {
                         {error}
                     </div>
                 ) : (
-                    <div style={{
+                    <div className="ai-summary-content" style={{
                         fontSize: '0.95rem',
                         lineHeight: '1.6',
-                        color: colors.text.secondary,
-                        whiteSpace: 'pre-line'
+                        color: colors.text.secondary
                     }}>
-                        {summary}
+                        <ReactMarkdown
+                            components={{
+                                // Custom rendering for better clinical display
+                                strong: ({ children }) => (
+                                    <strong style={{ color: colors.text.primary, fontWeight: 600 }}>{children}</strong>
+                                ),
+                                p: ({ children }) => (
+                                    <p style={{ margin: '0.5rem 0' }}>{children}</p>
+                                ),
+                                ul: ({ children }) => (
+                                    <ul style={{ margin: '0.25rem 0', paddingLeft: '1rem' }}>{children}</ul>
+                                ),
+                                li: ({ children }) => (
+                                    <li style={{ margin: '0.15rem 0' }}>{children}</li>
+                                )
+                            }}
+                        >
+                            {summary || ''}
+                        </ReactMarkdown>
                     </div>
                 )}
             </div>

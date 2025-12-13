@@ -128,7 +128,7 @@ export function OrganizationWorkspace() {
     const fetchOrganizations = useCallback(async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const response = await axios.get(`${API_BASE}/organizations/`, {
                 headers: { Authorization: `Bearer ${token}` },
                 params: searchTerm ? { name: searchTerm } : {}
@@ -165,7 +165,7 @@ export function OrganizationWorkspace() {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const payload = {
                 name: formData.name,
                 alias: formData.alias ? formData.alias.split(',').map(a => a.trim()) : undefined,
@@ -235,7 +235,7 @@ export function OrganizationWorkspace() {
         if (!confirm('Deseja realmente desativar esta organização?')) return;
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             await axios.delete(`${API_BASE}/organizations/${id}/`, {
                 headers: { Authorization: `Bearer ${token}` }
             });

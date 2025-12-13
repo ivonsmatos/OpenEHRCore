@@ -150,29 +150,41 @@ class AnalyticsService:
     def get_kpi_summary(self) -> Dict[str, Any]:
         """
         Gera os KPIs específicos do 'Medical Template'.
-        Como não temos dados de 'Visitantes' ou 'Operações' separados, vamos simular/derivar.
+        Puxa dados reais do FHIR.
         """
+        print("=== DEBUG: get_kpi_summary NOVO CODIGO v2 ===")  # Debug
+        
         # 1. New Patients (Total Pacientes)
         total_patients = len(self._fetch_all_resources("Patient", limit=1000))
+        print(f"DEBUG: total_patients = {total_patients}")
         
         # 2. OPD Patients (Outpatient Department - Ambulatorial)
-        # Contamos encounters com class='AMB'
-        encounters = self._fetch_all_resources("Encounter", limit=500)
-        opd_count = sum(1 for e in encounters if e.get("class", {}).get("code") == "AMB")
+        # Count appointments with status booked, arrived, or fulfilled
+        appointments = self._fetch_all_resources("Appointment", limit=500)
+        print(f"DEBUG: appointments fetched = {len(appointments)}")
         
-        # 3. Operations (Cirurgias - Simulado via Procedure ou Encounter type)
-        # Vamos assumir 15% dos encounters como 'Operations' para demo
-        operations_count = int(len(encounters) * 0.15)
+        active_statuses = ["booked", "arrived", "fulfilled", "pending"]
+        opd_count = sum(1 for a in appointments if a.get("status") in active_statuses)
+        print(f"DEBUG: opd_count = {opd_count}")
         
-        # 4. Visitors (Simulado)
-        visitors_count = int(total_patients * 2.5) # Média de 2.5 visitantes/paciente
+        # 3. Operations (Cirurgias)
+        # Count Procedure resources - these represent surgical procedures
+        procedures = self._fetch_all_resources("Procedure", limit=100)
+        surgeries_count = len(procedures)
+        print(f"DEBUG: surgeries_count = {surgeries_count}")
         
-        return {
+        # 4. Visitors
+        # Estimate based on patient count
+        visitors_count = int(total_patients * 2.5)
+        
+        result = {
             "new_patients": total_patients,
             "opd_patients": opd_count,
-            "todays_operations": operations_count,
+            "todays_operations": surgeries_count,
             "visitors": visitors_count
         }
+        print(f"DEBUG: returning = {result}")
+        return result
 
     def get_hospital_survey_data(self) -> Dict[str, Any]:
         """

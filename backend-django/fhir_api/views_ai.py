@@ -7,15 +7,28 @@ from rest_framework.permissions import IsAuthenticated
 from .services.fhir_core import FHIRService
 from .services.ai_service import AIService
 import logging
+from datetime import datetime, date
 
 logger = logging.getLogger(__name__)
+
+def calculate_age(birth_date_str):
+    """Calcula idade a partir de uma data de nascimento FHIR (YYYY-MM-DD)."""
+    if not birth_date_str:
+        return None
+    try:
+        birth_date = datetime.strptime(birth_date_str[:10], "%Y-%m-%d").date()
+        today = date.today()
+        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        return age
+    except:
+        return None
 
 @api_view(['GET'])
 @authentication_classes([KeycloakAuthentication])
 @permission_classes([IsAuthenticated])
 def get_patient_summary(request, patient_id):
     """
-    Gera um resumo clínico inteligente do paciente usando IA (Simulada).
+    Gera um resumo clínico inteligente do paciente usando IA.
     GET /api/v1/ai/summary/{patient_id}/
     """
     try:
@@ -25,9 +38,13 @@ def get_patient_summary(request, patient_id):
         
         if not patient:
             return Response({"error": "Paciente não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Calcular idade real
+        birth_date = patient.get("birthDate")
+        age = calculate_age(birth_date)
+        age_display = str(age) if age is not None else "Desconhecida"
             
-        # 2. Recuperar histórico relevante (simplificado)
-        # TODO: Adicionar MedicationRequest, Condition, etc.
+        # 2. Recuperar histórico clínico relevante
         try:
             conditions = fhir_service.search_resources("Condition", {"patient": patient_id})
         except:
@@ -37,14 +54,26 @@ def get_patient_summary(request, patient_id):
             medications = fhir_service.search_resources("MedicationRequest", {"patient": patient_id, "status": "active"})
         except:
             medications = []
+            
+        try:
+            # Buscar últimos sinais vitais
+            observations = fhir_service.search_resources("Observation", {
+                "patient": patient_id,
+                "category": "vital-signs",
+                "_count": "5",
+                "_sort": "-date"
+            })
+        except:
+            observations = []
 
         # Montar objeto de dados para o AIService
         patient_data = {
             "name": f"{patient.get('name', [{}])[0].get('given', [''])[0]} {patient.get('name', [{}])[0].get('family', '')}",
-            "age": "Desconhecida", # TODO: Calcular idade real
+            "age": age_display,
             "gender": patient.get("gender", "unknown"),
             "conditions": conditions,
-            "medications": medications
+            "medications": medications,
+            "vital_signs": observations
         }
         
         # 3. Gerar resumo

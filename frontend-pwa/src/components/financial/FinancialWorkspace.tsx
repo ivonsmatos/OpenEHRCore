@@ -5,6 +5,7 @@ import InvoiceList from './InvoiceList';
 import CoverageList from './CoverageList';
 import InvoiceForm from './InvoiceForm';
 import CoverageForm from './CoverageForm';
+import { FinancialDashboard } from './FinancialDashboard';
 
 const FinancialWorkspace: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'coverage'>('overview');
@@ -42,7 +43,7 @@ const FinancialWorkspace: React.FC = () => {
                             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
                     >
                         <User size={18} />
-                        Visão Geral
+                        Dashboard Gerencial
                     </button>
                     <button
                         onClick={() => handleTabChange('invoices')}
@@ -70,23 +71,7 @@ const FinancialWorkspace: React.FC = () => {
             {/* Content */}
             <div className="mt-6">
                 {activeTab === 'overview' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                            <h3 className="text-slate-500 text-sm font-medium">Saldo Devedor</h3>
-                            <p className="text-3xl font-bold text-red-600 mt-2">R$ 450,00</p>
-                            <p className="text-sm text-slate-400 mt-1">2 Faturas pendentes</p>
-                        </div>
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                            <h3 className="text-slate-500 text-sm font-medium">Faturamento Total</h3>
-                            <p className="text-3xl font-bold text-slate-900 mt-2">R$ 12.450,00</p>
-                            <p className="text-sm text-slate-400 mt-1">Últimos 30 dias</p>
-                        </div>
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                            <h3 className="text-slate-500 text-sm font-medium">Convênios Ativos</h3>
-                            <p className="text-3xl font-bold text-emerald-600 mt-2">3</p>
-                            <p className="text-sm text-slate-400 mt-1">Unimed, Bradesco</p>
-                        </div>
-                    </div>
+                    <FinancialDashboard />
                 )}
 
                 {activeTab === 'invoices' && (

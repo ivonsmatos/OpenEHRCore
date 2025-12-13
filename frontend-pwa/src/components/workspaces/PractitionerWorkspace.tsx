@@ -27,7 +27,8 @@ const PractitionerWorkspace: React.FC = () => {
     const loadPractitioners = async () => {
         try {
             const response = await fetchPractitioners(filters);
-            setPractitioners(response.practitioners || []);
+            // Backend returns 'results' key, not 'practitioners'
+            setPractitioners(response.results || response.practitioners || []);
         } catch (err) {
             console.error('Error loading practitioners:', err);
         }
