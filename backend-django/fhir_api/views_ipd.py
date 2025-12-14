@@ -34,9 +34,14 @@ def list_locations(request):
         for r in resources:
             r['children'] = []
             # Normalize Operational Status for Frontend
+            # FHIR v2-0116: O=Occupied, U=Unoccupied, H=Housekeeping, C=Closed
+            # Frontend expects: O=Occupied, U=Free, K=Cleaning, I=Blocked
             op_status = 'U' # Default Unoccupied
             if r.get('operationalStatus'):
-                op_status = r['operationalStatus'].get('code', 'U')
+                fhir_code = r['operationalStatus'].get('code', 'U')
+                # Map FHIR codes to frontend codes
+                status_map = {'O': 'O', 'U': 'U', 'H': 'K', 'C': 'I', 'K': 'K', 'I': 'I'}
+                op_status = status_map.get(fhir_code, fhir_code)
             r['status_code'] = op_status
             
             part_of = r.get('partOf', {}).get('reference')
@@ -98,8 +103,10 @@ def get_occupancy(request):
                 op_status = r.get('operationalStatus', {}).get('code', 'U')
                 if op_status == 'O':
                     occupied += 1
-                elif op_status == 'C':
+                elif op_status in ['H', 'K']:  # Housekeeping/Cleaning
                     cleaning += 1
+                elif op_status in ['C', 'I']:  # Closed/Blocked
+                    pass  # Will be calculated as total - (occupied + cleaning + free)
                 else:
                     free += 1
                     
@@ -306,8 +313,8 @@ def discharge_patient(request):
             location = loc_results[0]
             location['operationalStatus'] = {
                  "system": "http://terminology.hl7.org/CodeSystem/v2-0116",
-                 "code": "K",
-                 "display": "Contaminated"
+                 "code": "H",
+                 "display": "Housekeeping"
             }
             put_loc_url = f"{fhir.base_url}/Location/{location_id}"
             requests.put(put_loc_url, json=location, headers=headers)
