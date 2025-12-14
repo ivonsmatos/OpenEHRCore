@@ -14,7 +14,8 @@ import {
     Bed,
     Stethoscope,
     Building2,
-    Zap
+    Zap,
+    BookOpen
 } from 'lucide-react';
 import { colors, spacing } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
@@ -46,6 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobile = fal
         { label: 'Visitantes', icon: <UserPlus size={20} />, route: '/visitors' },
         { label: 'Chat', icon: <MessageSquare size={20} />, route: '/chat' },
         { label: 'Portal Paciente', icon: <Users size={20} />, route: '/portal' },
+        { label: 'Documentação', icon: <BookOpen size={20} />, route: '/docs', highlight: true },
     ];
 
     return (

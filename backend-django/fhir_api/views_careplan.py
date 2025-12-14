@@ -1,368 +1,361 @@
 """
-CarePlan - Plano de Cuidados FHIR
-Gerenciamento de planos de tratamento para pacientes crônicos
+FHIR CarePlan ViewSet - Sprint 33
+REST API for Care Coordination
 """
 
-import logging
-from datetime import datetime
-from django.conf import settings
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from .auth import KeycloakAuthentication
 from rest_framework.permissions import IsAuthenticated
-from .services.fhir_core import FHIRService
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django.db.models import Q, Count, Avg
+from django.utils import timezone
+from django.core.cache import cache
+
+from .models_careplan import CarePlan, CarePlanActivity
+from .serializers_careplan import (
+    CarePlanSerializer,
+    CarePlanDetailSerializer,
+    CarePlanFHIRSerializer,
+    CarePlanCreateSerializer,
+    CarePlanActivitySerializer,
+    CarePlanActivityCreateSerializer
+)
+from .permissions_document import CanViewPatientDocuments, CanCreateDocuments
+import logging
 
 logger = logging.getLogger(__name__)
 
 
-@api_view(['GET', 'POST'])
-@authentication_classes([KeycloakAuthentication])
-@permission_classes([IsAuthenticated])
-def manage_careplans(request):
+class CarePlanViewSet(viewsets.ModelViewSet):
     """
-    GET: Lista todos os CarePlans
-    POST: Cria novo CarePlan
+    ViewSet para FHIR CarePlan Resource
     
     Endpoints:
-    GET  /api/v1/careplans/
-    POST /api/v1/careplans/
+    - GET /api/v1/careplans/ - Listar planos de cuidado
+    - POST /api/v1/careplans/ - Criar plano
+    - GET /api/v1/careplans/{id}/ - Buscar plano
+    - PUT/PATCH /api/v1/careplans/{id}/ - Atualizar plano
+    - DELETE /api/v1/careplans/{id}/ - Deletar plano
+    - GET /api/v1/careplans/patient/{patient_id}/ - Planos do paciente
+    - POST /api/v1/careplans/{id}/activate/ - Ativar plano
+    - POST /api/v1/careplans/{id}/complete/ - Completar plano
+    - GET /api/v1/careplans/{id}/activities/ - Listar atividades
+    - POST /api/v1/careplans/{id}/activities/ - Adicionar atividade
     """
-    fhir_service = FHIRService(request.user)
     
-    if request.method == 'GET':
-        try:
-            # Parâmetros de busca
-            patient_id = request.query_params.get('patient')
-            status_filter = request.query_params.get('status', 'active')
-            category = request.query_params.get('category')
+    queryset = CarePlan.objects.all()
+    permission_classes = [IsAuthenticated, CanViewPatientDocuments]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    
+    filterset_fields = ['status', 'intent', 'patient', 'author', 'care_team']
+    search_fields = ['title', 'description', 'patient__name']
+    ordering_fields = ['period_start', 'created_at', 'updated_at']
+    ordering = ['-period_start']
+    
+    def get_serializer_class(self):
+        """Retorna serializer apropriado"""
+        if self.action == 'create':
+            return CarePlanCreateSerializer
+        elif self.action == 'retrieve':
+            if self.request.query_params.get('format') == 'fhir':
+                return CarePlanFHIRSerializer
+            return CarePlanDetailSerializer
+        return CarePlanSerializer
+    
+    def get_queryset(self):
+        """Filtra planos conforme permissões"""
+        queryset = super().get_queryset()
+        user = self.request.user
+        
+        if user.is_staff or user.is_superuser:
+            return queryset.select_related('patient', 'author', 'care_team')
+        
+        # Practitioner: planos próprios + pacientes sob cuidado
+        if hasattr(user, 'practitioner'):
+            queryset = queryset.filter(
+                Q(author=user) |
+                Q(patient__practitioners=user.practitioner) |
+                Q(care_team__members__practitioner=user.practitioner)
+            ).distinct()
+        
+        # Patient: apenas próprios planos
+        elif hasattr(user, 'patient'):
+            queryset = queryset.filter(patient__user=user)
+        
+        return queryset.select_related('patient', 'author', 'care_team')
+    
+    def create(self, request, *args, **kwargs):
+        """Cria novo CarePlan"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        care_plan = serializer.save()
+        
+        logger.info(f"CarePlan {care_plan.id} criado por {request.user}")
+        
+        # Retornar detalhado
+        detail_serializer = CarePlanDetailSerializer(care_plan)
+        return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Busca plano específico"""
+        instance = self.get_object()
+        
+        # Formato FHIR
+        if request.query_params.get('format') == 'fhir':
+            return Response(instance.to_fhir())
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path='patient/(?P<patient_id>[^/.]+)')
+    def by_patient(self, request, patient_id=None):
+        """
+        Lista todos os planos de cuidado de um paciente
+        
+        GET /api/v1/careplans/patient/{patient_id}/
+        """
+        queryset = self.get_queryset().filter(patient_id=patient_id)
+        
+        # Filtrar por status se fornecido
+        status_param = request.query_params.get('status')
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = CarePlanSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = CarePlanSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def activate(self, request, pk=None):
+        """
+        Ativa plano de cuidado (draft → active)
+        
+        POST /api/v1/careplans/{id}/activate/
+        """
+        care_plan = self.get_object()
+        
+        if care_plan.status != 'draft':
+            return Response(
+                {'error': f'Apenas planos em draft podem ser ativados. Status atual: {care_plan.status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        care_plan.status = 'active'
+        care_plan.save()
+        
+        logger.info(f"CarePlan {care_plan.id} ativado por {request.user}")
+        
+        serializer = CarePlanDetailSerializer(care_plan)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def complete(self, request, pk=None):
+        """
+        Completa plano de cuidado
+        
+        POST /api/v1/careplans/{id}/complete/
+        
+        Body (opcional):
+        {
+            "notes": "Plano completado com sucesso"
+        }
+        """
+        care_plan = self.get_object()
+        
+        if care_plan.status not in ['active', 'on-hold']:
+            return Response(
+                {'error': f'Apenas planos ativos podem ser completados. Status atual: {care_plan.status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        care_plan.status = 'completed'
+        care_plan.period_end = timezone.now()
+        
+        # Adicionar notas
+        notes = request.data.get('notes')
+        if notes:
+            existing_notes = care_plan.notes or ''
+            care_plan.notes = f"{existing_notes}\n\n[{timezone.now().strftime('%Y-%m-%d %H:%M')}] {notes}"
+        
+        care_plan.save()
+        
+        logger.info(f"CarePlan {care_plan.id} completado por {request.user}")
+        
+        serializer = CarePlanDetailSerializer(care_plan)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get', 'post'])
+    def activities(self, request, pk=None):
+        """
+        GET: Lista atividades do plano
+        POST: Adiciona nova atividade
+        
+        GET /api/v1/careplans/{id}/activities/
+        POST /api/v1/careplans/{id}/activities/
+        """
+        care_plan = self.get_object()
+        
+        if request.method == 'GET':
+            activities = care_plan.activities.all()
             
-            search_params = {}
-            if patient_id:
-                search_params['patient'] = patient_id
-            if status_filter:
-                search_params['status'] = status_filter
-            if category:
-                search_params['category'] = category
+            # Filtrar por status
+            status_param = request.query_params.get('status')
+            if status_param:
+                activities = activities.filter(status=status_param)
             
-            careplans = fhir_service.search_resources('CarePlan', search_params)
-            
-            # Formatar resposta
-            result = []
-            for cp in careplans:
-                result.append({
-                    'id': cp.get('id'),
-                    'status': cp.get('status'),
-                    'intent': cp.get('intent'),
-                    'title': cp.get('title'),
-                    'description': cp.get('description'),
-                    'subject': cp.get('subject', {}).get('reference'),
-                    'period': cp.get('period'),
-                    'category': [cat.get('coding', [{}])[0].get('display') for cat in cp.get('category', [])],
-                    'author': cp.get('author', {}).get('reference'),
-                    'created': cp.get('created'),
-                    'goal_count': len(cp.get('goal', [])),
-                    'activity_count': len(cp.get('activity', []))
-                })
-            
+            serializer = CarePlanActivitySerializer(activities, many=True)
             return Response({
-                'count': len(result),
-                'results': result
+                'care_plan_id': str(care_plan.id),
+                'activity_count': activities.count(),
+                'activities': serializer.data
             })
-        except Exception as e:
-            logger.error(f"Erro ao buscar CarePlans: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    elif request.method == 'POST':
-        try:
-            data = request.data
-            
-            # Validar campos obrigatórios
-            if not data.get('patient_id'):
-                return Response({'error': 'patient_id é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Construir recurso CarePlan FHIR
-            careplan = {
-                'resourceType': 'CarePlan',
-                'status': data.get('status', 'active'),
-                'intent': data.get('intent', 'plan'),
-                'title': data.get('title'),
-                'description': data.get('description'),
-                'subject': {
-                    'reference': f"Patient/{data['patient_id']}"
-                },
-                'period': {
-                    'start': data.get('start_date', datetime.now().strftime('%Y-%m-%d'))
-                },
-                'category': [{
-                    'coding': [{
-                        'system': 'http://snomed.info/sct',
-                        'code': data.get('category_code', '734163000'),
-                        'display': data.get('category_display', 'Plano de cuidados')
-                    }]
-                }],
-                'created': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
-                'author': {
-                    'reference': f"Practitioner/{data.get('author_id', 'unknown')}"
-                }
-            }
-            
-            # Adicionar período de término se fornecido
-            if data.get('end_date'):
-                careplan['period']['end'] = data['end_date']
-            
-            # Adicionar metas se fornecidas
-            if data.get('goals'):
-                careplan['goal'] = []
-                for goal in data['goals']:
-                    careplan['goal'].append({
-                        'reference': goal if goal.startswith('Goal/') else f"Goal/{goal}"
-                    })
-            
-            # Adicionar atividades se fornecidas
-            if data.get('activities'):
-                careplan['activity'] = []
-                for activity in data['activities']:
-                    careplan['activity'].append({
-                        'detail': {
-                            'status': activity.get('status', 'not-started'),
-                            'description': activity.get('description'),
-                            'code': {
-                                'coding': [{
-                                    'system': 'http://snomed.info/sct',
-                                    'code': activity.get('code', ''),
-                                    'display': activity.get('display', '')
-                                }]
-                            } if activity.get('code') else None
-                        }
-                    })
-            
-            # Criar no FHIR server
-            result = fhir_service.create_resource('CarePlan', careplan)
-            
-            logger.info(f"CarePlan criado: {result.get('id')} para paciente {data['patient_id']}")
-            
-            return Response({
-                'id': result.get('id'),
-                'message': 'Plano de cuidados criado com sucesso',
-                'careplan': result
-            }, status=status.HTTP_201_CREATED)
-            
-        except Exception as e:
-            logger.error(f"Erro ao criar CarePlan: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-@authentication_classes([KeycloakAuthentication])
-@permission_classes([IsAuthenticated])
-def careplan_detail(request, careplan_id):
-    """
-    GET: Obtém detalhes do CarePlan
-    PUT: Atualiza CarePlan
-    DELETE: Remove CarePlan
-    
-    Endpoints:
-    GET    /api/v1/careplans/{id}/
-    PUT    /api/v1/careplans/{id}/
-    DELETE /api/v1/careplans/{id}/
-    """
-    fhir_service = FHIRService(request.user)
-    
-    if request.method == 'GET':
-        try:
-            careplan = fhir_service.get_resource('CarePlan', careplan_id)
-            if not careplan:
-                return Response({'error': 'CarePlan não encontrado'}, status=status.HTTP_404_NOT_FOUND)
-            
-            return Response(careplan)
-        except Exception as e:
-            logger.error(f"Erro ao buscar CarePlan {careplan_id}: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    elif request.method == 'PUT':
-        try:
-            data = request.data
-            
-            # Buscar CarePlan existente
-            existing = fhir_service.get_resource('CarePlan', careplan_id)
-            if not existing:
-                return Response({'error': 'CarePlan não encontrado'}, status=status.HTTP_404_NOT_FOUND)
-            
-            # Atualizar campos
-            if 'status' in data:
-                existing['status'] = data['status']
-            if 'title' in data:
-                existing['title'] = data['title']
-            if 'description' in data:
-                existing['description'] = data['description']
-            if 'end_date' in data:
-                existing['period']['end'] = data['end_date']
-            
-            # Atualizar no FHIR server
-            result = fhir_service.update_resource('CarePlan', careplan_id, existing)
-            
-            return Response({
-                'message': 'CarePlan atualizado com sucesso',
-                'careplan': result
-            })
-        except Exception as e:
-            logger.error(f"Erro ao atualizar CarePlan {careplan_id}: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    elif request.method == 'DELETE':
-        try:
-            fhir_service.delete_resource('CarePlan', careplan_id)
-            return Response({'message': 'CarePlan removido'}, status=status.HTTP_204_NO_CONTENT)
-        except Exception as e:
-            logger.error(f"Erro ao remover CarePlan {careplan_id}: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['GET'])
-@authentication_classes([KeycloakAuthentication])
-@permission_classes([IsAuthenticated])
-def patient_careplans(request, patient_id):
-    """
-    Lista CarePlans de um paciente específico
-    GET /api/v1/patients/{patient_id}/careplans/
-    """
-    fhir_service = FHIRService(request.user)
-    
-    try:
-        status_filter = request.query_params.get('status', 'active')
         
-        careplans = fhir_service.search_resources('CarePlan', {
-            'patient': patient_id,
-            'status': status_filter
-        })
-        
-        return Response({
-            'patient_id': patient_id,
-            'count': len(careplans),
-            'results': careplans
-        })
-    except Exception as e:
-        logger.error(f"Erro ao buscar CarePlans do paciente {patient_id}: {str(e)}")
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['POST'])
-@authentication_classes([KeycloakAuthentication])
-@permission_classes([IsAuthenticated])
-def add_careplan_activity(request, careplan_id):
-    """
-    Adiciona atividade ao CarePlan
-    POST /api/v1/careplans/{id}/activities/
-    """
-    fhir_service = FHIRService(request.user)
+        else:  # POST
+            data = request.data.copy()
+            data['care_plan_id'] = str(care_plan.id)
+            
+            serializer = CarePlanActivityCreateSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            activity = serializer.save()
+            
+            logger.info(f"Atividade {activity.id} adicionada ao CarePlan {care_plan.id}")
+            
+            return Response(
+                CarePlanActivitySerializer(activity).data,
+                status=status.HTTP_201_CREATED
+            )
     
-    try:
-        data = request.data
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """
+        Estatísticas de planos de cuidado
         
-        # Buscar CarePlan
-        careplan = fhir_service.get_resource('CarePlan', careplan_id)
-        if not careplan:
-            return Response({'error': 'CarePlan não encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        GET /api/v1/careplans/statistics/
+        """
+        cache_key = 'careplan_statistics'
+        cached_data = cache.get(cache_key)
         
-        # Criar atividade
-        activity = {
-            'detail': {
-                'status': data.get('status', 'not-started'),
-                'description': data.get('description'),
-                'scheduledPeriod': {
-                    'start': data.get('start_date'),
-                    'end': data.get('end_date')
-                } if data.get('start_date') else None
-            }
+        if cached_data:
+            return Response(cached_data)
+        
+        queryset = self.get_queryset()
+        
+        total_plans = queryset.count()
+        
+        by_status = {}
+        for status_choice, _ in CarePlan.STATUS_CHOICES:
+            by_status[status_choice] = queryset.filter(status=status_choice).count()
+        
+        by_intent = {}
+        for intent_choice, _ in CarePlan.INTENT_CHOICES:
+            by_intent[intent_choice] = queryset.filter(intent=intent_choice).count()
+        
+        # Planos ativos
+        active_plans = queryset.filter(status='active').count()
+        
+        # Planos com atividades
+        plans_with_activities = queryset.annotate(
+            activity_count=Count('activities')
+        ).filter(activity_count__gt=0).count()
+        
+        # Média de atividades por plano
+        avg_activities = queryset.annotate(
+            activity_count=Count('activities')
+        ).aggregate(avg=Avg('activity_count'))['avg'] or 0
+        
+        stats = {
+            'total_plans': total_plans,
+            'active_plans': active_plans,
+            'by_status': by_status,
+            'by_intent': by_intent,
+            'plans_with_activities': plans_with_activities,
+            'avg_activities_per_plan': round(avg_activities, 2),
+            'cached_at': timezone.now().isoformat()
         }
         
-        # Se referência a procedimento
-        if data.get('procedure_reference'):
-            activity['reference'] = {
-                'reference': data['procedure_reference']
-            }
+        cache.set(cache_key, stats, 60 * 5)  # 5 minutos
         
-        # Adicionar ao CarePlan
-        if 'activity' not in careplan:
-            careplan['activity'] = []
-        careplan['activity'].append(activity)
-        
-        # Atualizar
-        result = fhir_service.update_resource('CarePlan', careplan_id, careplan)
-        
-        return Response({
-            'message': 'Atividade adicionada ao CarePlan',
-            'activity_count': len(result.get('activity', []))
-        }, status=status.HTTP_201_CREATED)
-        
-    except Exception as e:
-        logger.error(f"Erro ao adicionar atividade ao CarePlan {careplan_id}: {str(e)}")
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(stats)
 
 
-@api_view(['GET', 'POST'])
-@authentication_classes([KeycloakAuthentication])
-@permission_classes([IsAuthenticated])
-def manage_goals(request):
+class CarePlanActivityViewSet(viewsets.ModelViewSet):
     """
-    Gerencia Goals (Metas) FHIR
-    GET: Lista metas
-    POST: Cria nova meta
+    ViewSet para CarePlanActivity
     
     Endpoints:
-    GET  /api/v1/goals/
-    POST /api/v1/goals/
+    - GET /api/v1/careplan-activities/ - Listar atividades
+    - GET /api/v1/careplan-activities/{id}/ - Buscar atividade
+    - PATCH /api/v1/careplan-activities/{id}/ - Atualizar status/progress
+    - POST /api/v1/careplan-activities/{id}/start/ - Iniciar atividade
+    - POST /api/v1/careplan-activities/{id}/complete/ - Completar atividade
     """
-    fhir_service = FHIRService(request.user)
     
-    if request.method == 'GET':
-        try:
-            patient_id = request.query_params.get('patient')
-            search_params = {}
-            if patient_id:
-                search_params['patient'] = patient_id
-            
-            goals = fhir_service.search_resources('Goal', search_params)
-            return Response({
-                'count': len(goals),
-                'results': goals
-            })
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    queryset = CarePlanActivity.objects.all()
+    serializer_class = CarePlanActivitySerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
     
-    elif request.method == 'POST':
-        try:
-            data = request.data
-            
-            goal = {
-                'resourceType': 'Goal',
-                'lifecycleStatus': data.get('status', 'active'),
-                'description': {
-                    'text': data.get('description')
-                },
-                'subject': {
-                    'reference': f"Patient/{data['patient_id']}"
-                },
-                'startDate': data.get('start_date', datetime.now().strftime('%Y-%m-%d')),
-                'target': [{
-                    'measure': {
-                        'coding': [{
-                            'display': data.get('target_measure', '')
-                        }]
-                    },
-                    'detailString': data.get('target_value'),
-                    'dueDate': data.get('due_date')
-                }] if data.get('target_measure') or data.get('due_date') else None
-            }
-            
-            result = fhir_service.create_resource('Goal', goal)
-            
-            return Response({
-                'id': result.get('id'),
-                'message': 'Meta criada com sucesso'
-            }, status=status.HTTP_201_CREATED)
-            
-        except Exception as e:
-            logger.error(f"Erro ao criar Goal: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    filterset_fields = ['care_plan', 'status', 'kind']
+    ordering_fields = ['scheduled_period_start', 'created_at']
+    ordering = ['scheduled_period_start']
+    
+    def get_queryset(self):
+        """Filtra conforme permissões"""
+        queryset = super().get_queryset()
+        user = self.request.user
+        
+        if user.is_staff or user.is_superuser:
+            return queryset.select_related('care_plan', 'location')
+        
+        # Filtrar por planos acessíveis
+        if hasattr(user, 'practitioner'):
+            queryset = queryset.filter(
+                Q(care_plan__author=user) |
+                Q(care_plan__patient__practitioners=user.practitioner)
+            ).distinct()
+        
+        elif hasattr(user, 'patient'):
+            queryset = queryset.filter(care_plan__patient__user=user)
+        
+        return queryset.select_related('care_plan', 'location')
+    
+    @action(detail=True, methods=['post'])
+    def start(self, request, pk=None):
+        """Inicia atividade"""
+        activity = self.get_object()
+        
+        if activity.status != 'not-started':
+            return Response(
+                {'error': f'Atividade já foi iniciada. Status: {activity.status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        activity.status = 'in-progress'
+        activity.save()
+        
+        serializer = self.get_serializer(activity)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def complete(self, request, pk=None):
+        """Completa atividade"""
+        activity = self.get_object()
+        
+        activity.status = 'completed'
+        
+        # Adicionar progress note
+        progress = request.data.get('progress')
+        if progress:
+            existing = activity.progress or ''
+            activity.progress = f"{existing}\n\n[{timezone.now().strftime('%Y-%m-%d %H:%M')}] {progress}"
+        
+        activity.save()
+        
+        serializer = self.get_serializer(activity)
+        return Response(serializer.data)

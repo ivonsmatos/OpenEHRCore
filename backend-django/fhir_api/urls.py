@@ -1,13 +1,29 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views_financial import CoverageViewSet, AccountViewSet, InvoiceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_careplan, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7, views_brazil, views_agent, views_validation
+from .views_document import DocumentReferenceViewSet
+from .views_bundle import BundleViewSet
+from .views_careplan import CarePlanViewSet, CarePlanActivityViewSet
+from .views_medication_administration import MedicationAdministrationViewSet
+from .views_task import TaskViewSet
+from .views_goal import GoalViewSet
+from .views_media import MediaViewSet
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7, views_brazil, views_agent, views_validation
 from .metrics import metrics_view
 
 router = DefaultRouter()
 router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
 router.register(r'financial/accounts', AccountViewSet, basename='account')
 router.register(r'financial/invoices', InvoiceViewSet, basename='invoice')
+router.register(r'documents', DocumentReferenceViewSet, basename='document')
+router.register(r'bundles', BundleViewSet, basename='bundle')
+router.register(r'careplans', CarePlanViewSet, basename='careplan')
+router.register(r'careplan-activities', CarePlanActivityViewSet, basename='careplan-activity')
+# Sprint 34-35: Novos recursos FHIR
+router.register(r'medication-administrations', MedicationAdministrationViewSet, basename='medication-administration')
+router.register(r'tasks', TaskViewSet, basename='task')
+router.register(r'goals', GoalViewSet, basename='goal')
+router.register(r'media', MediaViewSet, basename='media')
 
 urlpatterns = [
     # Health Check endpoints (robustos)

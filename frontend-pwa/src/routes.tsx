@@ -124,6 +124,14 @@ const AutomationPage = lazyLoad(() => import('./pages/AutomationPage'));
 // Prescription (Sprint 31)
 const PrescriptionWorkspace = lazyLoad(() => import('./components/clinical/PrescriptionWorkspace'));
 
+// Document Manager (Sprint 33 - FHIR DocumentReference)
+const DocumentManager = lazyLoad(() => import('./components/clinical/DocumentManager'));
+
+// Documentation Portal
+const DocsLayout = lazyLoad(() => import('./layouts/DocsLayout'));
+const DocsHome = lazyLoad(() => import('./pages/DocsHome'));
+const DocsPage = lazyLoad(() => import('./pages/DocsPage'));
+
 /**
  * Rotas protegidas (requerem autenticação)
  */
@@ -170,12 +178,24 @@ const ProtectedRoutes: React.FC = () => {
                     {/* Prescription (Sprint 31) */}
                     <Route path="/prescriptions" element={<PrescriptionWorkspace />} />
 
+                    {/* Document Manager (Sprint 33 - FHIR DocumentReference) */}
+                    <Route path="/fhir/documents" element={<DocumentManager />} />
+                    <Route path="/patients/:id/documents" element={<DocumentManager />} />
+
                     <Route path="/profile" element={<SettingsWorkspace section="profile" />} />
                     <Route path="/settings/profile" element={<SettingsWorkspace section="profile" />} />
                     <Route path="/settings/security" element={<SettingsWorkspace section="security" />} />
                     <Route path="/settings/notifications" element={<SettingsWorkspace section="notifications" />} />
                     <Route path="/settings/preferences" element={<SettingsWorkspace section="preferences" />} />
                     <Route path="/help" element={<HelpWorkspace />} />
+                    
+                    {/* Documentation Portal */}
+                    <Route path="/docs" element={<DocsLayout />}>
+                        <Route index element={<DocsHome />} />
+                        <Route path=":category" element={<DocsPage />} />
+                        <Route path=":category/:page" element={<DocsPage />} />
+                    </Route>
+                    
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Suspense>
