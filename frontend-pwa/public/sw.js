@@ -62,6 +62,11 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
+    // Skip non-http(s) requests (like chrome-extension://)
+    if (!url.protocol.startsWith('http')) {
+        return;
+    }
+
     // Skip non-GET requests
     if (request.method !== 'GET') {
         // Queue POST/PUT/DELETE for sync when offline
