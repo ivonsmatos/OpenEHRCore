@@ -266,6 +266,38 @@ class FHIRService:
         """
         return self.search_resources(resource_type, params, use_cache=False)
 
+    def get_resource(self, resource_type: str, resource_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Recupera um único recurso FHIR pelo ID.
+        
+        Args:
+            resource_type: Tipo do recurso (Ex: 'Practitioner', 'Patient')
+            resource_id: ID do recurso no FHIR
+        
+        Returns:
+            Dict com o recurso completo, ou None se não encontrado
+        """
+        try:
+            response = self.session.get(
+                f"{self.base_url}/{resource_type}/{resource_id}",
+                timeout=self.timeout
+            )
+            
+            if response.status_code == 404:
+                logger.warning(f"{resource_type}/{resource_id} not found")
+                return None
+            
+            if response.status_code != 200:
+                logger.error(f"Failed to get {resource_type}/{resource_id}: {response.status_code}")
+                return None
+                
+            logger.info(f"{resource_type} retrieved: ID={resource_id}")
+            return response.json()
+            
+        except requests.RequestException as e:
+            logger.error(f"Error retrieving {resource_type}/{resource_id}: {str(e)}")
+            return None
+
     def create_patient_resource(
         self,
         first_name: str,
