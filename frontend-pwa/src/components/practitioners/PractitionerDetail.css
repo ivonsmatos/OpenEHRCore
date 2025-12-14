@@ -1,0 +1,211 @@
+/* Practitioner Detail Page Styles */
+
+.practitioner-detail {
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.practitioner-detail__loading,
+.practitioner-detail__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 1rem;
+}
+
+.practitioner-detail__header {
+    margin-bottom: 1.5rem;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+}
+
+.back-button:hover {
+    color: #1e3a5f;
+}
+
+/* Profile Card */
+.practitioner-detail__profile {
+    margin-bottom: 1.5rem;
+}
+
+.profile-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.avatar-initials {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 250px;
+}
+
+.profile-name {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.75rem;
+    color: #1e3a5f;
+}
+
+.profile-specialty {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: #64748b;
+}
+
+.profile-crm {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    margin-right: 0.75rem;
+}
+
+.profile-status {
+    display: inline-block;
+    font-size: 0.875rem;
+}
+
+.profile-status.active {
+    color: #10b981;
+}
+
+.profile-status.inactive {
+    color: #6b7280;
+}
+
+/* Action Buttons */
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 180px;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    width: 100%;
+}
+
+.action-button--primary {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    font-weight: 600;
+}
+
+.action-button--primary:hover {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+}
+
+/* Info Grid */
+.practitioner-detail__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-card {
+    padding: 1.5rem;
+}
+
+.info-card__title {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    color: #1e3a5f;
+    font-weight: 600;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.info-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #374151;
+}
+
+.info-icon {
+    color: #64748b;
+}
+
+.info-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.info-label {
+    color: #64748b;
+    font-weight: 500;
+}
+
+.info-value {
+    color: #374151;
+}
+
+.info-empty {
+    color: #94a3b8;
+    font-style: italic;
+    margin: 0;
+}
+
+.qualification-item {
+    margin-bottom: 0.5rem;
+}
+
+.qualification-badge {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .profile-actions {
+        width: 100%;
+    }
+}

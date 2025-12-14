@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Card from '../base/Card';
 import './ChatWorkspace.css';
@@ -50,6 +51,7 @@ const ChatWorkspace: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [loadingPractitioners, setLoadingPractitioners] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('access_token');
@@ -337,29 +339,40 @@ const ChatWorkspace: React.FC = () => {
                     {channels.filter(c => c.type === 'dm').length === 0 ? (
                         <div className="no-practitioners">
                             <p>Nenhum profissional</p>
-                            <p className="no-practitioners-hint">
-                                Cadastre profissionais para conversar
-                            </p>
+                            <button
+                                className="new-chat-button"
+                                onClick={() => navigate('/practitioners')}
+                            >
+                                + Nova Conversa
+                            </button>
                         </div>
                     ) : (
-                        channels.filter(c => c.type === 'dm').map(channel => (
-                            <div
-                                key={channel.id}
-                                onClick={() => setSelectedChannel(channel.id)}
-                                className={`dm-item ${selectedChannel === channel.id ? 'dm-item--selected' : ''}`}
+                        <>
+                            <button
+                                className="new-chat-button new-chat-button--inline"
+                                onClick={() => navigate('/practitioners')}
                             >
-                                <span
-                                    className="status-dot"
-                                    style={{ background: getStatusColor(channel.practitioner?.status || 'offline') }}
-                                />
-                                <div className="dm-info">
-                                    <div className="dm-name">{channel.name}</div>
-                                    {channel.description && (
-                                        <div className="dm-specialty">{channel.description}</div>
-                                    )}
+                                + Iniciar Nova Conversa
+                            </button>
+                            {channels.filter(c => c.type === 'dm').map(channel => (
+                                <div
+                                    key={channel.id}
+                                    onClick={() => setSelectedChannel(channel.id)}
+                                    className={`dm-item ${selectedChannel === channel.id ? 'dm-item--selected' : ''}`}
+                                >
+                                    <span
+                                        className="status-dot"
+                                        style={{ background: getStatusColor(channel.practitioner?.status || 'offline') }}
+                                    />
+                                    <div className="dm-info">
+                                        <div className="dm-name">{channel.name}</div>
+                                        {channel.description && (
+                                            <div className="dm-specialty">{channel.description}</div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            ))}
+                        </>
                     )}
                 </Card>
 

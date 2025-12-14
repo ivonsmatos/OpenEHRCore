@@ -252,12 +252,8 @@ const PractitionerWorkspace: React.FC = () => {
                                     key={practitioner.id}
                                     practitioner={practitioner}
                                     onClick={() => {
-                                        // Navigate to chat and select this practitioner
-                                        sessionStorage.setItem('chat-practitioner', JSON.stringify({
-                                            id: practitioner.id,
-                                            name: practitioner.name?.[0]?.given?.join(' ') + ' ' + (practitioner.name?.[0]?.family || '')
-                                        }));
-                                        navigate('/chat');
+                                        // Navigate to practitioner profile page
+                                        navigate(`/practitioners/${practitioner.id}`);
                                     }}
                                 />
                             ))}
