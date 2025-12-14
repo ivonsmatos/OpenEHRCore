@@ -1,4 +1,4 @@
-# OpenEHRCore Agent
+# HealthStack Agent
 
 On-premise agent for connecting legacy healthcare devices to HealthStack.
 
@@ -34,7 +34,7 @@ On-premise agent for connecting legacy healthcare devices to HealthStack.
 ### Requirements
 
 - Python 3.10+
-- Network access to OpenEHRCore server
+- Network access to HealthStack server
 
 ### Quick Start
 
@@ -59,7 +59,7 @@ python -m openehrcore_agent
 # config.yaml
 
 server:
-  url: https://your-openehrcore-server.com
+  url: https://your-HealthStack-server.com
   api_key: your-api-key
 
 mllp:

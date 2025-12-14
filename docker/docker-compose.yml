@@ -108,6 +108,27 @@ services:
     networks:
       - openehr_network
 
+  # FHIR Data Seeder - Seeds sample data after HAPI FHIR is ready
+  fhir-seeder:
+    build:
+      context: ../backend-django
+      dockerfile: Dockerfile
+    container_name: openehr_fhir_seeder
+    environment:
+      FHIR_SERVER_URL: http://hapi-fhir:8080/fhir
+    depends_on:
+      hapi-fhir:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for HAPI FHIR to be ready...' &&
+        sleep 10 &&
+        python scripts/seed_fhir_data.py &&
+        echo 'Seed data completed!'
+      "
+    networks:
+      - openehr_network
+    restart: "no"
   # NOTE: Mattermost was removed from this project (Sprint removed)
   # Chat functionality is handled via internal Communication resources (FHIR)
 

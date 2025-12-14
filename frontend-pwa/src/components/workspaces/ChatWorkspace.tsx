@@ -84,7 +84,7 @@ const ChatWorkspace: React.FC = () => {
         setLoadingPractitioners(true);
         try {
             const headers = getAuthHeaders();
-            const response = await axios.get(`${API_URL}/practitioners/`, { headers });
+            const response = await axios.get(`${API_URL}/practitioners/list/`, { headers });
 
             const practitionerList: Practitioner[] = [];
             const results = response.data?.results || response.data?.entry || response.data || [];
