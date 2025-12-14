@@ -120,23 +120,14 @@ def list_messages(request):
         
         search_params = {'_sort': 'sent', '_count': 50}
         
-        # Check if it's a generic channel ID or a Group/Practitioner ID
-        # If ID is numeric (FHIR ID) or generic string
+        # Format the channel_id for searching
+        # Store it in category with system|code format
+        # Handle dm- prefix for direct messages
+        channel_code = channel_id
         
-        if channel_id in ['general', 'clinical', 'admin', 'emergency']:
-             search_params['category'] = channel_id
-        elif channel_id.isdigit() or (len(channel_id) > 10 and '-' not in channel_id): # Simple check for FHIR ID
-             # It acts as a category or context. 
-             # For Group, we might not have linked it yet.
-             # Let's assume we store the ID in category as well for custom groups.
-             search_params['category'] = channel_id
-        else:
-            # DM or unknown - treat as category for now to be safe
-             search_params['category'] = channel_id
-             
-             # DM Logic Gap: Should filter by schema. 
-             # For now, simplistic category matching works for "Rooms".
-             
+        # Use a token search with system|code format for HAPI FHIR
+        search_params['category'] = f"http://openehrcore/chat-channels|{channel_code}"
+              
         resources = fhir.search_resources('Communication', search_params)
         
         for r in resources:
