@@ -259,20 +259,39 @@ const ChatWorkspace: React.FC = () => {
             sender: currentUser?.practitioner_id || 'you',
             senderName: currentUser?.name || 'Você',
             content: newMessage,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            attachment: attachment ? {
+                name: attachment.name,
+                type: attachment.type,
+                size: attachment.size,
+                data: attachment.data
+            } : undefined
         };
 
         setMessages(prev => [...prev, optimisticMessage]);
         setNewMessage('');
 
+        // Clear attachment after adding to messages
+        const attachmentToSend = attachment;
+        setAttachment(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+
         try {
             const headers = getAuthHeaders();
             await axios.post(`${API_URL}/chat/send/`, {
                 channel_id: selectedChannel,
-                content: newMessage,
+                content: newMessage || null,
                 recipient_id: selectedChannel.startsWith('dm-')
                     ? selectedChannel.replace('dm-', '')
-                    : null
+                    : null,
+                attachment: attachmentToSend ? {
+                    name: attachmentToSend.name,
+                    type: attachmentToSend.type,
+                    size: attachmentToSend.size,
+                    data: attachmentToSend.data
+                } : null
             }, { headers });
 
             // Refresh to get server-assigned ID

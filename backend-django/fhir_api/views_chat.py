@@ -141,19 +141,36 @@ def list_messages(request):
         
         for r in resources:
             content = ""
+            attachment = None
+            
             if r.get('payload'):
-                content = r['payload'][0].get('contentString', '')
+                for payload_item in r['payload']:
+                    if 'contentString' in payload_item:
+                        content = payload_item.get('contentString', '')
+                    if 'contentAttachment' in payload_item:
+                        att = payload_item['contentAttachment']
+                        attachment = {
+                            'name': att.get('title', 'attachment'),
+                            'type': att.get('contentType', 'application/octet-stream'),
+                            'size': att.get('size', 0),
+                            'data': att.get('data')  # base64
+                        }
                 
             sender_ref = r.get('sender', {}).get('reference', '')
             sender_id = sender_ref.split('/')[-1] if '/' in sender_ref else sender_ref
             
-            messages.append({
+            msg = {
                 "id": r.get('id'),
                 "content": content,
                 "sender_id": sender_id,
                 "sent": r.get('sent'),
                 "category": r.get('category', [{}])[0].get('coding', [{}])[0].get('code')
-            })
+            }
+            
+            if attachment:
+                msg['attachment'] = attachment
+                
+            messages.append(msg)
             
         return Response(messages, status=status.HTTP_200_OK)
 
@@ -168,21 +185,49 @@ def send_message(request):
     data = request.data
     channel_id = data.get('channel_id')
     content = data.get('content')
-    sender_id = data.get('sender_id') 
+    sender_id = data.get('sender_id')
+    attachment = data.get('attachment')  # {name, type, size, data}
     
-    if not channel_id or not content:
-         return Response({"error": "channel_id and content required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not channel_id or (not content and not attachment):
+         return Response({"error": "channel_id and content or attachment required"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         fhir = FHIRService()
+        
+        # Build payload
+        payload = []
+        
+        # Add text content if present
+        if content:
+            payload.append({
+                "contentString": content
+            })
+        
+        # Add attachment if present
+        if attachment:
+            attachment_payload = {
+                "contentAttachment": {
+                    "contentType": attachment.get('type', 'application/octet-stream'),
+                    "title": attachment.get('name', 'attachment'),
+                    "size": attachment.get('size', 0)
+                }
+            }
+            
+            # Include data if provided (base64 encoded)
+            if attachment.get('data'):
+                # Remove the data:mime;base64, prefix if present
+                data_str = attachment.get('data')
+                if ';base64,' in data_str:
+                    data_str = data_str.split(';base64,')[1]
+                attachment_payload["contentAttachment"]["data"] = data_str
+            
+            payload.append(attachment_payload)
         
         resource = {
             "resourceType": "Communication",
             "status": "completed",
             "sent": datetime.utcnow().isoformat() + "Z",
-            "payload": [{
-                "contentString": content
-            }]
+            "payload": payload
         }
         
         # Check validity of sender_id

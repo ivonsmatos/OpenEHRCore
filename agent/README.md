@@ -1,6 +1,6 @@
 # OpenEHRCore Agent
 
-On-premise agent for connecting legacy healthcare devices to OpenEHRCore.
+On-premise agent for connecting legacy healthcare devices to HealthStack.
 
 ## Supported Protocols
 
@@ -15,7 +15,7 @@ On-premise agent for connecting legacy healthcare devices to OpenEHRCore.
 │ Hospital Network (On-Premise)                           │
 │                                                          │
 │  [Lab Analyzer] ──HL7/MLLP──┐                           │
-│  [ECG Machine]  ──HL7/MLLP──┼──> 🤖 OpenEHRCore Agent  │
+│  [ECG Machine]  ──HL7/MLLP──┼──> 🤖 HealthStack Agent  │
 │  [PACS/CT/MRI]  ──DICOM─────┘         │                 │
 │                                        │                 │
 └────────────────────────────────────────│─────────────────┘
@@ -24,7 +24,7 @@ On-premise agent for connecting legacy healthcare devices to OpenEHRCore.
 ┌─────────────────────────────────────────────────────────┐
 │ Cloud / Data Center                                      │
 │                                                          │
-│  [OpenEHRCore Server] ──> HAPI FHIR ──> PostgreSQL      │
+│  [HealthStack Server] ──> HAPI FHIR ──> PostgreSQL      │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -140,4 +140,4 @@ python -m openehrcore_agent.status
 
 ## License
 
-MIT License - Same as OpenEHRCore
+MIT License - Same as HealthStack
