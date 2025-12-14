@@ -123,8 +123,8 @@ const DashboardWorkspace = () => {
                                 Evolução de Atendimentos (Semanal)
                             </h3>
                         </div>
-                        <div className="flex-1 p-4 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="flex-1 p-4 w-full" style={{ minHeight: 280 }}>
+                            <ResponsiveContainer width="100%" height="100%" minHeight={250}>
                                 <LineChart data={lineData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B' }} />

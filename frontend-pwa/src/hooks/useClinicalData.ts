@@ -141,25 +141,37 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
         return {};
     };
 
-    // Fetch sinais vitais
+    // Fetch sinais vitais (from observations endpoint)
     const fetchVitals = useCallback(async () => {
         const headers = getAuthHeaders();
         if (!headers.Authorization) return;
 
         try {
-            const response = await axios.get(`${API_URL}/patients/${patientId}/vitals/`, { headers });
-            const vitals = response.data || [];
+            // Use observations endpoint (vitals are observations with category vital-signs)
+            const response = await axios.get(`${API_URL}/patients/${patientId}/observations/`, { headers });
+            const responseData = response.data;
 
-            // Processar para formato padronizado
-            const processed: VitalSign[] = vitals.map((v: any) => ({
-                id: v.id,
-                code: v.code?.coding?.[0]?.code || '',
-                display: v.code?.coding?.[0]?.display || v.type || '',
-                value: v.valueQuantity?.value || v.value || 0,
-                unit: v.valueQuantity?.unit || v.unit || '',
-                date: v.effectiveDateTime || v.date || '',
-                status: v.status || 'final',
-            }));
+            // Handle both array and object with results
+            const vitals = Array.isArray(responseData)
+                ? responseData
+                : (responseData?.results || responseData?.observations || []);
+
+            // Processar para formato padronizado (filter vital-signs only)
+            const processed: VitalSign[] = vitals
+                .filter((v: any) => {
+                    // Check if it's a vital sign by category
+                    const category = v.category?.[0]?.coding?.[0]?.code;
+                    return category === 'vital-signs' || !category; // Include all if no category
+                })
+                .map((v: any) => ({
+                    id: v.id,
+                    code: v.code?.coding?.[0]?.code || '',
+                    display: v.code?.coding?.[0]?.display || v.type || '',
+                    value: v.valueQuantity?.value || v.value || 0,
+                    unit: v.valueQuantity?.unit || v.unit || '',
+                    date: v.effectiveDateTime || v.date || '',
+                    status: v.status || 'final',
+                }));
 
             // Calcular últimos valores por tipo
             const latest: Record<string, VitalSign> = {};
@@ -206,7 +218,14 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
 
         try {
             const response = await axios.get(`${API_URL}/patients/${patientId}/medications/`, { headers });
-            const medications = (response.data || []).map((m: any) => ({
+            const responseData = response.data;
+
+            // Handle both array and object with results
+            const medicationsData = Array.isArray(responseData)
+                ? responseData
+                : (responseData?.results || responseData?.medications || []);
+
+            const medications = medicationsData.map((m: any) => ({
                 id: m.id,
                 name: m.medicationCodeableConcept?.coding?.[0]?.display || m.name || m.medication_name || '',
                 dosage: m.dosageInstruction?.[0]?.doseAndRate?.[0]?.doseQuantity?.value +
