@@ -189,6 +189,19 @@ const ChatWorkspace: React.FC = () => {
             setLoading(true);
             await fetchPractitioners();
             setLoading(false);
+
+            // Check if coming from practitioner card click
+            const chatPractitioner = sessionStorage.getItem('chat-practitioner');
+            if (chatPractitioner) {
+                try {
+                    const { id } = JSON.parse(chatPractitioner);
+                    // Select the DM channel for this practitioner
+                    setSelectedChannel(`dm-${id}`);
+                    sessionStorage.removeItem('chat-practitioner');
+                } catch (e) {
+                    console.error('Error parsing chat practitioner:', e);
+                }
+            }
         };
         init();
     }, [fetchPractitioners]);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { colors, spacing } from '../../theme/colors';
 import { Practitioner, PractitionerFilters } from '../../types/practitioner';
 import { usePractitioners } from '../../hooks/usePractitioners';
@@ -9,6 +10,7 @@ import Card from '../base/Card';
 import { Plus, Search, Filter } from 'lucide-react';
 
 const PractitionerWorkspace: React.FC = () => {
+    const navigate = useNavigate();
     const { fetchPractitioners, createPractitioner, loading, error } = usePractitioners();
     const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
     const [showForm, setShowForm] = useState(false);
@@ -250,8 +252,12 @@ const PractitionerWorkspace: React.FC = () => {
                                     key={practitioner.id}
                                     practitioner={practitioner}
                                     onClick={() => {
-                                        // TODO: Navigate to practitioner detail
-                                        console.log('View practitioner:', practitioner.id);
+                                        // Navigate to chat and select this practitioner
+                                        sessionStorage.setItem('chat-practitioner', JSON.stringify({
+                                            id: practitioner.id,
+                                            name: practitioner.name?.[0]?.given?.join(' ') + ' ' + (practitioner.name?.[0]?.family || '')
+                                        }));
+                                        navigate('/chat');
                                     }}
                                 />
                             ))}
