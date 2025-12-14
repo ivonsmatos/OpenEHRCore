@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import './AutomationPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -21,7 +22,7 @@ interface Bot {
 interface ExecutionResult {
     bot_id: string;
     success: boolean;
-    result?: any;
+    result?: unknown;
     error?: string;
     logs: string[];
     duration_ms: number;
@@ -33,7 +34,6 @@ const AutomationPage: React.FC = () => {
     const [history, setHistory] = useState<ExecutionResult[]>([]);
     const [loading, setLoading] = useState(true);
     const [executing, setExecuting] = useState<string | null>(null);
-    const [selectedBot, setSelectedBot] = useState<string | null>(null);
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('access_token');
@@ -115,96 +115,84 @@ const AutomationPage: React.FC = () => {
         }
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusClass = (status: string) => {
         switch (status) {
-            case 'running': return '#3b82f6';
-            case 'completed': return '#10b981';
-            case 'failed': return '#ef4444';
-            default: return '#6b7280';
+            case 'running': return 'status-running';
+            case 'completed': return 'status-completed';
+            case 'failed': return 'status-failed';
+            default: return 'status-default';
         }
     };
 
     if (loading) {
         return (
-            <div className="automation-page" style={{ padding: '2rem', textAlign: 'center' }}>
+            <div className="automation-page automation-page--loading">
                 <p>Carregando automações...</p>
             </div>
         );
     }
 
     return (
-        <div className="automation-page" style={{ padding: '2rem' }}>
-            <h1 style={{ marginBottom: '1.5rem', color: '#1e3a5f' }}>
+        <div className="automation-page">
+            <h1 className="automation-title">
                 🤖 Automações (Bots)
             </h1>
 
-            <p style={{ color: '#64748b', marginBottom: '2rem' }}>
+            <p className="automation-description">
                 Gerencie bots que executam automaticamente em resposta a eventos do sistema.
             </p>
 
             {/* Bots Grid */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                gap: '1.5rem',
-                marginBottom: '3rem'
-            }}>
+            <div className="bots-grid">
                 {bots.map((bot) => (
                     <div
                         key={bot.id}
-                        style={{
-                            background: 'white',
-                            borderRadius: '12px',
-                            padding: '1.5rem',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                            border: bot.enabled ? '2px solid #10b981' : '2px solid #e5e7eb'
-                        }}
+                        className={`bot-card ${bot.enabled ? 'bot-card--enabled' : ''}`}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                        <div className="bot-card__header">
                             <div>
-                                <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e3a5f' }}>
+                                <h3 className="bot-card__title">
                                     {getTriggerIcon(bot.trigger_type)} {bot.name}
                                 </h3>
-                                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                                <p className="bot-card__description">
                                     {bot.description}
                                 </p>
                             </div>
-                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <label className="bot-card__toggle">
                                 <input
                                     type="checkbox"
                                     checked={bot.enabled}
                                     onChange={(e) => toggleBot(bot.id, e.target.checked)}
-                                    style={{ marginRight: '0.5rem' }}
                                 />
-                                <span style={{ fontSize: '0.75rem', color: bot.enabled ? '#10b981' : '#6b7280' }}>
+                                <span className={`bot-card__toggle-label ${bot.enabled ? 'bot-card__toggle-label--active' : ''}`}>
                                     {bot.enabled ? 'Ativo' : 'Inativo'}
                                 </span>
                             </label>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', fontSize: '0.8rem', color: '#64748b' }}>
+                        <div className="bot-card__meta">
                             <span>Trigger: <strong>{bot.trigger_type}</strong></span>
                             <span>
                                 Status:
-                                <span style={{ color: getStatusColor(bot.status), marginLeft: '0.25rem' }}>
-                                    {bot.status}
+                                <span className={getStatusClass(bot.status)}>
+                                    {' '}{bot.status}
                                 </span>
                             </span>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                        <div className="bot-card__stats">
                             <div>
-                                <span style={{ color: '#10b981', fontWeight: 'bold' }}>{bot.run_count}</span>
-                                <span style={{ color: '#64748b', marginLeft: '0.25rem' }}>execuções</span>
+                                <span className="bot-card__stat-value--success">{bot.run_count}</span>
+                                <span className="bot-card__stat-label">execuções</span>
                             </div>
                             <div>
-                                <span style={{ color: '#ef4444', fontWeight: 'bold' }}>{bot.error_count}</span>
-                                <span style={{ color: '#64748b', marginLeft: '0.25rem' }}>erros</span>
+                                <span className="bot-card__stat-value--error">{bot.error_count}</span>
+                                <span className="bot-card__stat-label">erros</span>
                             </div>
                         </div>
 
                         {bot.last_run && (
-                            <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '1rem' }}>
+                            <p className="bot-card__last-run">
                                 Última execução: {new Date(bot.last_run).toLocaleString('pt-BR')}
                             </p>
                         )}
@@ -212,16 +200,7 @@ const AutomationPage: React.FC = () => {
                         <button
                             onClick={() => executeBot(bot.id)}
                             disabled={executing === bot.id || !bot.enabled}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                background: bot.enabled ? '#3b82f6' : '#e5e7eb',
-                                color: bot.enabled ? 'white' : '#94a3b8',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: bot.enabled ? 'pointer' : 'not-allowed',
-                                fontWeight: '600'
-                            }}
+                            className="bot-card__execute-btn"
                         >
                             {executing === bot.id ? '⏳ Executando...' : '▶️ Executar Agora'}
                         </button>
@@ -230,51 +209,38 @@ const AutomationPage: React.FC = () => {
             </div>
 
             {/* Execution History */}
-            <h2 style={{ color: '#1e3a5f', marginBottom: '1rem' }}>
+            <h2 className="history-title">
                 📜 Histórico de Execuções
             </h2>
 
-            <div style={{
-                background: 'white',
-                borderRadius: '12px',
-                padding: '1rem',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-            }}>
+            <div className="history-container">
                 {history.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                    <p className="history-empty">
                         Nenhuma execução registrada ainda.
                     </p>
                 ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table className="history-table">
                         <thead>
-                            <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-                                <th style={{ textAlign: 'left', padding: '0.75rem', color: '#64748b' }}>Bot</th>
-                                <th style={{ textAlign: 'left', padding: '0.75rem', color: '#64748b' }}>Status</th>
-                                <th style={{ textAlign: 'left', padding: '0.75rem', color: '#64748b' }}>Duração</th>
-                                <th style={{ textAlign: 'left', padding: '0.75rem', color: '#64748b' }}>Timestamp</th>
+                            <tr>
+                                <th>Bot</th>
+                                <th>Status</th>
+                                <th>Duração</th>
+                                <th>Timestamp</th>
                             </tr>
                         </thead>
                         <tbody>
                             {history.slice(0, 20).map((exec, idx) => (
-                                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                    <td style={{ padding: '0.75rem' }}>{exec.bot_id}</td>
-                                    <td style={{ padding: '0.75rem' }}>
-                                        <span style={{
-                                            display: 'inline-block',
-                                            padding: '0.25rem 0.5rem',
-                                            borderRadius: '9999px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: '600',
-                                            background: exec.success ? '#d1fae5' : '#fee2e2',
-                                            color: exec.success ? '#065f46' : '#991b1b'
-                                        }}>
+                                <tr key={idx}>
+                                    <td>{exec.bot_id}</td>
+                                    <td>
+                                        <span className={`status-badge ${exec.success ? 'status-badge--success' : 'status-badge--error'}`}>
                                             {exec.success ? '✓ Sucesso' : '✗ Erro'}
                                         </span>
                                     </td>
-                                    <td style={{ padding: '0.75rem', fontSize: '0.85rem', color: '#64748b' }}>
+                                    <td className="history-table__duration">
                                         {exec.duration_ms.toFixed(0)}ms
                                     </td>
-                                    <td style={{ padding: '0.75rem', fontSize: '0.85rem', color: '#94a3b8' }}>
+                                    <td className="history-table__timestamp">
                                         {new Date(exec.timestamp).toLocaleString('pt-BR')}
                                     </td>
                                 </tr>

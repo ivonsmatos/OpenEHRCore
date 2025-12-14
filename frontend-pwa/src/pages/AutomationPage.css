@@ -1,0 +1,211 @@
+/* AutomationPage Styles */
+/* Sprint 29: Bots/Automation */
+
+.automation-page {
+  padding: 2rem;
+}
+
+.automation-page--loading {
+  text-align: center;
+}
+
+.automation-title {
+  margin-bottom: 1.5rem;
+  color: #1e3a5f;
+}
+
+.automation-description {
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+/* Bots Grid */
+.bots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.bot-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 2px solid #e5e7eb;
+  transition: border-color 0.2s ease;
+}
+
+.bot-card--enabled {
+  border-color: #10b981;
+}
+
+.bot-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.bot-card__title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1e3a5f;
+}
+
+.bot-card__description {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.bot-card__toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.bot-card__toggle input {
+  margin-right: 0.5rem;
+}
+
+.bot-card__toggle-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.bot-card__toggle-label--active {
+  color: #10b981;
+}
+
+.bot-card__meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.bot-card__stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.bot-card__stat-value--success {
+  color: #10b981;
+  font-weight: bold;
+}
+
+.bot-card__stat-value--error {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.bot-card__stat-label {
+  color: #64748b;
+  margin-left: 0.25rem;
+}
+
+.bot-card__last-run {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.bot-card__execute-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.bot-card__execute-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.bot-card__execute-btn:disabled {
+  background: #e5e7eb;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Status Colors */
+.status-running { color: #3b82f6; }
+.status-completed { color: #10b981; }
+.status-failed { color: #ef4444; }
+.status-default { color: #6b7280; }
+
+/* History Section */
+.history-title {
+  color: #1e3a5f;
+  margin-bottom: 1rem;
+}
+
+.history-container {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.history-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th {
+  text-align: left;
+  padding: 0.75rem;
+  color: #64748b;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.history-table td {
+  padding: 0.75rem;
+}
+
+.history-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.history-table__duration,
+.history-table__timestamp {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.history-table__timestamp {
+  color: #94a3b8;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge--success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge--error {
+  background: #fee2e2;
+  color: #991b1b;
+}
