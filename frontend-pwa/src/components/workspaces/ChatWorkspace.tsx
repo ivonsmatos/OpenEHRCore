@@ -175,23 +175,27 @@ const ChatWorkspace: React.FC = () => {
                 { headers }
             );
 
-            if (response.data?.messages) {
-                setMessages(response.data.messages.map((m: any) => ({
+            // Handle both array and {messages: []} response formats
+            const messagesData = Array.isArray(response.data)
+                ? response.data
+                : (response.data?.messages || []);
+
+            if (messagesData.length > 0) {
+                setMessages(messagesData.map((m: any) => ({
                     id: m.id,
                     sender: m.sender_id || 'unknown',
-                    senderName: m.sender_name || m.sender || 'Sistema',
-                    content: m.content || m.payload?.contentString || '',
-                    timestamp: m.sent || m.timestamp || new Date().toISOString()
+                    senderName: m.sender_name || practitioners.find(p => p.id === m.sender_id)?.name || 'Sistema',
+                    content: m.content || '',
+                    timestamp: m.sent || new Date().toISOString(),
+                    attachment: m.attachment
                 })));
-            } else {
-                setMessages([]);
             }
+            // Don't clear messages if empty - keep optimistic updates
         } catch (error) {
             console.error('Error fetching messages:', error);
-            // Set empty for now
-            setMessages([]);
+            // Don't clear messages on error - keep optimistic updates
         }
-    }, [selectedChannel]);
+    }, [selectedChannel, practitioners]);
 
     // Initial load
     useEffect(() => {
