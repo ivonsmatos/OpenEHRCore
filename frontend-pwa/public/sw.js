@@ -1,13 +1,11 @@
-const CACHE_NAME = 'healthstack-v2.0.0';
+const CACHE_NAME = 'healthstack-v2.0.1';
 const OFFLINE_URL = '/offline.html';
 
-// Static assets to cache
+// Static assets to cache - only files that exist
 const STATIC_ASSETS = [
     '/',
-    '/index.html',
     '/offline.html',
     '/manifest.json',
-    '/favicon.ico',
 ];
 
 // API endpoints to cache for offline
@@ -24,9 +22,16 @@ self.addEventListener('install', (event) => {
 
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => {
+            .then(async (cache) => {
                 console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS);
+                // Cache each asset individually to handle errors gracefully
+                for (const url of STATIC_ASSETS) {
+                    try {
+                        await cache.add(url);
+                    } catch (err) {
+                        console.warn('[SW] Failed to cache:', url, err);
+                    }
+                }
             })
             .then(() => self.skipWaiting())
     );
