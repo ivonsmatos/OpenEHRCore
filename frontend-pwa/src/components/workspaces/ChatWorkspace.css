@@ -1,0 +1,281 @@
+/* Chat Workspace Styles */
+
+.chat-workspace {
+    height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+}
+
+.chat-header {
+    margin-bottom: 1rem;
+}
+
+.chat-title {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #1e3a5f;
+}
+
+.chat-subtitle {
+    margin: 0.25rem 0 0 0;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.loading-indicator {
+    color: #3b82f6;
+    font-style: italic;
+}
+
+/* Chat Layout */
+.chat-layout {
+    display: flex;
+    flex: 1;
+    gap: 1rem;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.chat-sidebar {
+    width: 280px;
+    padding: 1rem;
+    overflow: auto;
+}
+
+.sidebar-title {
+    margin: 0 0 1rem 0;
+    font-size: 0.875rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sidebar-title--dm {
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.practitioner-count {
+    font-weight: normal;
+    color: #94a3b8;
+}
+
+/* Channel Items */
+.channel-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.channel-item:hover {
+    background: #f1f5f9;
+}
+
+.channel-item--selected {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.channel-name {
+    font-weight: 500;
+}
+
+.channel-description {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+}
+
+/* DM Items */
+.dm-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: background 0.2s;
+}
+
+.dm-item:hover {
+    background: #f1f5f9;
+}
+
+.dm-item--selected {
+    background: #dbeafe;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dm-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.dm-name {
+    font-weight: 500;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dm-item--selected .dm-name {
+    color: #1e40af;
+}
+
+.dm-specialty {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.no-practitioners {
+    padding: 1rem;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.no-practitioners p {
+    margin: 0;
+}
+
+.no-practitioners-hint {
+    font-size: 0.75rem;
+    margin-top: 0.25rem !important;
+}
+
+/* Messages Area */
+.chat-messages-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+}
+
+.messages-header {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.messages-header-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.messages-header-title {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1e3a5f;
+}
+
+.messages-header-subtitle {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.messages-list {
+    flex: 1;
+    padding: 1rem;
+    overflow: auto;
+}
+
+.messages-empty {
+    text-align: center;
+    color: #94a3b8;
+    padding: 2rem;
+}
+
+.messages-empty p {
+    margin: 0.5rem 0;
+}
+
+/* Message Item */
+.message-item {
+    margin-bottom: 1rem;
+}
+
+.message-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.message-sender {
+    font-weight: 600;
+    color: #1e3a5f;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.message-content {
+    margin: 0.25rem 0 0 0;
+    color: #374151;
+    line-height: 1.5;
+}
+
+/* Message Input */
+.message-input-area {
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.message-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.message-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.send-button {
+    padding: 0.75rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.send-button:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.send-button:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
