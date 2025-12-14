@@ -8,6 +8,7 @@ import { AvailabilityManager } from './AvailabilityManager';
 import { useScheduling } from '../../hooks/useScheduling';
 import { usePractitioners } from '../../hooks/usePractitioners';
 import { usePatients } from '../../hooks/usePatients';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import { colors, spacing } from '../../theme/colors';
 import { Calendar, Clock, User, Plus } from 'lucide-react';
 
@@ -26,6 +27,7 @@ const SchedulingWorkspace: React.FC = () => {
     const { slots, fetchSlots, createSchedule, createSlot, createAppointment, loading } = useScheduling();
     const { fetchPractitioners, loading: loadingPractitioners } = usePractitioners();
     const { fetchPatients, loading: loadingPatients } = usePatients();
+    const isMobile = useIsMobile();
     
     const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState<'calendar' | 'availability' | 'new-appointment'>('new-appointment');
@@ -167,54 +169,89 @@ const SchedulingWorkspace: React.FC = () => {
                 subtitle="Agende consultas com nossos profissionais"
             />
 
-            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: spacing.lg }}>
+            <main style={{ 
+                maxWidth: '1200px', 
+                margin: '0 auto', 
+                padding: isMobile ? spacing.md : spacing.lg
+            }}>
                 {/* Tabs */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: spacing.lg }}>
+                <div style={{ 
+                    display: 'flex', 
+                    gap: '12px', 
+                    marginBottom: spacing.lg,
+                    overflowX: 'auto',
+                    WebkitOverflowScrolling: 'touch',
+                    paddingBottom: '8px',
+                    msOverflowStyle: 'none',
+                    scrollbarWidth: 'none',
+                    flexWrap: isMobile ? 'nowrap' : 'wrap'
+                }}>
                     <button
                         onClick={() => setActiveTab('new-appointment')}
                         style={{
-                            padding: '10px 20px',
+                            padding: isMobile ? '10px 16px' : '12px 24px',
                             background: activeTab === 'new-appointment' ? colors.primary.medium : 'white',
                             color: activeTab === 'new-appointment' ? 'white' : colors.text.primary,
-                            border: `1px solid ${activeTab === 'new-appointment' ? colors.primary.medium : colors.border.default}`,
+                            border: `2px solid ${activeTab === 'new-appointment' ? colors.primary.medium : colors.border.default}`,
                             borderRadius: '8px',
                             cursor: 'pointer',
                             fontWeight: 500,
-                            transition: 'all 0.15s'
+                            fontSize: isMobile ? '0.875rem' : '1rem',
+                            transition: 'all 0.2s',
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            flexShrink: 0,
+                            boxShadow: activeTab === 'new-appointment' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
                         }}
                     >
-                        <Plus size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
+                        <Plus size={18} />
                         Nova Consulta
                     </button>
                     <button
                         onClick={() => setActiveTab('calendar')}
                         style={{
-                            padding: '10px 20px',
+                            padding: isMobile ? '10px 16px' : '12px 24px',
                             background: activeTab === 'calendar' ? colors.primary.medium : 'white',
                             color: activeTab === 'calendar' ? 'white' : colors.text.primary,
-                            border: `1px solid ${activeTab === 'calendar' ? colors.primary.medium : colors.border.default}`,
+                            border: `2px solid ${activeTab === 'calendar' ? colors.primary.medium : colors.border.default}`,
                             borderRadius: '8px',
                             cursor: 'pointer',
                             fontWeight: 500,
-                            transition: 'all 0.15s'
+                            fontSize: isMobile ? '0.875rem' : '1rem',
+                            transition: 'all 0.2s',
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            flexShrink: 0,
+                            boxShadow: activeTab === 'calendar' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
                         }}
                     >
-                        📅 Calendário
+                        <span style={{ fontSize: '1.1em' }}>📅</span>
+                        Calendário
                     </button>
                     <button
                         onClick={() => setActiveTab('availability')}
                         style={{
-                            padding: '10px 20px',
+                            padding: isMobile ? '10px 16px' : '12px 24px',
                             background: activeTab === 'availability' ? colors.primary.medium : 'white',
                             color: activeTab === 'availability' ? 'white' : colors.text.primary,
-                            border: `1px solid ${activeTab === 'availability' ? colors.primary.medium : colors.border.default}`,
+                            border: `2px solid ${activeTab === 'availability' ? colors.primary.medium : colors.border.default}`,
                             borderRadius: '8px',
                             cursor: 'pointer',
                             fontWeight: 500,
-                            transition: 'all 0.15s'
+                            fontSize: isMobile ? '0.875rem' : '1rem',
+                            transition: 'all 0.2s',
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',                            flexShrink: 0,                            boxShadow: activeTab === 'availability' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
                         }}
                     >
-                        ⏰ Disponibilidade
+                        <span style={{ fontSize: '1.1em' }}>⏰</span>
+                        Disponibilidade
                     </button>
                 </div>
 
@@ -239,7 +276,8 @@ const SchedulingWorkspace: React.FC = () => {
                                         padding: '12px',
                                         border: `1px solid ${colors.border.default}`,
                                         borderRadius: '8px',
-                                        fontSize: '0.95rem'
+                                        fontSize: isMobile ? '16px' : '0.95rem',
+                                        boxSizing: 'border-box'
                                     }}
                                     disabled={loadingPractitioners}
                                 >
@@ -271,7 +309,8 @@ const SchedulingWorkspace: React.FC = () => {
                                         padding: '12px',
                                         border: `1px solid ${colors.border.default}`,
                                         borderRadius: '8px',
-                                        fontSize: '0.95rem'
+                                        fontSize: isMobile ? '16px' : '0.95rem',
+                                        boxSizing: 'border-box'
                                     }}
                                     disabled={loadingPatients}
                                 >
@@ -285,7 +324,11 @@ const SchedulingWorkspace: React.FC = () => {
                             </div>
 
                             {/* Date and Time */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: spacing.md }}>
+                            <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
+                                gap: spacing.md 
+                            }}>
                                 <div>
                                     <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: colors.text.primary }}>
                                         <Calendar size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
@@ -301,7 +344,8 @@ const SchedulingWorkspace: React.FC = () => {
                                             padding: '12px',
                                             border: `1px solid ${colors.border.default}`,
                                             borderRadius: '8px',
-                                            fontSize: '0.95rem'
+                                            fontSize: isMobile ? '16px' : '0.95rem',
+                                            boxSizing: 'border-box'
                                         }}
                                     />
                                 </div>
@@ -319,7 +363,8 @@ const SchedulingWorkspace: React.FC = () => {
                                             padding: '12px',
                                             border: `1px solid ${colors.border.default}`,
                                             borderRadius: '8px',
-                                            fontSize: '0.95rem'
+                                            fontSize: isMobile ? '16px' : '0.95rem',
+                                            boxSizing: 'border-box'
                                         }}
                                     />
                                 </div>
@@ -335,7 +380,8 @@ const SchedulingWorkspace: React.FC = () => {
                                             padding: '12px',
                                             border: `1px solid ${colors.border.default}`,
                                             borderRadius: '8px',
-                                            fontSize: '0.95rem'
+                                            fontSize: isMobile ? '16px' : '0.95rem',
+                                            boxSizing: 'border-box'
                                         }}
                                     >
                                         <option value="15">15 min</option>
@@ -361,9 +407,10 @@ const SchedulingWorkspace: React.FC = () => {
                                         padding: '12px',
                                         border: `1px solid ${colors.border.default}`,
                                         borderRadius: '8px',
-                                        fontSize: '0.95rem',
+                                        fontSize: isMobile ? '16px' : '0.95rem',
                                         fontFamily: 'inherit',
-                                        resize: 'vertical'
+                                        resize: 'vertical',
+                                        boxSizing: 'border-box'
                                     }}
                                 />
                             </div>
@@ -373,7 +420,10 @@ const SchedulingWorkspace: React.FC = () => {
                                 onClick={handleCreateAppointment}
                                 isLoading={loading}
                                 disabled={!selectedPractitioner || !selectedPatient || !appointmentDate || !appointmentTime}
-                                style={{ marginTop: spacing.md }}
+                                style={{ 
+                                    marginTop: spacing.md,
+                                    width: isMobile ? '100%' : 'auto'
+                                }}
                             >
                                 Agendar Consulta
                             </Button>

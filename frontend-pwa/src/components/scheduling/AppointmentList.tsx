@@ -28,9 +28,14 @@ const AppointmentList: React.FC<AppointmentListProps> = ({ patientId }) => {
                     `${VITE_API_URL}/patients/${patientId}/appointments/`
                 );
                 setAppointments(response.data);
-            } catch (err) {
-                console.error("Erro ao buscar agendamentos:", err);
-                setError("Não foi possível carregar a agenda.");
+            } catch (err: any) {
+                if (err.response?.status === 429) {
+                    // Erro 429 - Too Many Requests, tentar novamente em 2s
+                    setTimeout(fetchAppointments, 2000);
+                } else {
+                    console.error("Erro ao buscar agendamentos:", err);
+                    setError("Não foi possível carregar a agenda.");
+                }
             } finally {
                 setLoading(false);
             }

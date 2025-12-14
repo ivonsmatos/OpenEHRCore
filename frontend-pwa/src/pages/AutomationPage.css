@@ -5,6 +5,21 @@
   padding: 2rem;
 }
 
+/* Responsivo: Mobile */
+@media (max-width: 767px) {
+  .automation-page {
+    padding: 1rem;
+  }
+
+  .automation-title {
+    font-size: 1.5rem;
+  }
+
+  .automation-description {
+    font-size: 0.875rem;
+  }
+}
+
 .automation-page--loading {
   text-align: center;
 }
@@ -27,6 +42,14 @@
   margin-bottom: 3rem;
 }
 
+/* Responsivo: Grid de bots */
+@media (max-width: 767px) {
+  .bots-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 .bot-card {
   background: white;
   border-radius: 12px;
@@ -34,6 +57,27 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 2px solid #e5e7eb;
   transition: border-color 0.2s ease;
+}
+
+/* Responsivo: Bot cards mobile */
+@media (max-width: 767px) {
+  .bot-card {
+    padding: 1rem;
+  }
+
+  .bot-card__header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .bot-card__actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .bot-card__actions button {
+    width: 100%;
+  }
 }
 
 .bot-card--enabled {

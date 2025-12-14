@@ -5,15 +5,50 @@ import json
 
 FHIR_URL = "http://localhost:8080/fhir"
 
+def generate_valid_cpf():
+    """
+    Gera um CPF válido com dígitos verificadores corretos.
+    ATENÇÃO: Apenas para uso em ambientes de desenvolvimento/testes.
+    """
+    def calculate_digit(cpf_partial, weights):
+        total = sum(d * w for d, w in zip(cpf_partial, weights))
+        remainder = total % 11
+        return 0 if remainder < 2 else 11 - remainder
+
+    # Gerar 9 primeiros dígitos aleatórios
+    cpf_digits = [random.randint(0, 9) for _ in range(9)]
+    
+    # Calcular primeiro dígito verificador
+    weights_1 = list(range(10, 1, -1))
+    digit_1 = calculate_digit(cpf_digits, weights_1)
+    cpf_digits.append(digit_1)
+    
+    # Calcular segundo dígito verificador
+    weights_2 = list(range(11, 1, -1))
+    digit_2 = calculate_digit(cpf_digits, weights_2)
+    cpf_digits.append(digit_2)
+    
+    # Converter para string
+    return ''.join(map(str, cpf_digits))
+
 def create_patient(first, last, gender, birth_date):
+    cpf = generate_valid_cpf()
     patient = {
         "resourceType": "Patient",
         "name": [{"family": last, "given": [first]}],
         "gender": gender,
-        "birthDate": birth_date
+        "birthDate": birth_date,
+        "identifier": [
+            {
+                "type": {"text": "CPF"},
+                "system": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cpf",
+                "value": cpf
+            }
+        ]
     }
     r = requests.post(f"{FHIR_URL}/Patient", json=patient)
     if r.status_code == 201:
+        print(f"✅ Paciente {first} {last} criado com CPF: {cpf}")
         return r.json()["id"]
     return None
 

@@ -30,7 +30,7 @@ export const PatientList: React.FC = () => {
             key: 'identifier',
             label: 'CPF',
             type: 'text',
-            placeholder: 'Ex: 123.456.789-00'
+            placeholder: '000.000.000-00'
         },
         {
             key: 'gender',
@@ -110,7 +110,7 @@ export const PatientList: React.FC = () => {
                 <div className="patient-list__header">
                     <div className="patient-list__search-wrapper">
                         <SearchBar
-                            placeholder="🔍 Buscar paciente por nome..."
+                            placeholder="Buscar paciente por nome..."
                             onSearch={executeSearch}
                             loading={loading}
                             initialValue={searchTerm}
@@ -129,7 +129,7 @@ export const PatientList: React.FC = () => {
             <div className="patient-list__header">
                 <div className="patient-list__search-wrapper">
                     <SearchBar
-                        placeholder="🔍 Buscar paciente por nome..."
+                        placeholder="Buscar paciente por nome..."
                         onSearch={executeSearch}
                         loading={loading}
                         initialValue={searchTerm}
@@ -190,16 +190,16 @@ export const PatientList: React.FC = () => {
                             className="patient-card"
                         >
                             <div className="patient-card__content">
-                                <div>
+                                <div className="patient-card__main">
                                     <h3 className="patient-card__name">
                                         👤 {patient.name}
                                     </h3>
-                                    <div className="patient-card__info">
-                                        <span>ID: {patient.id}</span>
-                                        <span>•</span>
-                                        <span>{calculateAge(patient.birthDate)} anos</span>
-                                        <span>•</span>
-                                        <span>{patient.gender === 'male' ? 'Masculino' : patient.gender === 'female' ? 'Feminino' : 'Outro'}</span>
+                                    <div className="patient-card__details">
+                                        <span className="patient-card__id">ID: {patient.id}</span>
+                                        <span className="patient-card__separator">•</span>
+                                        <span className="patient-card__age">{calculateAge(patient.birthDate)} anos</span>
+                                        <span className="patient-card__separator">•</span>
+                                        <span className="patient-card__gender">{patient.gender === 'male' ? 'Masculino' : patient.gender === 'female' ? 'Feminino' : 'Outro'}</span>
                                     </div>
                                     {patient.email && (
                                         <div className="patient-card__email">

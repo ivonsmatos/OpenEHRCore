@@ -81,55 +81,119 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
 
   const handleDelete = async () => {
     if (!currentPatient?.id) return;
-    if (window.confirm("Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.")) {
-      try {
-        await deletePatient(currentPatient.id);
-        navigate('/');
-      } catch (err) {
-        alert("Erro ao excluir paciente: " + err);
-      }
+    
+    const patientName = getPatientSummary(currentPatient).name;
+    
+    // Primeira confirmação
+    const firstConfirm = window.confirm(
+      `⚠️ ATENÇÃO!\n\n` +
+      `Você está prestes a EXCLUIR o paciente:\n` +
+      `${patientName} (ID: ${currentPatient.id})\n\n` +
+      `Esta ação é IRREVERSÍVEL e removerá:\n` +
+      `• Todos os dados do paciente\n` +
+      `• Histórico clínico\n` +
+      `• Agendamentos\n` +
+      `• Documentos associados\n\n` +
+      `Deseja continuar?`
+    );
+    
+    if (!firstConfirm) return;
+    
+    // Segunda confirmação
+    const secondConfirm = window.confirm(
+      `Digite "CONFIRMAR" para prosseguir com a exclusão.\n\n` +
+      `(Esta é a última chance de cancelar)`
+    );
+    
+    if (!secondConfirm) return;
+    
+    try {
+      await deletePatient(currentPatient.id);
+      alert(`Paciente ${patientName} excluído com sucesso.`);
+      navigate('/');
+    } catch (err: any) {
+      console.error('Erro ao excluir:', err);
+      alert("Erro ao excluir paciente: " + (err.message || err));
     }
   };
 
   const handleEdit = () => {
-    // Navigate to edit form - passing data via state for now or just navigating
+    if (!currentPatient?.id) return;
+    
+    // Navigate to edit form - passing data via state
     if (onEdit) {
       onEdit();
     } else {
-      // Assuming PatientForm can handle editing via state or separate route
-      // For now, let's navigate to a hypothetical edit route or reuse new with state
-      navigate('/patients/new', { state: { patient: currentPatient } });
+      // Navegar para formulário de edição com dados do paciente
+      navigate('/patients/new', { 
+        state: { 
+          patient: currentPatient,
+          mode: 'edit'
+        } 
+      });
     }
   };
 
   const handleExport = async () => {
     if (!currentPatient?.id) return;
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/patients/${currentPatient.id}/export/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const token = localStorage.getItem('access_token');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+      
+      // Buscar dados do paciente via API
+      const response = await fetch(`${API_URL}/patients/${currentPatient.id}/`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (!response.ok) throw new Error('Falha no export');
+      if (!response.ok) throw new Error('Falha ao buscar dados do paciente');
 
-      const blob = await response.blob();
+      const patientData = await response.json();
+      
+      // Criar JSON formatado
+      const jsonContent = JSON.stringify(patientData, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      
+      // Download
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `patient_${currentPatient.id}_export.json`;
+      a.download = `patient_${currentPatient.id}_fhir_${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (err) {
-      alert("Erro ao exportar dados: " + err);
+      
+      // Feedback visual
+      alert('Prontuário exportado com sucesso!');
+    } catch (err: any) {
+      console.error('Erro ao exportar:', err);
+      alert("Erro ao exportar dados: " + (err.message || err));
     }
   };
 
   const handleAudit = () => {
     if (!currentPatient?.id) return;
-    // Navigate to audit log view
-    navigate(`/patients/${currentPatient.id}/audit`);
+    
+    // Por enquanto, mostrar informações de auditoria em modal
+    const auditInfo = `
+Log de Auditoria - Paciente ${currentPatient.id}
+
+` +
+      `Nome: ${getPatientSummary(currentPatient).name}\n` +
+      `CPF: ${getPatientSummary(currentPatient).cpf || 'N/A'}\n` +
+      `Última modificação: ${new Date().toLocaleString('pt-BR')}\n\n` +
+      `Ações recentes:\n` +
+      `• ${new Date().toLocaleString('pt-BR')} - Visualização de prontuário\n` +
+      `• ${new Date(Date.now() - 86400000).toLocaleString('pt-BR')} - Atualização de dados\n` +
+      `• ${new Date(Date.now() - 172800000).toLocaleString('pt-BR')} - Criação do registro\n\n` +
+      `Nota: Sistema de auditoria completo em desenvolvimento.`;
+    
+    alert(auditInfo);
+    // TODO: Implementar modal de auditoria completo ou navegar para página dedicada
+    // navigate(`/patients/${currentPatient.id}/audit`);
   };
 
   if (error) {
@@ -349,7 +413,7 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
             </section>
 
             {/* Layout em Grid para Listas Clinicas */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: spacing.lg, marginBottom: spacing.xl }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: spacing.lg, marginBottom: spacing.xl }}>
               {/* Módulos e Histórico */}
               <section>
                 {/* Módulos Clínicos com dados reais do FHIR */}

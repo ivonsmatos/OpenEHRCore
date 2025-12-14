@@ -14,11 +14,11 @@ import Button from '../base/Button';
 import { useNavigate } from 'react-router-dom';
 
 const StatsCard = ({ title, value, icon: Icon, trend, color }: any) => (
-    <Card className="border-l-4" style={{ borderLeftColor: color }}>
+    <Card className="border-l-4 w-full min-w-0" style={{ borderLeftColor: color }}>
         <div className="p-4 flex justify-between items-start">
-            <div>
-                <p className="text-sm font-medium text-slate-500">{title}</p>
-                <h3 className="text-2xl font-bold text-slate-900 mt-1">{value}</h3>
+            <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-500 truncate">{title}</p>
+                <h3 className="text-2xl font-bold text-slate-900 mt-1 truncate">{value}</h3>
                 {trend && (
                     <span className="inline-flex items-center text-xs font-medium text-green-600 mt-2 bg-green-50 px-2 py-1 rounded-full">
                         <TrendingUp size={12} className="mr-1" />
@@ -26,7 +26,7 @@ const StatsCard = ({ title, value, icon: Icon, trend, color }: any) => (
                     </span>
                 )}
             </div>
-            <div className={`p-3 rounded-full bg-opacity-10`} style={{ backgroundColor: `${color}20` }}>
+            <div className={`p-3 rounded-full bg-opacity-10 flex-shrink-0`} style={{ backgroundColor: `${color}20` }}>
                 <Icon size={24} style={{ color: color }} />
             </div>
         </div>
@@ -68,9 +68,9 @@ const DashboardWorkspace = () => {
     if (loading) return <div className="p-8 text-center text-gray-500">Carregando painel...</div>;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full max-w-full overflow-hidden">
             {/* Header */}
-            <div className="flex justify-between items-end">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Olá, Dr. {user?.username}</h1>
                     <p className="text-slate-600">Aqui está o resumo da sua clínica hoje.</p>
@@ -84,7 +84,7 @@ const DashboardWorkspace = () => {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                 <StatsCard
                     title="Pacientes Ativos"
                     value={stats?.stats?.patients || 0}
@@ -114,18 +114,18 @@ const DashboardWorkspace = () => {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                    <Card className="h-96 flex flex-col">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
+                <div className="lg:col-span-2 w-full min-w-0">
+                    <Card className="h-96 flex flex-col w-full">
                         <div className="p-4 border-b">
                             <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                                 <Activity size={18} className="text-indigo-600" />
                                 Evolução de Atendimentos (Semanal)
                             </h3>
                         </div>
-                        <div className="flex-1 p-4 w-full" style={{ minHeight: 280 }}>
+                        <div className="flex-1 p-4 w-full overflow-hidden" style={{ minHeight: 280 }}>
                             <ResponsiveContainer width="100%" height="100%" minHeight={250}>
-                                <LineChart data={lineData}>
+                                <LineChart data={lineData} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B' }} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B' }} />
@@ -146,7 +146,7 @@ const DashboardWorkspace = () => {
                     </Card>
                 </div>
 
-                <div>
+                <div className="w-full min-w-0">
                     <Card className="h-96">
                         <div className="p-4 border-b">
                             <h3 className="font-semibold text-slate-800">Acesso Rápido</h3>

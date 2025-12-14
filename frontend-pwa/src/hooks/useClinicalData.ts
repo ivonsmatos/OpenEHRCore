@@ -9,12 +9,23 @@
  * - Condições (Condition)
  * - Alergias (AllergyIntolerance)
  * - Atendimentos (Encounter)
+ * 
+ * Features:
+ * - Cache de dados para evitar requisições duplicadas
+ * - Debouncing automático
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
+// Cache global para evitar requisições duplicadas
+const dataCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 30000; // 30 segundos
+
+// Controle de requisições em andamento
+const pendingRequests = new Map<string, Promise<any>>();
 
 // Tipos de sinais vitais LOINC
 export const VITAL_SIGN_CODES = {
@@ -131,6 +142,14 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     // Get token from param or localStorage
     const getAuthHeaders = () => {
@@ -141,15 +160,55 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
         return {};
     };
 
+    // Helper para fazer requisição com cache
+    const fetchWithCache = async <T,>(
+        url: string,
+        cacheKey: string,
+        headers: any
+    ): Promise<T> => {
+        // Verificar cache
+        const cached = dataCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+            return cached.data;
+        }
+
+        // Verificar se já existe requisição em andamento
+        if (pendingRequests.has(cacheKey)) {
+            return pendingRequests.get(cacheKey)!;
+        }
+
+        // Fazer nova requisição
+        const request = axios.get(url, { headers })
+            .then(response => {
+                const data = response.data;
+                // Salvar no cache
+                dataCache.set(cacheKey, { data, timestamp: Date.now() });
+                // Remover da lista de pendentes
+                pendingRequests.delete(cacheKey);
+                return data;
+            })
+            .catch(error => {
+                // Remover da lista de pendentes em caso de erro
+                pendingRequests.delete(cacheKey);
+                throw error;
+            });
+
+        pendingRequests.set(cacheKey, request);
+        return request;
+    };
+
     // Fetch sinais vitais (from observations endpoint)
     const fetchVitals = useCallback(async () => {
         const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
+        if (!headers.Authorization || !isMountedRef.current) return;
 
         try {
-            // Use observations endpoint (vitals are observations with category vital-signs)
-            const response = await axios.get(`${API_URL}/patients/${patientId}/observations/`, { headers });
-            const responseData = response.data;
+            const cacheKey = `vitals_${patientId}`;
+            const responseData = await fetchWithCache(
+                `${API_URL}/patients/${patientId}/observations/`,
+                cacheKey,
+                headers
+            );
 
             // Handle both array and object with results
             const vitals = Array.isArray(responseData)
@@ -183,19 +242,26 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
             });
 
             setData(prev => ({ ...prev, vitalSigns: processed, latestVitals: latest }));
-        } catch (err) {
-            console.error('Error fetching vitals:', err);
+        } catch (err: any) {
+            if (err.response?.status !== 429) { // Ignorar erros 429 silenciosamente
+                console.error('Error fetching vitals:', err);
+            }
         }
     }, [patientId, token]);
 
     // Fetch vacinas
     const fetchImmunizations = useCallback(async () => {
         const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
+        if (!headers.Authorization || !isMountedRef.current) return;
 
         try {
-            const response = await axios.get(`${API_URL}/patients/${patientId}/immunizations/`, { headers });
-            const immunizations = (response.data || []).map((i: any) => ({
+            const cacheKey = `immunizations_${patientId}`;
+            const response = await fetchWithCache(
+                `${API_URL}/patients/${patientId}/immunizations/`,
+                cacheKey,
+                headers
+            );
+            const immunizations = (response || []).map((i: any) => ({
                 id: i.id,
                 vaccineName: i.vaccineCode?.coding?.[0]?.display || i.vaccine_name || i.name || '',
                 vaccineCode: i.vaccineCode?.coding?.[0]?.code || '',
@@ -206,19 +272,25 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
                 performer: i.performer?.[0]?.actor?.display || '',
             }));
             setData(prev => ({ ...prev, immunizations }));
-        } catch (err) {
-            console.error('Error fetching immunizations:', err);
+        } catch (err: any) {
+            if (err.response?.status !== 429) {
+                console.error('Error fetching immunizations:', err);
+            }
         }
     }, [patientId, token]);
 
     // Fetch medicamentos
     const fetchMedications = useCallback(async () => {
         const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
+        if (!headers.Authorization || !isMountedRef.current) return;
 
         try {
-            const response = await axios.get(`${API_URL}/patients/${patientId}/medications/`, { headers });
-            const responseData = response.data;
+            const cacheKey = `medications_${patientId}`;
+            const responseData = await fetchWithCache(
+                `${API_URL}/patients/${patientId}/medications/`,
+                cacheKey,
+                headers
+            );
 
             // Handle both array and object with results
             const medicationsData = Array.isArray(responseData)
@@ -241,19 +313,26 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
                 notes: m.note?.[0]?.text || m.notes || '',
             }));
             setData(prev => ({ ...prev, medications }));
-        } catch (err) {
-            console.error('Error fetching medications:', err);
+        } catch (err: any) {
+            if (err.response?.status !== 429) {
+                console.error('Error fetching medications:', err);
+            }
         }
     }, [patientId, token]);
 
     // Fetch resultados de exames
     const fetchDiagnostics = useCallback(async () => {
         const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
+        if (!headers.Authorization || !isMountedRef.current) return;
 
         try {
-            const response = await axios.get(`${API_URL}/patients/${patientId}/diagnostic-reports/`, { headers });
-            const diagnostics = (response.data || []).map((d: any) => ({
+            const cacheKey = `diagnostics_${patientId}`;
+            const response = await fetchWithCache(
+                `${API_URL}/patients/${patientId}/diagnostic-reports/`,
+                cacheKey,
+                headers
+            );
+            const diagnostics = (response || []).map((d: any) => ({
                 id: d.id,
                 category: d.category?.[0]?.coding?.[0]?.display || '',
                 code: d.code?.coding?.[0]?.code || '',
@@ -271,45 +350,66 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
                 performer: d.performer?.[0]?.display || '',
             }));
             setData(prev => ({ ...prev, diagnosticResults: diagnostics }));
-        } catch (err) {
-            console.error('Error fetching diagnostics:', err);
+        } catch (err: any) {
+            if (err.response?.status !== 429) {
+                console.error('Error fetching diagnostics:', err);
+            }
         }
     }, [patientId, token]);
 
     // Fetch condições
     const fetchConditions = useCallback(async () => {
         const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
+        if (!headers.Authorization || !isMountedRef.current) return;
 
         try {
-            const response = await axios.get(`${API_URL}/patients/${patientId}/conditions/`, { headers });
-            setData(prev => ({ ...prev, conditions: response.data || [] }));
-        } catch (err) {
-            console.error('Error fetching conditions:', err);
+            const cacheKey = `conditions_${patientId}`;
+            const response = await fetchWithCache(
+                `${API_URL}/patients/${patientId}/conditions/`,
+                cacheKey,
+                headers
+            );
+            setData(prev => ({ ...prev, conditions: response || [] }));
+        } catch (err: any) {
+            if (err.response?.status !== 429) {
+                console.error('Error fetching conditions:', err);
+            }
         }
     }, [patientId, token]);
 
     // Fetch alergias
     const fetchAllergies = useCallback(async () => {
         const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
+        if (!headers.Authorization || !isMountedRef.current) return;
 
         try {
-            const response = await axios.get(`${API_URL}/patients/${patientId}/allergies/`, { headers });
-            setData(prev => ({ ...prev, allergies: response.data || [] }));
-        } catch (err) {
-            console.error('Error fetching allergies:', err);
+            const cacheKey = `allergies_${patientId}`;
+            const response = await fetchWithCache(
+                `${API_URL}/patients/${patientId}/allergies/`,
+                cacheKey,
+                headers
+            );
+            setData(prev => ({ ...prev, allergies: response || [] }));
+        } catch (err: any) {
+            if (err.response?.status !== 429) {
+                console.error('Error fetching allergies:', err);
+            }
         }
     }, [patientId, token]);
 
     // Fetch encounters e construir timeline
     const fetchEncountersAndTimeline = useCallback(async () => {
         const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
+        if (!headers.Authorization || !isMountedRef.current) return;
 
         try {
-            const response = await axios.get(`${API_URL}/patients/${patientId}/encounters/`, { headers });
-            const encounters = response.data || [];
+            const cacheKey = `encounters_${patientId}`;
+            const response = await fetchWithCache(
+                `${API_URL}/patients/${patientId}/encounters/`,
+                cacheKey,
+                headers
+            );
+            const encounters = response || [];
             setData(prev => ({ ...prev, encounters }));
 
             // Construir timeline unificada
@@ -329,29 +429,49 @@ export function useClinicalData(patientId: string, token?: string): UseClinicalD
             });
 
             setData(prev => ({ ...prev, timeline }));
-        } catch (err) {
-            console.error('Error fetching encounters:', err);
+        } catch (err: any) {
+            if (err.response?.status !== 429) {
+                console.error('Error fetching encounters:', err);
+            }
         }
     }, [patientId, token]);
 
-    // Carregar todos os dados
+    // Carregar todos os dados com delay entre requisições
     const refresh = useCallback(async () => {
+        if (!isMountedRef.current) return;
+        
         setLoading(true);
         setError(null);
+        
         try {
-            await Promise.all([
-                fetchVitals(),
-                fetchImmunizations(),
-                fetchMedications(),
-                fetchDiagnostics(),
-                fetchConditions(),
-                fetchAllergies(),
-                fetchEncountersAndTimeline(),
-            ]);
-        } catch (err) {
-            setError('Erro ao carregar dados clínicos');
+            // Carregar dados sequencialmente com pequeno delay para evitar 429
+            await fetchVitals();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            await fetchConditions();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            await fetchAllergies();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            await fetchEncountersAndTimeline();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            await fetchImmunizations();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            await fetchMedications();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            await fetchDiagnostics();
+        } catch (err: any) {
+            if (err.response?.status !== 429) {
+                setError('Erro ao carregar dados clínicos');
+            }
         } finally {
-            setLoading(false);
+            if (isMountedRef.current) {
+                setLoading(false);
+            }
         }
     }, [fetchVitals, fetchImmunizations, fetchMedications, fetchDiagnostics, fetchConditions, fetchAllergies, fetchEncountersAndTimeline]);
 

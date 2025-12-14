@@ -71,6 +71,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           email: "contato@ivonmatos.com.br",
           name: "Ivon Matos",
           roles: ["medico", "admin", "enfermeiro"],
+          practitionerId: "114", // ID do Practitioner FHIR associado
         });
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
         return;
@@ -84,6 +85,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           email: "paciente@teste.com",
           name: "Paciente Teste",
           roles: ["paciente"],
+          practitionerId: undefined, // Pacientes não têm practitionerId
         });
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
         return;

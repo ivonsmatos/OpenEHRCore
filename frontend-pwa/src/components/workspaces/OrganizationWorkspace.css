@@ -148,6 +148,32 @@
     display: block;
 }
 
+.info-text {
+    color: #2563eb;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+    font-style: italic;
+}
+
+.auto-filled-badge {
+    font-size: 11px;
+    color: #059669;
+    font-weight: normal;
+    margin-left: 8px;
+    background: #d1fae5;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+    border-color: #d1d5db;
+}
+
 .form-actions {
     display: flex;
     justify-content: flex-end;

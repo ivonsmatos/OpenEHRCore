@@ -37,7 +37,7 @@ const PractitionerCard: React.FC<PractitionerCardProps> = ({ practitioner, onCli
             onClick={onClick}
             style={{
                 backgroundColor: colors.background.default,
-                borderRadius: borderRadius.lg,
+                borderRadius: '12px',
                 padding: spacing.md,
                 border: `1px solid ${colors.border.light}`,
                 cursor: onClick ? 'pointer' : 'default',

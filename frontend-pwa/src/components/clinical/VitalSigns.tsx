@@ -28,9 +28,14 @@ const VitalSigns: React.FC<VitalSignsProps> = ({ patientId }) => {
                     `${VITE_API_URL}/patients/${patientId}/observations/`
                 );
                 setObservations(response.data);
-            } catch (err) {
-                console.error("Erro ao buscar sinais vitais:", err);
-                setError("Não foi possível carregar os sinais vitais.");
+            } catch (err: any) {
+                if (err.response?.status === 429) {
+                    // Erro 429 - Too Many Requests, tentar novamente em 2s
+                    setTimeout(fetchObservations, 2000);
+                } else {
+                    console.error("Erro ao buscar sinais vitais:", err);
+                    setError("Não foi possível carregar os sinais vitais.");
+                }
             } finally {
                 setLoading(false);
             }

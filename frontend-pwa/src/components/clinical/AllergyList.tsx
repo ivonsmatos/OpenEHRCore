@@ -27,9 +27,14 @@ const AllergyList: React.FC<AllergyListProps> = ({ patientId }) => {
                     `${VITE_API_URL}/patients/${patientId}/allergies/`
                 );
                 setAllergies(response.data);
-            } catch (err) {
-                console.error("Erro ao buscar alergias:", err);
-                setError("Não foi possível carregar a lista de alergias.");
+            } catch (err: any) {
+                if (err.response?.status === 429) {
+                    // Erro 429 - Too Many Requests, tentar novamente em 2s
+                    setTimeout(fetchAllergies, 2000);
+                } else {
+                    console.error("Erro ao buscar alergias:", err);
+                    setError("Não foi possível carregar a lista de alergias.");
+                }
             } finally {
                 setLoading(false);
             }

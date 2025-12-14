@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useEncounters } from '../../hooks/useEncounters';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
 
@@ -32,10 +33,8 @@ const LOINC_CODES = {
 };
 
 export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ encounterId, onSuccess }) => {
-    const { createObservation, loading } = useEncounters(); // Note: patientId is handled by the hook context if provided, but here we might need to ensure it's available. 
-    // Actually, useEncounters expects patientId in the hook init. 
-    // If ClinicalWorkspace initializes useEncounters without patientId, it might fail.
-    // But ClinicalWorkspace uses useEncounters() without args? No, let's check ClinicalWorkspace.
+    const { createObservation, loading } = useEncounters();
+    const isMobile = useIsMobile();
 
     const [formData, setFormData] = useState<VitalSignData>({});
     const [error, setError] = useState<string | null>(null);
@@ -142,118 +141,198 @@ export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ encounterId, onS
         }
     };
 
+    const inputStyle = {
+        width: '100%',
+        padding: spacing.sm,
+        borderRadius: '8px',
+        border: `1px solid ${colors.border.default}`,
+        fontSize: isMobile ? '16px' : '0.95rem', // 16px no mobile evita zoom automático
+        boxSizing: 'border-box' as const,
+        transition: 'border-color 0.2s ease'
+    };
+
+    const labelStyle = {
+        display: 'block',
+        marginBottom: spacing.xs,
+        fontSize: isMobile ? '0.9rem' : '0.875rem',
+        fontWeight: 600,
+        color: colors.text.primary
+    };
+
     return (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
-            <h3 style={{ margin: 0, color: colors.text.primary }}>Registrar Sinais Vitais</h3>
+        <form onSubmit={handleSubmit} style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: spacing.lg,
+            maxWidth: '100%',
+            padding: isMobile ? spacing.sm : 0
+        }}>
+            <h3 style={{ 
+                margin: 0, 
+                color: colors.text.primary,
+                fontSize: isMobile ? '1.1rem' : '1.25rem'
+            }}>
+                Registrar Sinais Vitais
+            </h3>
 
             {error && (
-                <div style={{ padding: spacing.md, backgroundColor: `${colors.alert.critical}20`, color: colors.alert.critical, borderRadius: '4px' }}>
+                <div style={{ 
+                    padding: spacing.md, 
+                    backgroundColor: `${colors.alert.critical}20`, 
+                    color: colors.alert.critical, 
+                    borderRadius: '8px',
+                    fontSize: isMobile ? '0.875rem' : '0.9rem'
+                }}>
                     {error}
                 </div>
             )}
 
             {successMessage && (
-                <div style={{ padding: spacing.md, backgroundColor: `${colors.alert.success}20`, color: colors.alert.success, borderRadius: '4px' }}>
+                <div style={{ 
+                    padding: spacing.md, 
+                    backgroundColor: `${colors.alert.success}20`, 
+                    color: colors.alert.success, 
+                    borderRadius: '8px',
+                    fontSize: isMobile ? '0.875rem' : '0.9rem'
+                }}>
                     {successMessage}
                 </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
+            {/* Layout vertical: um campo embaixo do outro */}
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: spacing.md 
+            }}>
                 {/* Pressão Arterial */}
-                <div style={{ gridColumn: '1 / -1', display: 'flex', gap: spacing.md }}>
-                    <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>PA Sistólica (mmHg)</label>
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                    gap: spacing.md 
+                }}>
+                    <div>
+                        <label style={labelStyle}>PA Sistólica (mmHg)</label>
                         <input
                             type="number"
                             value={formData.systolic || ''}
                             onChange={(e) => handleChange('systolic', e.target.value)}
-                            style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
+                            style={inputStyle}
                             placeholder="120"
                         />
                     </div>
-                    <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>PA Diastólica (mmHg)</label>
+                    <div>
+                        <label style={labelStyle}>PA Diastólica (mmHg)</label>
                         <input
                             type="number"
                             value={formData.diastolic || ''}
                             onChange={(e) => handleChange('diastolic', e.target.value)}
-                            style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
+                            style={inputStyle}
                             placeholder="80"
                         />
                     </div>
                 </div>
 
                 {/* FC e FR */}
-                <div>
-                    <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Freq. Cardíaca (bpm)</label>
-                    <input
-                        type="number"
-                        value={formData.heartRate || ''}
-                        onChange={(e) => handleChange('heartRate', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
-                        placeholder="75"
-                    />
-                </div>
-                <div>
-                    <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Freq. Respiratória (rpm)</label>
-                    <input
-                        type="number"
-                        value={formData.respiratoryRate || ''}
-                        onChange={(e) => handleChange('respiratoryRate', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
-                        placeholder="16"
-                    />
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                    gap: spacing.md 
+                }}>
+                    <div>
+                        <label style={labelStyle}>Freq. Cardíaca (bpm)</label>
+                        <input
+                            type="number"
+                            value={formData.heartRate || ''}
+                            onChange={(e) => handleChange('heartRate', e.target.value)}
+                            style={inputStyle}
+                            placeholder="75"
+                        />
+                    </div>
+                    <div>
+                        <label style={labelStyle}>Freq. Respiratória (rpm)</label>
+                        <input
+                            type="number"
+                            value={formData.respiratoryRate || ''}
+                            onChange={(e) => handleChange('respiratoryRate', e.target.value)}
+                            style={inputStyle}
+                            placeholder="16"
+                        />
+                    </div>
                 </div>
 
                 {/* Temp e SpO2 */}
-                <div>
-                    <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Temperatura (°C)</label>
-                    <input
-                        type="number"
-                        step="0.1"
-                        value={formData.temperature || ''}
-                        onChange={(e) => handleChange('temperature', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
-                        placeholder="36.5"
-                    />
-                </div>
-                <div>
-                    <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Saturação O2 (%)</label>
-                    <input
-                        type="number"
-                        value={formData.spo2 || ''}
-                        onChange={(e) => handleChange('spo2', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
-                        placeholder="98"
-                    />
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                    gap: spacing.md 
+                }}>
+                    <div>
+                        <label style={labelStyle}>Temperatura (°C)</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            value={formData.temperature || ''}
+                            onChange={(e) => handleChange('temperature', e.target.value)}
+                            style={inputStyle}
+                            placeholder="36.5"
+                        />
+                    </div>
+                    <div>
+                        <label style={labelStyle}>Saturação O2 (%)</label>
+                        <input
+                            type="number"
+                            value={formData.spo2 || ''}
+                            onChange={(e) => handleChange('spo2', e.target.value)}
+                            style={inputStyle}
+                            placeholder="98"
+                        />
+                    </div>
                 </div>
 
                 {/* Peso e Altura */}
-                <div>
-                    <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Peso (kg)</label>
-                    <input
-                        type="number"
-                        step="0.1"
-                        value={formData.weight || ''}
-                        onChange={(e) => handleChange('weight', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
-                        placeholder="70.5"
-                    />
-                </div>
-                <div>
-                    <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Altura (cm)</label>
-                    <input
-                        type="number"
-                        value={formData.height || ''}
-                        onChange={(e) => handleChange('height', e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
-                        placeholder="175"
-                    />
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                    gap: spacing.md 
+                }}>
+                    <div>
+                        <label style={labelStyle}>Peso (kg)</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            value={formData.weight || ''}
+                            onChange={(e) => handleChange('weight', e.target.value)}
+                            style={inputStyle}
+                            placeholder="70.5"
+                        />
+                    </div>
+                    <div>
+                        <label style={labelStyle}>Altura (cm)</label>
+                        <input
+                            type="number"
+                            value={formData.height || ''}
+                            onChange={(e) => handleChange('height', e.target.value)}
+                            style={inputStyle}
+                            placeholder="175"
+                        />
+                    </div>
                 </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing.md }}>
-                <Button type="submit" disabled={loading}>
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                marginTop: spacing.md 
+            }}>
+                <Button 
+                    type="submit" 
+                    disabled={loading}
+                    style={{ 
+                        width: isMobile ? '100%' : 'auto',
+                        minWidth: isMobile ? '100%' : '180px'
+                    }}
+                >
                     {loading ? 'Salvando...' : 'Salvar Sinais Vitais'}
                 </Button>
             </div>

@@ -12,6 +12,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import Card from '../base/Card';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import './ChatWorkspace.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
@@ -59,10 +60,12 @@ const ChatWorkspace: React.FC = () => {
     const [attachment, setAttachment] = useState<{ name: string; type: string; size: number; data: string } | null>(null);
     const [imageModal, setImageModal] = useState<{ src: string; name: string } | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showSidebar, setShowSidebar] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const isMobile = useIsMobile();
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('access_token');
@@ -518,189 +521,426 @@ const ChatWorkspace: React.FC = () => {
     const selectedChannelInfo = getSelectedChannelInfo();
 
     return (
-        <div className="chat-workspace">
+        <div className="chat-workspace" style={{ 
+            height: isMobile ? 'calc(100vh - 60px)' : 'calc(100vh - 120px)',
+            display: 'flex',
+            flexDirection: 'column'
+        }}>
             {/* Header */}
-            <div className="chat-header">
-                <h1 className="chat-title">💬 Chat Clínico</h1>
-                <p className="chat-subtitle">
-                    Comunicação segura entre a equipe de saúde
-                    {loadingPractitioners && <span className="loading-indicator"> (atualizando...)</span>}
-                </p>
+            <div style={{ 
+                marginBottom: isMobile ? '0.5rem' : '1rem',
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                justifyContent: 'space-between',
+                gap: isMobile ? '0.5rem' : '1rem'
+            }}>
+                <div style={{ flex: 1 }}>
+                    <h1 style={{ 
+                        margin: 0,
+                        fontSize: isMobile ? '1.25rem' : '1.5rem',
+                        color: '#1e3a5f'
+                    }}>💬 Chat Clínico</h1>
+                    <p style={{ 
+                        margin: '0.25rem 0 0 0',
+                        color: '#64748b',
+                        fontSize: isMobile ? '0.8rem' : '0.875rem'
+                    }}>
+                        Comunicação segura entre a equipe de saúde
+                        {loadingPractitioners && <span className="loading-indicator"> (atualizando...)</span>}
+                    </p>
+                </div>
+                
+                {isMobile && (
+                    <button
+                        onClick={() => setShowSidebar(!showSidebar)}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            background: showSidebar ? '#3b82f6' : '#f1f5f9',
+                            color: showSidebar ? 'white' : '#64748b',
+                            border: showSidebar ? 'none' : '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        {showSidebar ? '✕ Fechar Menu' : '☰ Abrir Menu'}
+                    </button>
+                )}
             </div>
 
             {/* Chat Layout */}
-            <div className="chat-layout">
+            <div style={{ 
+                display: 'flex',
+                flex: 1,
+                gap: isMobile ? '0' : '1rem',
+                overflow: 'hidden',
+                position: 'relative'
+            }}>
                 {/* Channels Sidebar */}
-                <Card className="chat-sidebar">
-                    <h3 className="sidebar-title">Canais</h3>
-                    {channels.filter(c => c.type === 'group').map(channel => (
-                        <div
-                            key={channel.id}
-                            onClick={() => setSelectedChannel(channel.id)}
-                            className={`channel-item ${selectedChannel === channel.id ? 'channel-item--selected' : ''}`}
-                        >
-                            <div className="channel-name">{channel.name}</div>
-                            {channel.description && (
-                                <div className="channel-description">{channel.description}</div>
-                            )}
-                        </div>
-                    ))}
-
-                    <h3 className="sidebar-title sidebar-title--dm">
-                        Mensagens Diretas
-                        <span className="practitioner-count">
-                            ({channels.filter(c => c.type === 'dm').length})
-                        </span>
-                    </h3>
-
-                    {channels.filter(c => c.type === 'dm').length === 0 ? (
-                        <div className="no-practitioners">
-                            <p>Nenhum profissional cadastrado</p>
-                            <p className="no-practitioners-hint">Cadastre profissionais para iniciar conversas</p>
-                        </div>
-                    ) : (
-                        <>
-                            {/* Search Input */}
-                            <div className="practitioner-search">
-                                <input
-                                    type="text"
-                                    placeholder="Buscar profissional..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="search-input"
-                                />
-                                {searchQuery && (
-                                    <button
-                                        className="search-clear"
-                                        onClick={() => setSearchQuery('')}
-                                        type="button"
-                                    >
-                                        ×
-                                    </button>
+                {(!isMobile || showSidebar) && (
+                    <Card className="chat-sidebar" style={{
+                        width: isMobile ? '100%' : '280px',
+                        padding: '1rem',
+                        overflow: 'auto',
+                        position: isMobile ? 'absolute' : 'relative',
+                        top: 0,
+                        left: 0,
+                        bottom: 0,
+                        zIndex: isMobile ? 10 : 1,
+                        boxShadow: isMobile ? '2px 0 8px rgba(0,0,0,0.1)' : 'none'
+                    }}>
+                        <h3 className="sidebar-title">Canais</h3>
+                        {channels.filter(c => c.type === 'group').map(channel => (
+                            <div
+                                key={channel.id}
+                                onClick={() => {
+                                    setSelectedChannel(channel.id);
+                                    if (isMobile) setShowSidebar(false);
+                                }}
+                                className={`channel-item ${selectedChannel === channel.id ? 'channel-item--selected' : ''}`}
+                            >
+                                <div className="channel-name">{channel.name}</div>
+                                {channel.description && (
+                                    <div className="channel-description">{channel.description}</div>
                                 )}
                             </div>
-                            
-                            {channels
-                                .filter(c => c.type === 'dm')
-                                .filter(c => 
-                                    !searchQuery || 
+                        ))}
+
+                        <h3 className="sidebar-title sidebar-title--dm">
+                            Mensagens Diretas
+                            <span className="practitioner-count">
+                                ({channels.filter(c => c.type === 'dm').length})
+                            </span>
+                        </h3>
+
+                        {channels.filter(c => c.type === 'dm').length === 0 ? (
+                            <div className="no-practitioners">
+                                <p>Nenhum profissional cadastrado</p>
+                                <p className="no-practitioners-hint">Cadastre profissionais para iniciar conversas</p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Search Input */}
+                                <div className="practitioner-search">
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar profissional..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="search-input"
+                                        style={{ fontSize: isMobile ? '16px' : '0.875rem' }}
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            className="search-clear"
+                                            onClick={() => setSearchQuery('')}
+                                            type="button"
+                                        >
+                                            ×
+                                        </button>
+                                    )}
+                                </div>
+                                
+                                {channels
+                                    .filter(c => c.type === 'dm')
+                                    .filter(c => 
+                                        !searchQuery || 
+                                        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        c.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                                    )
+                                    .map(channel => (
+                                    <div
+                                        key={channel.id}
+                                        onClick={() => {
+                                            setSelectedChannel(channel.id);
+                                            if (isMobile) setShowSidebar(false);
+                                        }}
+                                        className={`dm-item ${selectedChannel === channel.id ? 'dm-item--selected' : ''}`}
+                                    >
+                                        <span
+                                            className="status-dot"
+                                            style={{ background: getStatusColor(channel.practitioner?.status || 'offline') }}
+                                        />
+                                        <div className="dm-info">
+                                            <div className="dm-name">{channel.name}</div>
+                                            {channel.description && (
+                                                <div className="dm-specialty">{channel.description}</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                                
+                                {/* No results message */}
+                                {searchQuery && channels.filter(c => c.type === 'dm').filter(c => 
                                     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                     c.description?.toLowerCase().includes(searchQuery.toLowerCase())
-                                )
-                                .map(channel => (
-                                <div
-                                    key={channel.id}
-                                    onClick={() => setSelectedChannel(channel.id)}
-                                    className={`dm-item ${selectedChannel === channel.id ? 'dm-item--selected' : ''}`}
-                                >
-                                    <span
-                                        className="status-dot"
-                                        style={{ background: getStatusColor(channel.practitioner?.status || 'offline') }}
-                                    />
-                                    <div className="dm-info">
-                                        <div className="dm-name">{channel.name}</div>
-                                        {channel.description && (
-                                            <div className="dm-specialty">{channel.description}</div>
-                                        )}
+                                ).length === 0 && (
+                                    <div className="no-results">
+                                        <p>🔍 Nenhum profissional encontrado</p>
+                                        <button
+                                            className="clear-search-button"
+                                            onClick={() => setSearchQuery('')}
+                                        >
+                                            Limpar busca
+                                        </button>
                                     </div>
-                                </div>
-                            ))}
-                            
-                            {/* No results message */}
-                            {searchQuery && channels.filter(c => c.type === 'dm').filter(c => 
-                                c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                c.description?.toLowerCase().includes(searchQuery.toLowerCase())
-                            ).length === 0 && (
-                                <div className="no-results">
-                                    <p>🔍 Nenhum profissional encontrado</p>
-                                    <button
-                                        className="clear-search-button"
-                                        onClick={() => setSearchQuery('')}
-                                    >
-                                        Limpar busca
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    )}
-                </Card>
+                                )}
+                            </>
+                        )}
+                    </Card>
+                )}
 
                 {/* Messages Area */}
-                <Card className="chat-messages-area">
+                <Card className="chat-messages-area" style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: 0,
+                    overflow: 'hidden',
+                    width: isMobile && showSidebar ? '0' : isMobile ? '100%' : 'auto',
+                    opacity: isMobile && showSidebar ? 0 : 1,
+                    pointerEvents: isMobile && showSidebar ? 'none' : 'auto'
+                }}>
                     {/* Channel Header */}
                     {selectedChannelInfo && (
-                        <div className="messages-header">
-                            <div className="messages-header-info">
-                                <h2 className="messages-header-title">
-                                    {selectedChannelInfo.type === 'dm' ? '👤' : '💬'} {selectedChannelInfo.name}
+                        <div style={{
+                            padding: isMobile ? '0.75rem' : '1rem',
+                            borderBottom: '1px solid #e5e7eb',
+                            background: '#f0f2f5',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem'
+                        }}>
+                            {/* Avatar/Icon */}
+                            <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                background: selectedChannelInfo.type === 'dm' ? '#00a884' : '#3b82f6',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '1.25rem',
+                                flexShrink: 0
+                            }}>
+                                {selectedChannelInfo.type === 'dm' ? '👤' : '💬'}
+                            </div>
+                            
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <h2 style={{ 
+                                    margin: 0,
+                                    fontSize: isMobile ? '1rem' : '1.1rem',
+                                    color: '#111b21',
+                                    fontWeight: '600',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}>
+                                    {selectedChannelInfo.name}
                                 </h2>
                                 {selectedChannelInfo.description && (
-                                    <p className="messages-header-subtitle">{selectedChannelInfo.description}</p>
+                                    <p style={{ 
+                                        margin: '0.125rem 0 0 0',
+                                        fontSize: isMobile ? '0.75rem' : '0.8125rem',
+                                        color: '#667781',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}>{selectedChannelInfo.description}</p>
                                 )}
                             </div>
                         </div>
                     )}
 
                     {/* Messages List */}
-                    <div className="messages-list">
+                    <div className="messages-list" style={{
+                        flex: 1,
+                        padding: isMobile ? '0.75rem' : '1rem',
+                        overflow: 'auto',
+                        background: '#e5ddd5',
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d9d9d9' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+                    }}>
                         {messages.length === 0 ? (
-                            <div className="messages-empty">
-                                <p>Nenhuma mensagem ainda.</p>
-                                <p>Comece uma conversa!</p>
+                            <div className="messages-empty" style={{
+                                background: 'white',
+                                padding: '2rem',
+                                borderRadius: '12px',
+                                margin: '2rem auto',
+                                maxWidth: '300px',
+                                textAlign: 'center',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            }}>
+                                <p style={{ margin: '0.5rem 0', color: '#64748b', fontSize: '0.875rem' }}>Nenhuma mensagem ainda.</p>
+                                <p style={{ margin: '0.5rem 0', color: '#94a3b8', fontSize: '0.8rem' }}>Comece uma conversa!</p>
                             </div>
                         ) : (
-                            messages.map(msg => (
-                                <div key={msg.id} className="message-item">
-                                    <div className="message-header">
-                                        <span className="message-sender">{msg.senderName}</span>
-                                        <span className="message-time">
-                                            {new Date(msg.timestamp).toLocaleTimeString('pt-BR', {
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
-                                        </span>
-                                    </div>
-                                    {msg.content && <p className="message-content">{msg.content}</p>}
-                                    {msg.attachment && (
-                                        <div 
-                                            className="message-attachment"
-                                            onClick={() => handleAttachmentClick(msg)}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            {msg.attachment.type.startsWith('image/') ? (
-                                                msg.attachment.data ? (
-                                                    <img 
-                                                        src={msg.attachment.data} 
-                                                        alt={msg.attachment.name}
-                                                        className="message-attachment-image"
-                                                        title="Clique para ampliar"
-                                                    />
-                                                ) : (
-                                                    <div className="message-attachment-file">
-                                                        <span className="attachment-icon">🖼️</span>
-                                                        <span className="attachment-name">{msg.attachment.name}</span>
-                                                        <span className="attachment-size">({formatFileSize(msg.attachment.size)})</span>
-                                                        <span className="attachment-hint">Clique para visualizar</span>
-                                                    </div>
-                                                )
-                                            ) : (
-                                                <div className="message-attachment-file">
-                                                    <span className="attachment-icon">📎</span>
-                                                    <span className="attachment-name">{msg.attachment.name}</span>
-                                                    <span className="attachment-size">({formatFileSize(msg.attachment.size)})</span>
-                                                    <span className="attachment-hint">Clique para baixar</span>
+                            messages.map((msg, index) => {
+                                const currentUser = getCurrentUser();
+                                const isMyMessage = msg.sender === currentUser?.practitioner_id;
+                                const prevMsg = index > 0 ? messages[index - 1] : null;
+                                const showSender = !prevMsg || prevMsg.sender !== msg.sender;
+                                
+                                return (
+                                    <div 
+                                        key={msg.id} 
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: isMyMessage ? 'flex-end' : 'flex-start',
+                                            marginBottom: '0.5rem'
+                                        }}
+                                    >
+                                        {/* Sender name (only for others' messages and when sender changes) */}
+                                        {!isMyMessage && showSender && (
+                                            <div style={{
+                                                fontSize: '0.75rem',
+                                                color: '#667781',
+                                                marginLeft: '0.75rem',
+                                                marginBottom: '0.25rem',
+                                                fontWeight: '500'
+                                            }}>
+                                                {msg.senderName}
+                                            </div>
+                                        )}
+                                        
+                                        {/* Message bubble */}
+                                        <div style={{
+                                            maxWidth: isMobile ? '85%' : '70%',
+                                            background: isMyMessage ? '#d9fdd3' : 'white',
+                                            padding: '0.5rem 0.75rem',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                                            position: 'relative'
+                                        }}>
+                                            {msg.content && (
+                                                <p style={{
+                                                    margin: 0,
+                                                    color: '#111b21',
+                                                    fontSize: '0.9375rem',
+                                                    lineHeight: '1.4',
+                                                    wordWrap: 'break-word',
+                                                    whiteSpace: 'pre-wrap'
+                                                }}>
+                                                    {msg.content}
+                                                </p>
+                                            )}
+                                            
+                                            {msg.attachment && (
+                                                <div 
+                                                    onClick={() => handleAttachmentClick(msg)}
+                                                    style={{ 
+                                                        cursor: 'pointer',
+                                                        marginTop: msg.content ? '0.5rem' : 0
+                                                    }}
+                                                >
+                                                    {msg.attachment.type.startsWith('image/') ? (
+                                                        msg.attachment.data ? (
+                                                            <img 
+                                                                src={msg.attachment.data} 
+                                                                alt={msg.attachment.name}
+                                                                title="Clique para ampliar"
+                                                                style={{
+                                                                    maxWidth: '100%',
+                                                                    maxHeight: isMobile ? '200px' : '300px',
+                                                                    borderRadius: '6px',
+                                                                    display: 'block'
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.5rem',
+                                                                padding: '0.5rem',
+                                                                background: isMyMessage ? '#c8f0c0' : '#f0f2f5',
+                                                                borderRadius: '6px'
+                                                            }}>
+                                                                <span style={{ fontSize: '1.5rem' }}>🖼️</span>
+                                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                                    <div style={{ 
+                                                                        fontSize: '0.875rem', 
+                                                                        color: '#111b21',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis',
+                                                                        whiteSpace: 'nowrap'
+                                                                    }}>
+                                                                        {msg.attachment.name}
+                                                                    </div>
+                                                                    <div style={{ fontSize: '0.75rem', color: '#667781' }}>
+                                                                        {formatFileSize(msg.attachment.size)}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    ) : (
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.5rem',
+                                                            padding: '0.5rem',
+                                                            background: isMyMessage ? '#c8f0c0' : '#f0f2f5',
+                                                            borderRadius: '6px'
+                                                        }}>
+                                                            <span style={{ fontSize: '1.5rem' }}>📎</span>
+                                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                                <div style={{ 
+                                                                    fontSize: '0.875rem', 
+                                                                    color: '#111b21',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>
+                                                                    {msg.attachment.name}
+                                                                </div>
+                                                                <div style={{ fontSize: '0.75rem', color: '#667781' }}>
+                                                                    {formatFileSize(msg.attachment.size)}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
+                                            
+                                            {/* Timestamp */}
+                                            <div style={{
+                                                fontSize: '0.6875rem',
+                                                color: '#667781',
+                                                marginTop: '0.25rem',
+                                                textAlign: 'right',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'flex-end',
+                                                gap: '0.25rem'
+                                            }}>
+                                                {new Date(msg.timestamp).toLocaleTimeString('pt-BR', {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                                {isMyMessage && <span style={{ color: '#53bdeb' }}>✓✓</span>}
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                            ))
+                                    </div>
+                                );
+                            })
                         )}
                         <div ref={messagesEndRef} />
                     </div>
 
                     {/* Message Input */}
-                    <div className="message-input-area">
+                    <div style={{
+                        padding: isMobile ? '0.5rem' : '0.75rem',
+                        borderTop: '1px solid #e5e7eb',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem',
+                        background: '#f0f2f5'
+                    }}>
                         {/* Hidden file input */}
                         <input
                             type="file"
@@ -713,51 +953,156 @@ const ChatWorkspace: React.FC = () => {
 
                         {/* Attachment preview */}
                         {attachment && (
-                            <div className="attachment-preview">
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: isMobile ? 'column' : 'row',
+                                alignItems: isMobile ? 'flex-start' : 'center',
+                                gap: isMobile ? '0.25rem' : '0.5rem',
+                                padding: '0.5rem 0.75rem',
+                                background: 'white',
+                                border: '1px solid #d1d7db',
+                                borderRadius: '8px'
+                            }}>
                                 {attachment.type.startsWith('image/') ? (
                                     <img
                                         src={attachment.data}
                                         alt={attachment.name}
-                                        className="attachment-thumbnail"
+                                        style={{
+                                            width: isMobile ? '100%' : '60px',
+                                            height: isMobile ? 'auto' : '60px',
+                                            maxHeight: isMobile ? '120px' : '60px',
+                                            objectFit: 'cover',
+                                            borderRadius: '4px'
+                                        }}
                                     />
                                 ) : (
-                                    <span className="attachment-icon">📎</span>
+                                    <span style={{ fontSize: '1.5rem' }}>📎</span>
                                 )}
-                                <span className="attachment-name">{attachment.name}</span>
-                                <span className="attachment-size">({formatFileSize(attachment.size)})</span>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ 
+                                        fontSize: '0.875rem',
+                                        color: '#111b21',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}>
+                                        {attachment.name}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#667781' }}>
+                                        {formatFileSize(attachment.size)}
+                                    </div>
+                                </div>
                                 <button
-                                    className="attachment-remove"
                                     onClick={removeAttachment}
                                     type="button"
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#ef4444',
+                                        cursor: 'pointer',
+                                        padding: '0.25rem',
+                                        fontSize: '1.25rem',
+                                        lineHeight: 1,
+                                        borderRadius: '50%',
+                                        width: '28px',
+                                        height: '28px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'background 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = '#fee'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
                                 >
                                     ✕
                                 </button>
                             </div>
                         )}
 
-                        <div className="message-input-row">
+                        <div style={{
+                            display: 'flex',
+                            gap: '0.5rem',
+                            alignItems: 'center'
+                        }}>
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="attach-button"
                                 type="button"
                                 title="Anexar arquivo"
+                                style={{
+                                    background: 'white',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    padding: '0.625rem',
+                                    cursor: 'pointer',
+                                    fontSize: '1.25rem',
+                                    transition: 'all 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '40px',
+                                    height: '40px',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = '#f0f2f5'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
                             >
                                 📎
                             </button>
-                            <input
-                                type="text"
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                                placeholder="Digite uma mensagem..."
-                                className="message-input"
-                            />
+                            <div style={{
+                                flex: 1,
+                                display: 'flex',
+                                background: 'white',
+                                borderRadius: '24px',
+                                padding: '0.5rem 1rem',
+                                alignItems: 'center',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            }}>
+                                <input
+                                    type="text"
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                                    placeholder="Digite uma mensagem..."
+                                    style={{
+                                        flex: 1,
+                                        border: 'none',
+                                        outline: 'none',
+                                        fontSize: isMobile ? '16px' : '0.9375rem',
+                                        background: 'transparent',
+                                        color: '#111b21'
+                                    }}
+                                />
+                            </div>
                             <button
                                 onClick={sendMessage}
-                                className="send-button"
                                 disabled={!newMessage.trim() && !attachment}
+                                style={{
+                                    background: (!newMessage.trim() && !attachment) ? '#d1d7db' : '#00a884',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    cursor: (!newMessage.trim() && !attachment) ? 'not-allowed' : 'pointer',
+                                    transition: 'background 0.2s',
+                                    width: '40px',
+                                    height: '40px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '1.25rem',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (newMessage.trim() || attachment) {
+                                        e.currentTarget.style.background = '#06cf9c';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (newMessage.trim() || attachment) {
+                                        e.currentTarget.style.background = '#00a884';
+                                    }
+                                }}
                             >
-                                Enviar
+                                ➤
                             </button>
                         </div>
                     </div>
@@ -769,16 +1114,73 @@ const ChatWorkspace: React.FC = () => {
                 <div 
                     className="image-modal"
                     onClick={() => setImageModal(null)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10000
+                    }}
                 >
-                    <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <div 
+                        className="image-modal-content" 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            position: 'relative',
+                            maxWidth: isMobile ? '95vw' : '90vw',
+                            maxHeight: isMobile ? '95vh' : '90vh',
+                            background: 'white',
+                            borderRadius: '12px',
+                            padding: isMobile ? '0.5rem' : '1rem',
+                            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+                        }}
+                    >
                         <button 
                             className="image-modal-close"
                             onClick={() => setImageModal(null)}
+                            style={{
+                                position: 'absolute',
+                                top: isMobile ? '-10px' : '-15px',
+                                right: isMobile ? '-10px' : '-15px',
+                                width: isMobile ? '32px' : '40px',
+                                height: isMobile ? '32px' : '40px',
+                                background: '#ef4444',
+                                color: 'white',
+                                border: '3px solid white',
+                                borderRadius: '50%',
+                                fontSize: isMobile ? '1.25rem' : '1.5rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                lineHeight: 1
+                            }}
                         >
                             ×
                         </button>
-                        <img src={imageModal.src} alt={imageModal.name} />
-                        <p className="image-modal-name">{imageModal.name}</p>
+                        <img 
+                            src={imageModal.src} 
+                            alt={imageModal.name}
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: isMobile ? 'calc(95vh - 60px)' : 'calc(90vh - 80px)',
+                                display: 'block',
+                                borderRadius: '8px'
+                            }}
+                        />
+                        <p style={{
+                            margin: isMobile ? '0.5rem 0 0 0' : '0.75rem 0 0 0',
+                            textAlign: 'center',
+                            color: '#374151',
+                            fontSize: isMobile ? '0.8rem' : '0.875rem',
+                            fontWeight: '500'
+                        }}>{imageModal.name}</p>
                     </div>
                 </div>
             )}

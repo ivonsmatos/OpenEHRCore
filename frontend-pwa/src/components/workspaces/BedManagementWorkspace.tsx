@@ -3,6 +3,7 @@ import Card from '../base/Card';
 import { colors, spacing, borderRadius } from '../../theme/colors';
 import { User, Bed, Activity } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import BedDetailsModal from './BedDetailsModal';
 
 // API Base
@@ -22,12 +23,16 @@ interface Patient {
     name: string;
 }
 
+type StatusFilter = 'all' | 'O' | 'U' | 'K' | 'I';
+
 const BedManagementWorkspace: React.FC = () => {
     const { token, logout } = useAuth();
+    const isMobile = useIsMobile();
     const [locations, setLocations] = useState<LocationNode[]>([]);
     const [_error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: 0, occupied: 0, free: 0, cleaning: 0, occupancy_rate: 0 });
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
     // Admission Modal State
     const [selectedBed, setSelectedBed] = useState<LocationNode | null>(null);
@@ -179,33 +184,96 @@ const BedManagementWorkspace: React.FC = () => {
     };
 
     return (
-        <div style={{ padding: spacing.xl }}>
+        <div style={{ padding: isMobile ? spacing.md : spacing.xl }}>
             {/* Header and Stats */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xl }}>
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: isMobile ? 'column' : 'row',
+                justifyContent: 'space-between', 
+                alignItems: isMobile ? 'flex-start' : 'center', 
+                marginBottom: spacing.xl,
+                gap: spacing.md
+            }}>
                 <div>
-                    <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: colors.text.primary }}>Gestão de Leitos</h1>
-                    <p style={{ color: colors.text.secondary }}>Visualização em tempo real da ocupação hospitalar</p>
+                    <h1 style={{ fontSize: isMobile ? '1.5rem' : '1.8rem', fontWeight: 700, color: colors.text.primary }}>Gestão de Leitos</h1>
+                    <p style={{ color: colors.text.secondary, fontSize: isMobile ? '0.875rem' : '1rem' }}>Visualização em tempo real da ocupação hospitalar</p>
                 </div>
-                <div style={{ display: 'flex', gap: spacing.md }}>
-                    <Card style={{ padding: spacing.sm, minWidth: 100, textAlign: 'center' }}>
-                        <div style={{ color: '#10b981', fontWeight: 'bold' }}>{stats.free}</div>
-                        <div style={{ fontSize: '0.8rem' }}>Livres</div>
+                <div style={{ 
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)',
+                    gap: spacing.sm,
+                    width: isMobile ? '100%' : 'auto'
+                }}>
+                    <Card 
+                        style={{ 
+                            padding: spacing.sm, 
+                            minWidth: isMobile ? 'auto' : 100, 
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            border: `2px solid ${statusFilter === 'U' ? '#10b981' : 'transparent'}`,
+                            transform: statusFilter === 'U' ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'all 0.2s'
+                        }}
+                        onClick={() => setStatusFilter(statusFilter === 'U' ? 'all' : 'U')}
+                    >
+                        <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: isMobile ? '1.25rem' : '1.5rem' }}>{stats.free}</div>
+                        <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>Livres</div>
                     </Card>
-                    <Card style={{ padding: spacing.sm, minWidth: 100, textAlign: 'center' }}>
-                        <div style={{ color: '#ef4444', fontWeight: 'bold' }}>{stats.occupied}</div>
-                        <div style={{ fontSize: '0.8rem' }}>Ocupados</div>
+                    <Card 
+                        style={{ 
+                            padding: spacing.sm, 
+                            minWidth: isMobile ? 'auto' : 100, 
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            border: `2px solid ${statusFilter === 'O' ? '#ef4444' : 'transparent'}`,
+                            transform: statusFilter === 'O' ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'all 0.2s'
+                        }}
+                        onClick={() => setStatusFilter(statusFilter === 'O' ? 'all' : 'O')}
+                    >
+                        <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: isMobile ? '1.25rem' : '1.5rem' }}>{stats.occupied}</div>
+                        <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>Ocupados</div>
                     </Card>
-                    <Card style={{ padding: spacing.sm, minWidth: 100, textAlign: 'center' }}>
-                        <div style={{ color: '#f59e0b', fontWeight: 'bold' }}>{stats.cleaning}</div>
-                        <div style={{ fontSize: '0.8rem' }}>Limpeza</div>
+                    <Card 
+                        style={{ 
+                            padding: spacing.sm, 
+                            minWidth: isMobile ? 'auto' : 100, 
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            border: `2px solid ${statusFilter === 'K' ? '#f59e0b' : 'transparent'}`,
+                            transform: statusFilter === 'K' ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'all 0.2s'
+                        }}
+                        onClick={() => setStatusFilter(statusFilter === 'K' ? 'all' : 'K')}
+                    >
+                        <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: isMobile ? '1.25rem' : '1.5rem' }}>{stats.cleaning}</div>
+                        <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>Limpeza</div>
                     </Card>
-                    <Card style={{ padding: spacing.sm, minWidth: 100, textAlign: 'center' }}>
-                        <div style={{ color: '#6b7280', fontWeight: 'bold' }}>{stats.total - (stats.free + stats.occupied + stats.cleaning)}</div>
-                        <div style={{ fontSize: '0.8rem' }}>Bloqueados</div>
+                    <Card 
+                        style={{ 
+                            padding: spacing.sm, 
+                            minWidth: isMobile ? 'auto' : 100, 
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            border: `2px solid ${statusFilter === 'I' ? '#6b7280' : 'transparent'}`,
+                            transform: statusFilter === 'I' ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'all 0.2s'
+                        }}
+                        onClick={() => setStatusFilter(statusFilter === 'I' ? 'all' : 'I')}
+                    >
+                        <div style={{ color: '#6b7280', fontWeight: 'bold', fontSize: isMobile ? '1.25rem' : '1.5rem' }}>{stats.total - (stats.free + stats.occupied + stats.cleaning)}</div>
+                        <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>Bloqueados</div>
                     </Card>
-                    <Card style={{ padding: spacing.sm, minWidth: 100, textAlign: 'center' }}>
-                        <div style={{ fontWeight: 'bold' }}>{stats.occupancy_rate}%</div>
-                        <div style={{ fontSize: '0.8rem' }}>Taxa Ocup.</div>
+                    <Card 
+                        style={{ 
+                            padding: spacing.sm, 
+                            minWidth: isMobile ? 'auto' : 100, 
+                            textAlign: 'center',
+                            gridColumn: isMobile ? 'span 2' : 'auto'
+                        }}
+                    >
+                        <div style={{ fontWeight: 'bold', fontSize: isMobile ? '1.25rem' : '1.5rem' }}>{stats.occupancy_rate}%</div>
+                        <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>Taxa Ocup.</div>
                     </Card>
                 </div>
             </div>
@@ -229,16 +297,64 @@ const BedManagementWorkspace: React.FC = () => {
                         const free = allBeds.filter(b => b.status_code === 'U');
                         const blocked = allBeds.filter(b => b.status_code === 'I');
 
+                        // Apply filter
+                        const getFilteredBeds = () => {
+                            if (statusFilter === 'all') return allBeds;
+                            return allBeds.filter(b => b.status_code === statusFilter);
+                        };
+
+                        const filteredBeds = getFilteredBeds();
+
                         const renderSection = (title: string, color: string, list: LocationNode[]) => (
                             <Card style={{ marginBottom: spacing.lg }}>
-                                <h3 style={{ color, borderBottom: `2px solid ${color}`, paddingBottom: spacing.sm, marginBottom: spacing.md }}>
+                                <h3 style={{ color, borderBottom: `2px solid ${color}`, paddingBottom: spacing.sm, marginBottom: spacing.md, fontSize: isMobile ? '1rem' : '1.25rem' }}>
                                     {title} ({list.length})
                                 </h3>
-                                <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-start' }}>
                                     {list.length > 0 ? list.map(bed => renderBed(bed)) : <p style={{ padding: spacing.md, color: colors.text.secondary }}>Nenhum leito nesta categoria.</p>}
                                 </div>
                             </Card>
                         );
+
+                        // If filter is active, show only filtered beds in one section
+                        if (statusFilter !== 'all') {
+                            const filterTitle = 
+                                statusFilter === 'O' ? 'Em Uso / Ocupados' :
+                                statusFilter === 'K' ? 'Em Higienização' :
+                                statusFilter === 'U' ? 'Liberados / Livres' :
+                                'Bloqueados / Manutenção';
+                            const filterColor = 
+                                statusFilter === 'O' ? '#ef4444' :
+                                statusFilter === 'K' ? '#f59e0b' :
+                                statusFilter === 'U' ? '#10b981' :
+                                '#6b7280';
+                            
+                            return (
+                                <>
+                                    <div style={{ marginBottom: spacing.md, padding: spacing.sm, backgroundColor: colors.background.surface, borderRadius: borderRadius.md, textAlign: 'center' }}>
+                                        <span style={{ fontSize: isMobile ? '0.875rem' : '1rem', color: colors.text.secondary }}>
+                                            Filtrando por: <strong style={{ color: filterColor }}>{filterTitle}</strong>
+                                            <button 
+                                                onClick={() => setStatusFilter('all')}
+                                                style={{ 
+                                                    marginLeft: spacing.md, 
+                                                    padding: '4px 12px', 
+                                                    backgroundColor: colors.primary.medium, 
+                                                    color: 'white', 
+                                                    border: 'none', 
+                                                    borderRadius: borderRadius.soft,
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.875rem'
+                                                }}
+                                            >
+                                                Limpar Filtro
+                                            </button>
+                                        </span>
+                                    </div>
+                                    {renderSection(filterTitle, filterColor, filteredBeds)}
+                                </>
+                            );
+                        }
 
                         return (
                             <>

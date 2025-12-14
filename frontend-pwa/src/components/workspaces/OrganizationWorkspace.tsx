@@ -124,6 +124,8 @@ export function OrganizationWorkspace() {
     const [formData, setFormData] = useState<OrganizationFormData>(initialFormData);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set());
+    const [loadingCNPJ, setLoadingCNPJ] = useState(false);
+    const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
 
     const fetchOrganizations = useCallback(async () => {
         try {
@@ -147,6 +149,57 @@ export function OrganizationWorkspace() {
         fetchOrganizations();
     }, [fetchOrganizations]);
 
+    const fetchCNPJData = async (cnpj: string) => {
+        const cleaned = cnpj.replace(/[^\d]/g, '');
+        if (cleaned.length !== 14) return;
+
+        if (!validateCNPJ(cleaned)) {
+            setFormErrors({ ...formErrors, cnpj: 'CNPJ inválido' });
+            return;
+        }
+
+        setLoadingCNPJ(true);
+        setFormErrors({ ...formErrors, cnpj: '' });
+
+        try {
+            const response = await axios.get(`https://www.receitaws.com.br/v1/cnpj/${cleaned}`);
+            const data = response.data;
+
+            if (data.status === 'ERROR') {
+                setFormErrors({ ...formErrors, cnpj: 'CNPJ não encontrado' });
+                return;
+            }
+
+            // Auto-preencher campos
+            const fieldsToFill = new Set<string>(['name', 'phone', 'email', 'address']);
+            
+            setFormData({
+                ...formData,
+                cnpj: cleaned,
+                name: data.nome || formData.name,
+                phone: data.telefone?.replace(/[^\d]/g, '') || formData.phone,
+                email: data.email || formData.email,
+                address: {
+                    line: data.logradouro ? `${data.logradouro}, ${data.numero}${data.complemento ? ' - ' + data.complemento : ''}` : formData.address.line,
+                    city: data.municipio || formData.address.city,
+                    state: data.uf || formData.address.state,
+                    postalCode: data.cep?.replace(/[^\d]/g, '') || formData.address.postalCode
+                }
+            });
+
+            setAutoFilledFields(fieldsToFill);
+        } catch (err: any) {
+            console.error('Erro ao buscar CNPJ:', err);
+            if (err.response?.status === 429) {
+                setFormErrors({ ...formErrors, cnpj: 'Muitas requisições. Tente novamente em alguns instantes.' });
+            } else {
+                setFormErrors({ ...formErrors, cnpj: 'Erro ao buscar dados do CNPJ' });
+            }
+        } finally {
+            setLoadingCNPJ(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -155,7 +208,9 @@ export function OrganizationWorkspace() {
         if (!formData.name.trim()) {
             errors.name = 'Nome é obrigatório';
         }
-        if (formData.cnpj && !validateCNPJ(formData.cnpj)) {
+        if (!formData.cnpj.trim()) {
+            errors.cnpj = 'CNPJ é obrigatório';
+        } else if (!validateCNPJ(formData.cnpj)) {
             errors.cnpj = 'CNPJ inválido';
         }
 
@@ -197,6 +252,7 @@ export function OrganizationWorkspace() {
             setEditingId(null);
             setFormData(initialFormData);
             setFormErrors({});
+            setAutoFilledFields(new Set());
             fetchOrganizations();
         } catch (err) {
             setError('Erro ao salvar organização');
@@ -273,8 +329,11 @@ export function OrganizationWorkspace() {
                     <Building2 size={28} color={colors.primary.medium} />
                     <h1>Organizações</h1>
                 </div>
-                <Button variant="primary" onClick={() => { setShowForm(true); setEditingId(null); setFormData(initialFormData); }}>
-                    <Plus size={18} />
+                <Button 
+                    variant="primary" 
+                    leftIcon={<Plus size={18} />}
+                    onClick={() => { setShowForm(true); setEditingId(null); setFormData(initialFormData); setAutoFilledFields(new Set()); }}
+                >
                     Nova Organização
                 </Button>
             </header>
@@ -301,12 +360,33 @@ export function OrganizationWorkspace() {
                         <form onSubmit={handleSubmit}>
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Nome *</label>
+                                    <label>CNPJ *</label>
+                                    <input
+                                        type="text"
+                                        value={formatCNPJ(formData.cnpj)}
+                                        onChange={(e) => setFormData({ ...formData, cnpj: e.target.value.replace(/[^\d]/g, '') })}
+                                        onBlur={(e) => {
+                                            const cleaned = e.target.value.replace(/[^\d]/g, '');
+                                            if (cleaned.length === 14) {
+                                                fetchCNPJData(cleaned);
+                                            }
+                                        }}
+                                        placeholder="00.000.000/0000-00"
+                                        maxLength={18}
+                                        className={formErrors.cnpj ? 'error' : ''}
+                                        disabled={loadingCNPJ}
+                                    />
+                                    {loadingCNPJ && <span className="info-text">Buscando dados...</span>}
+                                    {formErrors.cnpj && <span className="error-text">{formErrors.cnpj}</span>}
+                                </div>
+                                <div className="form-group">
+                                    <label>Nome * {autoFilledFields.has('name') && <span className="auto-filled-badge">🔒 Preenchido automaticamente</span>}</label>
                                     <input
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         className={formErrors.name ? 'error' : ''}
+                                        disabled={autoFilledFields.has('name')}
                                     />
                                     {formErrors.name && <span className="error-text">{formErrors.name}</span>}
                                 </div>
@@ -324,18 +404,6 @@ export function OrganizationWorkspace() {
                             </div>
 
                             <div className="form-row">
-                                <div className="form-group">
-                                    <label>CNPJ</label>
-                                    <input
-                                        type="text"
-                                        value={formatCNPJ(formData.cnpj)}
-                                        onChange={(e) => setFormData({ ...formData, cnpj: e.target.value.replace(/[^\d]/g, '') })}
-                                        placeholder="00.000.000/0000-00"
-                                        maxLength={18}
-                                        className={formErrors.cnpj ? 'error' : ''}
-                                    />
-                                    {formErrors.cnpj && <span className="error-text">{formErrors.cnpj}</span>}
-                                </div>
                                 <div className="form-group">
                                     <label>CNES</label>
                                     <input
@@ -360,32 +428,35 @@ export function OrganizationWorkspace() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Telefone</label>
+                                    <label>Telefone {autoFilledFields.has('phone') && <span className="auto-filled-badge">🔒 Preenchido automaticamente</span>}</label>
                                     <input
                                         type="tel"
                                         value={formData.phone}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                         placeholder="(00) 0000-0000"
+                                        disabled={autoFilledFields.has('phone')}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>E-mail</label>
+                                    <label>E-mail {autoFilledFields.has('email') && <span className="auto-filled-badge">🔒 Preenchido automaticamente</span>}</label>
                                     <input
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         placeholder="contato@hospital.com.br"
+                                        disabled={autoFilledFields.has('email')}
                                     />
                                 </div>
                             </div>
 
                             <div className="form-group">
-                                <label>Endereço</label>
+                                <label>Endereço {autoFilledFields.has('address') && <span className="auto-filled-badge">🔒 Preenchido automaticamente</span>}</label>
                                 <input
                                     type="text"
                                     value={formData.address.line}
                                     onChange={(e) => setFormData({ ...formData, address: { ...formData.address, line: e.target.value } })}
                                     placeholder="Rua, número"
+                                    disabled={autoFilledFields.has('address')}
                                 />
                             </div>
 
@@ -396,6 +467,7 @@ export function OrganizationWorkspace() {
                                         type="text"
                                         value={formData.address.city}
                                         onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value } })}
+                                        disabled={autoFilledFields.has('address')}
                                     />
                                 </div>
                                 <div className="form-group small">
@@ -405,6 +477,7 @@ export function OrganizationWorkspace() {
                                         value={formData.address.state}
                                         onChange={(e) => setFormData({ ...formData, address: { ...formData.address, state: e.target.value } })}
                                         maxLength={2}
+                                        disabled={autoFilledFields.has('address')}
                                     />
                                 </div>
                                 <div className="form-group">
@@ -414,6 +487,7 @@ export function OrganizationWorkspace() {
                                         value={formData.address.postalCode}
                                         onChange={(e) => setFormData({ ...formData, address: { ...formData.address, postalCode: e.target.value } })}
                                         placeholder="00000-000"
+                                        disabled={autoFilledFields.has('address')}
                                     />
                                 </div>
                             </div>
@@ -429,7 +503,7 @@ export function OrganizationWorkspace() {
                             </div>
 
                             <div className="form-actions">
-                                <Button variant="secondary" type="button" onClick={() => { setShowForm(false); setFormErrors({}); }}>
+                                <Button variant="secondary" type="button" onClick={() => { setShowForm(false); setFormErrors({}); setAutoFilledFields(new Set()); }}>
                                     Cancelar
                                 </Button>
                                 <Button variant="primary" type="submit">

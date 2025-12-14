@@ -48,18 +48,35 @@ export const useEncounters = (patientId?: string) => {
         }
     }, [patientId]);
 
-    const createEncounter = async (data: any) => {
+    const createEncounter = async (data: Partial<Encounter>) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.post(`${API_URL}/encounters/`, {
-                ...data,
-                patient_id: patientId
-            });
+            // O backend espera um formato simples, não FHIR completo
+            const payload = {
+                patient_id: patientId,
+                encounter_type: 'consultation',
+                status: data.status || 'in-progress',
+                period_start: data.period?.start || new Date().toISOString(),
+                reason_code: data.reasonCode?.[0]?.text || 'Atendimento Clínico'
+            };
+
+            console.log('Creating encounter with payload:', JSON.stringify(payload, null, 2));
+            const response = await axios.post(`${API_URL}/encounters/`, payload);
             await fetchEncounters();
             return response.data;
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erro ao criar encontro');
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.error || err.response?.data?.detail || err.message || 'Erro ao criar encontro';
+            console.error('Error creating encounter:', {
+                status: err.response?.status,
+                statusText: err.response?.statusText,
+                data: err.response?.data,
+                headers: err.response?.headers,
+                message: err.message,
+                fullError: err
+            });
+            console.error('Full error response data:', JSON.stringify(err.response?.data, null, 2));
+            setError(errorMessage);
             throw err;
         } finally {
             setLoading(false);

@@ -27,9 +27,14 @@ const ProblemList: React.FC<ProblemListProps> = ({ patientId }) => {
                     `${VITE_API_URL}/patients/${patientId}/conditions/`
                 );
                 setConditions(response.data);
-            } catch (err) {
-                console.error("Erro ao buscar condições:", err);
-                setError("Não foi possível carregar a lista de problemas.");
+            } catch (err: any) {
+                if (err.response?.status === 429) {
+                    // Erro 429 - Too Many Requests, tentar novamente em 2s
+                    setTimeout(fetchConditions, 2000);
+                } else {
+                    console.error("Erro ao buscar condições:", err);
+                    setError("Não foi possível carregar a lista de problemas.");
+                }
             } finally {
                 setLoading(false);
             }

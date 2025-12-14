@@ -94,6 +94,9 @@ const OrganizationWorkspace = lazyLoad(() =>
 const SettingsWorkspace = lazyLoad(() =>
     import('./components/settings/SettingsWorkspace').then(m => ({ default: m.SettingsWorkspace }))
 );
+const HelpWorkspace = lazyLoad(() =>
+    import('./components/settings/HelpWorkspace').then(m => ({ default: m.HelpWorkspace }))
+);
 
 // LGPD Dashboard (Sprint 24)
 const LGPDDashboard = lazyLoad(() =>
@@ -172,7 +175,7 @@ const ProtectedRoutes: React.FC = () => {
                     <Route path="/settings/security" element={<SettingsWorkspace section="security" />} />
                     <Route path="/settings/notifications" element={<SettingsWorkspace section="notifications" />} />
                     <Route path="/settings/preferences" element={<SettingsWorkspace section="preferences" />} />
-                    <Route path="/help" element={<SettingsWorkspace section="profile" />} />
+                    <Route path="/help" element={<HelpWorkspace />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Suspense>

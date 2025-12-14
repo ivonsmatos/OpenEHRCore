@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { colors, spacing } from '../../theme/colors';
 import { Practitioner, PractitionerFilters } from '../../types/practitioner';
 import { usePractitioners } from '../../hooks/usePractitioners';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import PractitionerCard from '../practitioners/PractitionerCard';
 import PractitionerForm from '../practitioners/PractitionerForm';
 import Button from '../base/Button';
@@ -11,6 +12,7 @@ import { Plus, Search, Filter } from 'lucide-react';
 
 const PractitionerWorkspace: React.FC = () => {
     const navigate = useNavigate();
+    const isMobile = useIsMobile();
     const { fetchPractitioners, createPractitioner, loading, error } = usePractitioners();
     const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
     const [showForm, setShowForm] = useState(false);
@@ -71,34 +73,59 @@ const PractitionerWorkspace: React.FC = () => {
     }
 
     return (
-        <div style={{ padding: spacing.xl }}>
+        <div style={{ 
+            padding: isMobile ? spacing.md : spacing.xl,
+            maxWidth: '100%',
+            overflowX: 'hidden'
+        }}>
             {/* Header */}
             <div style={{
                 display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
                 justifyContent: 'space-between',
-                alignItems: 'center',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: spacing.md,
                 marginBottom: spacing.lg
             }}>
-                <div>
-                    <h1 style={{ margin: 0, marginBottom: spacing.xs }}>Profissionais de Saúde</h1>
-                    <p style={{ margin: 0, color: colors.text.secondary }}>
+                <div style={{ width: isMobile ? '100%' : 'auto' }}>
+                    <h1 style={{ 
+                        margin: 0, 
+                        marginBottom: spacing.xs,
+                        fontSize: isMobile ? '1.5rem' : '2rem'
+                    }}>Profissionais de Saúde</h1>
+                    <p style={{ 
+                        margin: 0, 
+                        color: colors.text.secondary,
+                        fontSize: isMobile ? '0.875rem' : '1rem'
+                    }}>
                         Gerencie médicos, enfermeiros e outros profissionais
                     </p>
                 </div>
-                <Button onClick={() => setShowForm(true)} leftIcon={<Plus size={20} />}>
+                <Button 
+                    onClick={() => setShowForm(true)} 
+                    leftIcon={<Plus size={20} />}
+                    style={{ width: isMobile ? '100%' : 'auto' }}
+                >
                     Adicionar Profissional
                 </Button>
             </div>
 
             {/* Search and Filters */}
             <Card style={{ marginBottom: spacing.lg }}>
-                <div style={{ display: 'flex', gap: spacing.md, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div style={{ 
+                    display: 'flex', 
+                    flexDirection: isMobile ? 'column' : 'row',
+                    gap: spacing.md, 
+                    flexWrap: 'wrap', 
+                    alignItems: isMobile ? 'stretch' : 'flex-end' 
+                }}>
                     {/* Name Search */}
-                    <div style={{ flex: 1, minWidth: '200px' }}>
+                    <div style={{ flex: 1, minWidth: isMobile ? '100%' : '200px' }}>
                         <label style={{
                             display: 'block',
                             marginBottom: spacing.xs,
-                            fontWeight: 500,
+                            fontWeight: 600,
+                            fontSize: isMobile ? '0.9rem' : '1rem',
                             color: colors.text.primary
                         }}>
                             Buscar por nome
@@ -114,17 +141,19 @@ const PractitionerWorkspace: React.FC = () => {
                                 padding: spacing.sm,
                                 border: `1px solid ${colors.border.light}`,
                                 borderRadius: '8px',
-                                fontSize: '1rem',
+                                fontSize: isMobile ? '16px' : '1rem',
+                                boxSizing: 'border-box'
                             }}
                         />
                     </div>
 
                     {/* CRM Search */}
-                    <div style={{ flex: 1, minWidth: '200px' }}>
+                    <div style={{ flex: 1, minWidth: isMobile ? '100%' : '200px' }}>
                         <label style={{
                             display: 'block',
                             marginBottom: spacing.xs,
-                            fontWeight: 500,
+                            fontWeight: 600,
+                            fontSize: isMobile ? '0.9rem' : '1rem',
                             color: colors.text.primary
                         }}>
                             Buscar por CRM
@@ -140,24 +169,31 @@ const PractitionerWorkspace: React.FC = () => {
                                 padding: spacing.sm,
                                 border: `1px solid ${colors.border.light}`,
                                 borderRadius: '8px',
-                                fontSize: '1rem',
+                                fontSize: isMobile ? '16px' : '1rem',
+                                boxSizing: 'border-box'
                             }}
                         />
                     </div>
 
                     {/* Search Button */}
-                    <div>
-                        <Button onClick={handleSearch} variant="secondary" leftIcon={<Search size={18} />}>
+                    <div style={{ width: isMobile ? '100%' : 'auto' }}>
+                        <Button 
+                            onClick={handleSearch} 
+                            variant="secondary" 
+                            leftIcon={<Search size={18} />}
+                            style={{ width: isMobile ? '100%' : 'auto' }}
+                        >
                             Buscar
                         </Button>
                     </div>
 
                     {/* Status Filter */}
-                    <div style={{ minWidth: '150px' }}>
+                    <div style={{ minWidth: isMobile ? '100%' : '150px' }}>
                         <label style={{
                             display: 'block',
                             marginBottom: spacing.xs,
-                            fontWeight: 500,
+                            fontWeight: 600,
+                            fontSize: isMobile ? '0.9rem' : '1rem',
                             color: colors.text.primary
                         }}>
                             Status
@@ -176,7 +212,8 @@ const PractitionerWorkspace: React.FC = () => {
                                 padding: spacing.sm,
                                 border: `1px solid ${colors.border.light}`,
                                 borderRadius: '8px',
-                                fontSize: '1rem',
+                                fontSize: isMobile ? '16px' : '1rem',
+                                boxSizing: 'border-box'
                             }}
                         >
                             <option value="all">Todos</option>
@@ -186,7 +223,12 @@ const PractitionerWorkspace: React.FC = () => {
                     </div>
 
                     {/* Apply Filters */}
-                    <Button onClick={loadPractitioners} variant="secondary" leftIcon={<Filter size={18} />}>
+                    <Button 
+                        onClick={loadPractitioners} 
+                        variant="secondary" 
+                        leftIcon={<Filter size={18} />}
+                        style={{ width: isMobile ? '100%' : 'auto' }}
+                    >
                         Aplicar Filtros
                     </Button>
                 </div>
@@ -241,7 +283,7 @@ const PractitionerWorkspace: React.FC = () => {
                     ) : (
                         <div style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))',
                             gap: spacing.md
                         }}>
                             {practitioners.map((practitioner) => (

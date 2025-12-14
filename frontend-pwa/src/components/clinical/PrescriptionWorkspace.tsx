@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Search, Plus, Trash2, AlertTriangle, FileText, Pill, CheckCircle } from 'lucide-react';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -41,6 +42,7 @@ const PrescriptionWorkspace: React.FC<PrescriptionWorkspaceProps> = ({
     patientId = '',
     patientName = 'Paciente'
 }) => {
+    const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Drug[]>([]);
     const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItem[]>([]);
@@ -174,14 +176,14 @@ const PrescriptionWorkspace: React.FC<PrescriptionWorkspaceProps> = ({
     const hasControlledDrugs = prescriptionItems.some(item => item.drug.controlled);
 
     return (
-        <div style={{ padding: '1.5rem' }}>
+        <div style={{ padding: isMobile ? '1rem' : '1.5rem' }}>
             {/* Header */}
             <div style={{ marginBottom: '1.5rem' }}>
-                <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Pill size={28} />
+                <h1 style={{ margin: 0, fontSize: isMobile ? '1.25rem' : '1.5rem', color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <Pill size={isMobile ? 24 : 28} />
                     Prescrição Eletrônica
                 </h1>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#64748b' }}>
+                <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: isMobile ? '0.875rem' : '1rem' }}>
                     Paciente: <strong>{patientName || 'Não selecionado'}</strong>
                 </p>
             </div>
@@ -203,10 +205,10 @@ const PrescriptionWorkspace: React.FC<PrescriptionWorkspaceProps> = ({
                 </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1.5rem' }}>
                 {/* Left Column - Drug Search & Form */}
-                <div style={{ background: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-                    <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1e3a5f' }}>
+                <div style={{ background: 'white', borderRadius: '12px', padding: isMobile ? '1rem' : '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', flex: 1 }}>
+                    <h2 style={{ margin: '0 0 1rem 0', fontSize: isMobile ? '1rem' : '1.1rem', color: '#1e3a5f' }}>
                         Adicionar Medicamento
                     </h2>
 
@@ -223,7 +225,7 @@ const PrescriptionWorkspace: React.FC<PrescriptionWorkspaceProps> = ({
                                     flex: 1,
                                     border: 'none',
                                     outline: 'none',
-                                    fontSize: '0.95rem'
+                                    fontSize: isMobile ? '16px' : '0.95rem'
                                 }}
                             />
                             {loading && <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Buscando...</span>}
@@ -310,7 +312,7 @@ const PrescriptionWorkspace: React.FC<PrescriptionWorkspaceProps> = ({
                     )}
 
                     {/* Prescription Form */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
                         <div>
                             <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#64748b' }}>
                                 Posologia *
@@ -403,8 +405,8 @@ const PrescriptionWorkspace: React.FC<PrescriptionWorkspaceProps> = ({
                 </div>
 
                 {/* Right Column - Prescription Preview */}
-                <div style={{ background: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-                    <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ background: 'white', borderRadius: '12px', padding: isMobile ? '1rem' : '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', flex: 1 }}>
+                    <h2 style={{ margin: '0 0 1rem 0', fontSize: isMobile ? '1rem' : '1.1rem', color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <FileText size={20} />
                         Receita
                         {hasControlledDrugs && (
@@ -537,7 +539,8 @@ const inputStyle: React.CSSProperties = {
     border: '1px solid #e5e7eb',
     borderRadius: '8px',
     fontSize: '0.9rem',
-    outline: 'none'
+    outline: 'none',
+    boxSizing: 'border-box'
 };
 
 export default PrescriptionWorkspace;

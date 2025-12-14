@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useEncounters } from '../../hooks/useEncounters';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
 
@@ -10,6 +11,7 @@ interface SOAPNoteProps {
 
 export const SOAPNote: React.FC<SOAPNoteProps> = ({ encounterId, onSuccess }) => {
     const { createSOAPNote, loading } = useEncounters();
+    const isMobile = useIsMobile();
 
     const [subjective, setSubjective] = useState<string>('');
     const [objective, setObjective] = useState<string>('');
@@ -66,40 +68,84 @@ ${plan || '-'}
     const textareaStyle = {
         width: '100%',
         padding: spacing.sm,
-        borderRadius: '4px',
+        borderRadius: '8px',
         border: `1px solid ${colors.border.default}`,
-        minHeight: '80px',
-        fontFamily: 'inherit'
+        minHeight: isMobile ? '100px' : '120px',
+        fontFamily: 'inherit',
+        fontSize: isMobile ? '16px' : '0.95rem', // 16px no mobile evita zoom automático no iOS
+        resize: 'vertical' as const,
+        transition: 'border-color 0.2s ease',
+        boxSizing: 'border-box' as const
     };
 
     const labelStyle = {
         display: 'block',
         marginBottom: spacing.xs,
-        fontSize: '0.875rem',
+        fontSize: isMobile ? '0.9rem' : '0.875rem',
         fontWeight: 600,
         color: colors.text.primary
     };
 
     return (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, color: colors.text.primary }}>Nota de Evolução (SOAP)</h3>
-                <span style={{ fontSize: '0.75rem', color: colors.text.secondary }}>{new Date().toLocaleDateString()}</span>
+        <form onSubmit={handleSubmit} style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: spacing.lg,
+            maxWidth: '100%',
+            padding: isMobile ? spacing.sm : 0
+        }}>
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: isMobile ? 'column' : 'row',
+                justifyContent: 'space-between', 
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: spacing.xs
+            }}>
+                <h3 style={{ 
+                    margin: 0, 
+                    color: colors.text.primary,
+                    fontSize: isMobile ? '1.1rem' : '1.25rem'
+                }}>
+                    Nota de Evolução (SOAP)
+                </h3>
+                <span style={{ 
+                    fontSize: '0.75rem', 
+                    color: colors.text.secondary 
+                }}>
+                    {new Date().toLocaleDateString()}
+                </span>
             </div>
 
             {error && (
-                <div style={{ padding: spacing.md, backgroundColor: `${colors.alert.critical}20`, color: colors.alert.critical, borderRadius: '4px' }}>
+                <div style={{ 
+                    padding: spacing.md, 
+                    backgroundColor: `${colors.alert.critical}20`, 
+                    color: colors.alert.critical, 
+                    borderRadius: '8px',
+                    fontSize: isMobile ? '0.875rem' : '0.9rem'
+                }}>
                     {error}
                 </div>
             )}
 
             {successMessage && (
-                <div style={{ padding: spacing.md, backgroundColor: `${colors.alert.success}20`, color: colors.alert.success, borderRadius: '4px' }}>
+                <div style={{ 
+                    padding: spacing.md, 
+                    backgroundColor: `${colors.alert.success}20`, 
+                    color: colors.alert.success, 
+                    borderRadius: '8px',
+                    fontSize: isMobile ? '0.875rem' : '0.9rem'
+                }}>
                     {successMessage}
                 </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
+            {/* Layout vertical: um campo embaixo do outro */}
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: spacing.lg 
+            }}>
                 {/* Subjective */}
                 <div>
                     <label style={labelStyle}>S - Subjetivo</label>
@@ -145,8 +191,19 @@ ${plan || '-'}
                 </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing.md }}>
-                <Button type="submit" disabled={loading}>
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                marginTop: spacing.md 
+            }}>
+                <Button 
+                    type="submit" 
+                    disabled={loading}
+                    style={{ 
+                        width: isMobile ? '100%' : 'auto',
+                        minWidth: isMobile ? '100%' : '150px'
+                    }}
+                >
                     {loading ? 'Salvando...' : 'Salvar Nota'}
                 </Button>
             </div>

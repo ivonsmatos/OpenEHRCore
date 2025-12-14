@@ -169,13 +169,16 @@ const PatientForm: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <label style={labelStyle}>CPF</label>
+                            <label style={labelStyle}>CPF *</label>
                             <input
+                                required
                                 name="cpf"
                                 value={formData.cpf}
                                 onChange={handleChange}
                                 style={inputStyle}
                                 placeholder="000.000.000-00"
+                                pattern="[0-9]{3}\.?[0-9]{3}\.?[0-9]{3}-?[0-9]{2}"
+                                title="Digite um CPF válido no formato 000.000.000-00"
                             />
                         </div>
                         <div>

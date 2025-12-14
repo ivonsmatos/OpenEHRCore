@@ -240,8 +240,11 @@ const ClinicalDocumentWorkspace: React.FC = () => {
                             <Button variant="secondary" onClick={fetchDocuments}>
                                 🔄
                             </Button>
-                            <Button onClick={() => setViewMode('create')}>
-                                <Plus size={20} className="mr-2" />
+                            <Button 
+                                variant="primary"
+                                leftIcon={<Plus size={18} />}
+                                onClick={() => setViewMode('create')}
+                            >
                                 Novo Documento
                             </Button>
                         </>

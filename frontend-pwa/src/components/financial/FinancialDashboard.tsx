@@ -109,6 +109,65 @@ export const FinancialDashboard: React.FC = () => {
     const [period, setPeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
     const [loading, setLoading] = useState(false);
 
+    // Filtrar dados baseado no período selecionado
+    useEffect(() => {
+        const filterDataByPeriod = () => {
+            let filteredData = { ...mockData };
+            
+            switch (period) {
+                case 'week':
+                    // Última semana - mostrar apenas último item
+                    filteredData.monthlyRevenue = mockData.monthlyRevenue.slice(-1);
+                    filteredData.revenue.current = mockData.monthlyRevenue[mockData.monthlyRevenue.length - 1].revenue / 4;
+                    filteredData.revenue.previous = mockData.monthlyRevenue[mockData.monthlyRevenue.length - 2]?.revenue / 4 || 0;
+                    break;
+                    
+                case 'month':
+                    // Mês atual - últimos 6 meses
+                    filteredData.monthlyRevenue = mockData.monthlyRevenue.slice(-6);
+                    break;
+                    
+                case 'quarter':
+                    // Trimestre - últimos 3 meses
+                    filteredData.monthlyRevenue = mockData.monthlyRevenue.slice(-3);
+                    const quarterRevenue = filteredData.monthlyRevenue.reduce((sum, m) => sum + m.revenue, 0);
+                    filteredData.revenue.current = quarterRevenue;
+                    break;
+                    
+                case 'year':
+                    // Ano completo - todos os meses
+                    const yearlyData = [
+                        { month: 'Jan', revenue: 82000, expenses: 65000 },
+                        { month: 'Fev', revenue: 88000, expenses: 68000 },
+                        { month: 'Mar', revenue: 91000, expenses: 70000 },
+                        { month: 'Abr', revenue: 87000, expenses: 69000 },
+                        { month: 'Mai', revenue: 93000, expenses: 71000 },
+                        { month: 'Jun', revenue: 89000, expenses: 70000 },
+                        ...mockData.monthlyRevenue
+                    ];
+                    filteredData.monthlyRevenue = yearlyData;
+                    const yearRevenue = yearlyData.reduce((sum, m) => sum + m.revenue, 0);
+                    filteredData.revenue.current = yearRevenue;
+                    break;
+            }
+            
+            // Recalcular trend baseado nos dados filtrados
+            if (filteredData.monthlyRevenue.length >= 2) {
+                const lastMonth = filteredData.monthlyRevenue[filteredData.monthlyRevenue.length - 1];
+                const previousMonth = filteredData.monthlyRevenue[filteredData.monthlyRevenue.length - 2];
+                filteredData.revenue.previous = previousMonth.revenue;
+                filteredData.revenue.percentChange = Number(
+                    (((lastMonth.revenue - previousMonth.revenue) / previousMonth.revenue) * 100).toFixed(1)
+                );
+                filteredData.revenue.trend = lastMonth.revenue >= previousMonth.revenue ? 'up' : 'down';
+            }
+            
+            setMetrics(filteredData);
+        };
+        
+        filterDataByPeriod();
+    }, [period]);
+
     // Calculate max for chart scaling
     const maxRevenue = Math.max(...metrics.monthlyRevenue.map(m => m.revenue));
 
@@ -226,7 +285,12 @@ export const FinancialDashboard: React.FC = () => {
                 <div className="chart-card">
                     <div className="chart-header">
                         <h3><BarChart3 size={18} /> Faturamento vs Despesas</h3>
-                        <span className="chart-period">Últimos 6 meses</span>
+                        <span className="chart-period">
+                            {period === 'week' && 'Última semana'}
+                            {period === 'month' && 'Últimos 6 meses'}
+                            {period === 'quarter' && 'Último trimestre'}
+                            {period === 'year' && 'Ano completo'}
+                        </span>
                     </div>
                     <div className="bar-chart">
                         {metrics.monthlyRevenue.map((item, index) => (

@@ -3,6 +3,17 @@
     margin: 0 auto;
 }
 
+/* Responsivo: Mobile */
+@media (max-width: 767px) {
+    .settings-workspace {
+        padding: 0;
+    }
+
+    .settings-header h1 {
+        font-size: 1.25rem;
+    }
+}
+
 .settings-header {
     display: flex;
     align-items: center;
@@ -40,6 +51,32 @@
     display: grid;
     grid-template-columns: 220px 1fr;
     gap: 32px;
+}
+
+/* Responsivo: Settings layout mobile */
+@media (max-width: 767px) {
+    .settings-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .settings-sidebar {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 8px;
+        padding-bottom: 8px;
+    }
+
+    .sidebar-item {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .settings-content {
+        padding: 16px;
+    }
 }
 
 /* Sidebar */

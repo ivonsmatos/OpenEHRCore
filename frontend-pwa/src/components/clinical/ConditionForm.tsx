@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useEncounters } from '../../hooks/useEncounters';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
 
@@ -23,6 +24,7 @@ const COMMON_CONDITIONS = [
 
 export const ConditionForm: React.FC<ConditionFormProps> = ({ encounterId, onSuccess }) => {
     const { createCondition, loading } = useEncounters();
+    const isMobile = useIsMobile();
 
     const [selectedCondition, setSelectedCondition] = useState<string>('');
     const [customCondition, setCustomCondition] = useState<string>('');
@@ -78,18 +80,60 @@ export const ConditionForm: React.FC<ConditionFormProps> = ({ encounterId, onSuc
         }
     };
 
+    const inputStyle = {
+        width: '100%',
+        padding: spacing.sm,
+        borderRadius: '8px',
+        border: `1px solid ${colors.border.default}`,
+        fontSize: isMobile ? '16px' : '0.95rem',
+        boxSizing: 'border-box' as const,
+        transition: 'border-color 0.2s ease'
+    };
+
+    const labelStyle = {
+        display: 'block',
+        marginBottom: spacing.xs,
+        fontSize: isMobile ? '0.9rem' : '0.875rem',
+        fontWeight: 600,
+        color: colors.text.primary
+    };
+
     return (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
-            <h3 style={{ margin: 0, color: colors.text.primary }}>Registrar Diagnóstico (Condition)</h3>
+        <form onSubmit={handleSubmit} style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: spacing.lg,
+            maxWidth: '100%',
+            padding: isMobile ? spacing.sm : 0
+        }}>
+            <h3 style={{ 
+                margin: 0, 
+                color: colors.text.primary,
+                fontSize: isMobile ? '1.1rem' : '1.25rem'
+            }}>
+                Registrar Diagnóstico (Condition)
+            </h3>
 
             {error && (
-                <div style={{ padding: spacing.md, backgroundColor: `${colors.alert.critical}20`, color: colors.alert.critical, borderRadius: '4px' }}>
+                <div style={{ 
+                    padding: spacing.md, 
+                    backgroundColor: `${colors.alert.critical}20`, 
+                    color: colors.alert.critical, 
+                    borderRadius: '8px',
+                    fontSize: isMobile ? '0.875rem' : '0.9rem'
+                }}>
                     {error}
                 </div>
             )}
 
             {successMessage && (
-                <div style={{ padding: spacing.md, backgroundColor: `${colors.alert.success}20`, color: colors.alert.success, borderRadius: '4px' }}>
+                <div style={{ 
+                    padding: spacing.md, 
+                    backgroundColor: `${colors.alert.success}20`, 
+                    color: colors.alert.success, 
+                    borderRadius: '8px',
+                    fontSize: isMobile ? '0.875rem' : '0.9rem'
+                }}>
                     {successMessage}
                 </div>
             )}
@@ -97,11 +141,11 @@ export const ConditionForm: React.FC<ConditionFormProps> = ({ encounterId, onSuc
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
                 {/* Diagnóstico */}
                 <div>
-                    <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Diagnóstico</label>
+                    <label style={labelStyle}>Diagnóstico</label>
                     <select
                         value={selectedCondition}
                         onChange={(e) => setSelectedCondition(e.target.value)}
-                        style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
+                        style={inputStyle}
                     >
                         <option value="">Selecione...</option>
                         {COMMON_CONDITIONS.map(c => (
@@ -113,25 +157,29 @@ export const ConditionForm: React.FC<ConditionFormProps> = ({ encounterId, onSuc
 
                 {selectedCondition === 'other' && (
                     <div>
-                        <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Nome do Diagnóstico</label>
+                        <label style={labelStyle}>Nome do Diagnóstico</label>
                         <input
                             type="text"
                             value={customCondition}
                             onChange={(e) => setCustomCondition(e.target.value)}
-                            style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
+                            style={inputStyle}
                             placeholder="Ex: Gripe Sazonal"
                         />
                     </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                    gap: spacing.md 
+                }}>
                     {/* Status Clínico */}
                     <div>
-                        <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Status Clínico</label>
+                        <label style={labelStyle}>Status Clínico</label>
                         <select
                             value={clinicalStatus}
                             onChange={(e) => setClinicalStatus(e.target.value)}
-                            style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
+                            style={inputStyle}
                         >
                             <option value="active">Ativo</option>
                             <option value="recurrence">Recorrência</option>
@@ -144,11 +192,11 @@ export const ConditionForm: React.FC<ConditionFormProps> = ({ encounterId, onSuc
 
                     {/* Status de Verificação */}
                     <div>
-                        <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '0.875rem', fontWeight: 500 }}>Status de Verificação</label>
+                        <label style={labelStyle}>Status de Verificação</label>
                         <select
                             value={verificationStatus}
                             onChange={(e) => setVerificationStatus(e.target.value)}
-                            style={{ width: '100%', padding: spacing.sm, borderRadius: '4px', border: `1px solid ${colors.border.default}` }}
+                            style={inputStyle}
                         >
                             <option value="confirmed">Confirmado</option>
                             <option value="provisional">Provisório</option>
@@ -160,8 +208,20 @@ export const ConditionForm: React.FC<ConditionFormProps> = ({ encounterId, onSuc
                 </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing.md }}>
-                <Button type="submit" disabled={loading}>
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: isMobile ? 'stretch' : 'flex-end', 
+                marginTop: spacing.md 
+            }}>
+                <Button 
+                    type="submit" 
+                    disabled={loading}
+                    style={{ 
+                        width: isMobile ? '100%' : 'auto',
+                        padding: spacing.md,
+                        fontSize: isMobile ? '1rem' : '0.95rem'
+                    }}
+                >
                     {loading ? 'Salvando...' : 'Salvar Diagnóstico'}
                 </Button>
             </div>

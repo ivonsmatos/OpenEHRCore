@@ -1,0 +1,18 @@
+/* ClinicalWorkspace.css */
+
+/* Esconder scrollbar no navegador de tabs mobile mantendo funcionalidade */
+.clinical-tabs-nav {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.clinical-tabs-nav::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ajustes responsivos para tabs */
+@media (max-width: 767px) {
+    .clinical-tab-button {
+        flex-shrink: 0;
+    }
+}

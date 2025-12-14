@@ -22,9 +22,10 @@ import { useAuth } from '../../hooks/useAuth';
 interface SidebarProps {
     isOpen: boolean;
     toggleSidebar: () => void;
+    isMobile?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobile = false }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { logout } = useAuth();
@@ -50,49 +51,54 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     return (
         <aside style={{
             backgroundColor: 'white',
-            width: isOpen ? '260px' : '70px',
+            width: isMobile ? (isOpen ? '80%' : '0') : (isOpen ? '260px' : '70px'),
+            maxWidth: isMobile ? '300px' : 'none',
             height: '100vh',
             position: 'fixed',
             left: 0,
             top: 0,
             borderRight: `1px solid ${colors.border.default}`,
-            transition: 'width 0.3s ease',
+            transition: 'width 0.3s ease, transform 0.3s ease',
+            transform: isMobile ? (isOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
             display: 'flex',
             flexDirection: 'column',
             zIndex: 1000,
-            boxShadow: '4px 0 12px rgba(0,0,0,0.02)'
+            boxShadow: isMobile ? '4px 0 20px rgba(0,0,0,0.15)' : '4px 0 12px rgba(0,0,0,0.02)',
+            overflowX: 'hidden'
         }}>
             {/* Header do Sidebar */}
             <div style={{
                 height: '64px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: isOpen ? 'space-between' : 'center',
-                padding: isOpen ? `0 ${spacing.md}` : '0',
+                justifyContent: (isOpen || isMobile) ? 'space-between' : 'center',
+                padding: (isOpen || isMobile) ? `0 ${spacing.md}` : '0',
                 borderBottom: `1px solid ${colors.border.default}`,
             }}>
-                {isOpen && (
+                {(isOpen || isMobile) && (
                     <div style={{ fontWeight: 'bold', fontSize: '1.25rem', color: colors.primary.dark, display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Activity size={24} color={colors.primary.medium} />
                         <span>OpenEHR</span>
                     </div>
                 )}
-                <button
-                    onClick={toggleSidebar}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: colors.text.secondary,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '8px',
-                        borderRadius: '4px',
-                    }}
-                >
-                    <Menu size={20} />
-                </button>
+                {!isMobile && (
+                    <button
+                        onClick={toggleSidebar}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: colors.text.secondary,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px',
+                            borderRadius: '4px',
+                        }}
+                    >
+                        <Menu size={20} />
+                    </button>
+                )}
             </div>
 
             {/* Menu Navigation */}
@@ -104,14 +110,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                         return (
                             <li key={item.route} style={{ marginBottom: '4px', padding: `0 ${spacing.sm}` }}>
                                 <button
-                                    onClick={() => navigate(item.route)}
-                                    title={!isOpen ? item.label : ''}
+                                    onClick={() => {
+                                        navigate(item.route);
+                                        if (isMobile) toggleSidebar(); // Close sidebar on mobile after navigation
+                                    }}
+                                    title={(!isOpen && !isMobile) ? item.label : ''}
                                     style={{
                                         width: '100%',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: isOpen ? 'flex-start' : 'center',
-                                        padding: isOpen ? '12px 16px' : '12px',
+                                        justifyContent: (isOpen || isMobile) ? 'flex-start' : 'center',
+                                        padding: (isOpen || isMobile) ? '12px 16px' : '12px',
                                         backgroundColor: isActive ? `${colors.primary.medium}15` : 'transparent',
                                         color: isActive ? colors.primary.dark : colors.text.secondary,
                                         border: 'none',
@@ -119,11 +128,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                         cursor: 'pointer',
                                         transition: 'all 0.2s ease',
                                         fontWeight: isActive ? 600 : 400,
-                                        gap: isOpen ? '12px' : '0'
+                                        gap: (isOpen || isMobile) ? '12px' : '0',
+                                        fontSize: isMobile ? '0.95rem' : '1rem'
                                     }}
                                 >
                                     {React.cloneElement(item.icon as React.ReactElement, { color: isActive ? colors.primary.medium : 'currentColor' })}
-                                    {isOpen && <span>{item.label}</span>}
+                                    {(isOpen || isMobile) && <span>{item.label}</span>}
                                 </button>
                             </li>
                         );
@@ -142,19 +152,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                         width: '100%',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: isOpen ? 'flex-start' : 'center',
+                        justifyContent: (isOpen || isMobile) ? 'flex-start' : 'center',
                         padding: '12px',
                         backgroundColor: 'transparent',
                         color: colors.alert.critical,
-                        border: `1px solid ${isOpen ? `${colors.alert.critical}30` : 'transparent'}`,
+                        border: `1px solid ${(isOpen || isMobile) ? `${colors.alert.critical}30` : 'transparent'}`,
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        gap: isOpen ? '12px' : '0',
+                        gap: (isOpen || isMobile) ? '12px' : '0',
                         transition: 'all 0.2s'
                     }}
                 >
                     <LogOut size={20} />
-                    {isOpen && <span>Sair</span>}
+                    {(isOpen || isMobile) && <span>Sair</span>}
                 </button>
             </div>
         </aside>

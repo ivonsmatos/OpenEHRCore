@@ -83,25 +83,24 @@ def create_patient(request):
         data = request.data
         
         # Validar campos obrigatórios
-        required_fields = ['first_name', 'last_name', 'birth_date']
+        required_fields = ['first_name', 'last_name', 'birth_date', 'cpf']
         for field in required_fields:
-            if field not in data:
+            if field not in data or not data[field]:
                 return Response({
                     "error": f"Campo obrigatório ausente: {field}"
                 }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Validar CPF se fornecido
+        # Validar CPF (agora obrigatório)
         cpf = data.get('cpf')
-        if cpf:
-            # Sanitizar CPF (remover formatação)
-            cpf = sanitize_cpf(cpf)
-            
-            # Validar CPF
-            if not validate_cpf(cpf):
-                return Response({
-                    "error": "CPF inválido",
-                    "detail": "O CPF fornecido não é válido. Verifique o número e o dígito verificador."
-                }, status=status.HTTP_400_BAD_REQUEST)
+        # Sanitizar CPF (remover formatação)
+        cpf = sanitize_cpf(cpf)
+        
+        # Validar CPF
+        if not validate_cpf(cpf):
+            return Response({
+                "error": "CPF inválido",
+                "detail": "O CPF fornecido não é válido. Verifique o número e o dígito verificador."
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         fhir_service = FHIRService()
         
