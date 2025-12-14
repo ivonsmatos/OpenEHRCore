@@ -31,6 +31,20 @@
 
 ---
 
+## 📸 Screenshots
+
+### Dashboard
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Patient Management
+
+![Patients](docs/screenshots/patients.png)
+
+### Appointment Calendar
+
+![Appointments](docs/screenshots/appointments.png)
+
 ## 🏗️ Architecture
 
 ```
