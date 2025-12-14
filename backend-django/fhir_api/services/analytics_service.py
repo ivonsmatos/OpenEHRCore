@@ -83,7 +83,9 @@ class AnalyticsService:
                     elif age <= 50: age_groups["31-50"] += 1
                     elif age <= 70: age_groups["51-70"] += 1
                     else: age_groups["71+"] += 1
-                except:
+                except (ValueError, AttributeError, TypeError) as e:
+                    # Invalid birthDate format or missing field
+                    logger.debug(f"Invalid birthDate in patient demographics: {e}")
                     pass
 
         return {
@@ -152,25 +154,56 @@ class AnalyticsService:
         Gera os KPIs específicos do 'Medical Template'.
         Puxa dados reais do FHIR.
         """
-        print("=== DEBUG: get_kpi_summary NOVO CODIGO v2 ===")  # Debug
+        print("=== DEBUG: get_kpi_summary NOVO CODIGO v3 ===")  # Debug
         
         # 1. New Patients (Total Pacientes)
         total_patients = len(self._fetch_all_resources("Patient", limit=1000))
         print(f"DEBUG: total_patients = {total_patients}")
         
         # 2. OPD Patients (Outpatient Department - Ambulatorial)
-        # Count appointments with status booked, arrived, or fulfilled
-        appointments = self._fetch_all_resources("Appointment", limit=500)
-        print(f"DEBUG: appointments fetched = {len(appointments)}")
+        # Use Encounters with class = 'AMB' (ambulatory) or type = outpatient
+        encounters = self._fetch_all_resources("Encounter", limit=500)
+        print(f"DEBUG: encounters fetched = {len(encounters)}")
         
-        active_statuses = ["booked", "arrived", "fulfilled", "pending"]
-        opd_count = sum(1 for a in appointments if a.get("status") in active_statuses)
+        # Filter for ambulatory encounters (class.code = 'AMB' or status = 'in-progress', 'finished')
+        opd_count = 0
+        for enc in encounters:
+            enc_class = enc.get("class", {})
+            if isinstance(enc_class, dict):
+                class_code = enc_class.get("code", "")
+                if class_code in ["AMB", "EMER", "HH"]:  # Ambulatory, Emergency, Home Health
+                    opd_count += 1
+            elif enc.get("status") in ["in-progress", "finished"]:
+                opd_count += 1
+                
         print(f"DEBUG: opd_count = {opd_count}")
         
         # 3. Operations (Cirurgias)
-        # Count Procedure resources - these represent surgical procedures
-        procedures = self._fetch_all_resources("Procedure", limit=100)
-        surgeries_count = len(procedures)
+        # Use ServiceRequest with category = 387713003 (Surgical procedure) or intent = order
+        service_requests = self._fetch_all_resources("ServiceRequest", limit=100)
+        print(f"DEBUG: service_requests fetched = {len(service_requests)}")
+        
+        # Filter for surgical procedures
+        surgeries_count = 0
+        for sr in service_requests:
+            # Check category for surgical codes
+            categories = sr.get("category", [])
+            for cat in categories:
+                codings = cat.get("coding", [])
+                for coding in codings:
+                    code = coding.get("code", "")
+                    display = coding.get("display", "").lower()
+                    if "surgery" in display or "surgical" in display or "cirurgia" in display:
+                        surgeries_count += 1
+                        break
+                else:
+                    continue
+                break
+            
+            # Also count if intent is 'order' and status is active
+            if sr.get("intent") == "order" and sr.get("status") in ["active", "completed"]:
+                surgeries_count += 1
+                
         print(f"DEBUG: surgeries_count = {surgeries_count}")
         
         # 4. Visitors

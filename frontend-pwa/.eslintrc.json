@@ -1,0 +1,66 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react-hooks/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": [
+    "react",
+    "@typescript-eslint"
+  ],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    
+    /**
+     * 🎨 DESIGN SYSTEM ENFORCEMENT
+     * Proíbe cores hexadecimais hardcoded
+     */
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "Literal[value=/#[0-9A-Fa-f]{3,6}/]",
+        "message": "🚨 Use variáveis do Design System (colors.primary.dark) em vez de cores hexadecimais hardcoded (#1e3a5f)"
+      },
+      {
+        "selector": "TemplateLiteral > TemplateElement[value.raw=/#[0-9A-Fa-f]{3,6}/]",
+        "message": "🚨 Use variáveis do Design System em template literals"
+      }
+    ],
+
+    /**
+     * ♿ ACESSIBILIDADE
+     * Avisa sobre práticas ruins de acessibilidade
+     */
+    "no-restricted-properties": [
+      "warn",
+      {
+        "object": "style",
+        "property": "backgroundColor",
+        "message": "⚠️ Prefira usar classes Tailwind ou variáveis do Design System em vez de inline styles"
+      },
+      {
+        "object": "style",
+        "property": "color",
+        "message": "⚠️ Prefira usar classes Tailwind ou variáveis do Design System em vez de inline styles"
+      }
+    ]
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

@@ -22,6 +22,20 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId, onClose }) => {
         const fetchSummary = async () => {
             try {
                 setLoading(true);
+                
+                // Validação básica do patientId
+                if (!patientId || patientId.trim() === '') {
+                    throw new Error('ID do paciente não fornecido');
+                }
+
+                // Validação de formato UUID (opcional - apenas aviso)
+                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(patientId);
+                const isNumeric = /^\d+$/.test(patientId);
+                
+                if (!isUUID && !isNumeric) {
+                    console.warn('[AICopilot] ID do paciente não parece ser UUID nem numérico:', patientId);
+                }
+
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/summary/${patientId}/`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -29,20 +43,41 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId, onClose }) => {
                 });
 
                 if (!response.ok) {
-                    const errData = await response.json().catch(() => ({ error: 'Falha ao conectar' }));
-                    throw new Error(errData.error || 'Falha ao gerar resumo');
+                    const errData = await response.json().catch(() => ({ 
+                        error: 'Falha ao conectar',
+                        detail: `Status ${response.status}` 
+                    }));
+                    
+                    // Tratamento específico para diferentes status codes
+                    if (response.status === 400) {
+                        const errorMsg = errData.detail || errData.error || 'Formato de ID inválido';
+                        if (isNumeric && !isUUID) {
+                            throw new Error(`${errorMsg}. O backend espera um UUID, mas recebeu ID numérico: ${patientId}`);
+                        } else {
+                            throw new Error(errorMsg);
+                        }
+                    } else if (response.status === 404) {
+                        throw new Error('Paciente não encontrado no sistema.');
+                    } else if (response.status === 401) {
+                        throw new Error('Não autorizado. Faça login novamente.');
+                    } else {
+                        throw new Error(errData.error || 'Falha ao gerar resumo');
+                    }
                 }
 
                 const data = await response.json();
                 setSummary(data.summary);
             } catch (err: any) {
-                // If message contains "Patient not found" or "404", be specific
+                // Tratamento de erro melhorado
                 let msg = err.message || "Não foi possível conectar ao serviço de IA.";
-                if (msg.includes("404") || msg.includes("not found")) {
-                    msg = "Paciente não encontrado. Verifique se o ID é válido.";
+                
+                // Se for erro de rede
+                if (err.name === 'TypeError' && msg.includes('fetch')) {
+                    msg = "Erro de conexão. Verifique se o backend está rodando.";
                 }
+                
                 setError(msg);
-                console.error(err);
+                console.error('[AICopilot] Erro ao buscar resumo:', err);
             } finally {
                 setLoading(false);
             }
@@ -50,8 +85,11 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId, onClose }) => {
 
         if (patientId) {
             fetchSummary();
+        } else {
+            setError('ID do paciente não fornecido');
+            setLoading(false);
         }
-    }, [patientId]);
+    }, [patientId, token]);
 
     if (!patientId) return null;
 
@@ -92,9 +130,27 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId, onClose }) => {
                         Gerando insights clínicos...
                     </div>
                 ) : error ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, color: colors.alert.warning, fontSize: '0.9rem' }}>
-                        <AlertTriangle size={16} />
-                        {error}
+                    <div style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        gap: spacing.sm, 
+                        padding: spacing.md,
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderRadius: '8px',
+                        border: `1px solid ${colors.alert.warning}`
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, color: colors.alert.warning, fontSize: '0.9rem', fontWeight: 600 }}>
+                            <AlertTriangle size={16} />
+                            Não foi possível gerar o resumo
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: colors.text.secondary, lineHeight: '1.4' }}>
+                            {error}
+                        </p>
+                        {error.includes('UUID') || error.includes('formato') ? (
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: colors.text.tertiary, fontStyle: 'italic' }}>
+                                💡 Dica: Certifique-se de que o paciente foi criado corretamente no sistema com um ID válido.
+                            </p>
+                        ) : null}
                     </div>
                 ) : (
                     <div className="ai-summary-content" style={{

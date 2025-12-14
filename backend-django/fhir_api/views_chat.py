@@ -144,7 +144,9 @@ def list_messages(request):
                             'name': att.get('title', 'attachment'),
                             'type': att.get('contentType', 'application/octet-stream'),
                             'size': att.get('size', 0),
-                            'data': att.get('data')  # base64
+                            'has_data': bool(att.get('data')),  # Flag indicating attachment exists
+                            'message_id': r.get('id')  # Reference for download
+                            # Do NOT include 'data' here to avoid 431 errors
                         }
                 
             sender_ref = r.get('sender', {}).get('reference', '')
@@ -247,3 +249,39 @@ def send_message(request):
         logger.error(f"Error sending message: {e}")
         # Return the exception details for debugging
         return Response({"error": f"Internal Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+@api_view(['GET'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def download_attachment(request, message_id):
+    """
+    Download attachment from a specific message.
+    Returns the base64 data for the attachment.
+    """
+    try:
+        fhir = FHIRService()
+        
+        # Get the Communication resource
+        resource = fhir.get_resource('Communication', message_id)
+        
+        if not resource:
+            return Response({"error": "Message not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Find attachment in payload
+        if resource.get('payload'):
+            for payload_item in resource['payload']:
+                if 'contentAttachment' in payload_item:
+                    att = payload_item['contentAttachment']
+                    
+                    # Return attachment data
+                    return Response({
+                        'name': att.get('title', 'attachment'),
+                        'type': att.get('contentType', 'application/octet-stream'),
+                        'size': att.get('size', 0),
+                        'data': att.get('data')  # base64
+                    }, status=status.HTTP_200_OK)
+        
+        return Response({"error": "No attachment found"}, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        logger.error(f"Error downloading attachment: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

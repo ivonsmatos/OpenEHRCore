@@ -212,8 +212,11 @@ def diagnostic_report_detail(request, report_id):
                                 'value': obs.get('valueQuantity', {}).get('value'),
                                 'unit': obs.get('valueQuantity', {}).get('unit')
                             })
-                        except:
-                            pass
+                        except FHIRServiceException as e:
+                            # Log but continue - individual observation failure shouldn't break entire report
+                            logger.warning(f"Failed to fetch observation {obs_id}: {str(e)}")
+                        except Exception as e:
+                            logger.warning(f"Unexpected error fetching observation {obs_id}: {str(e)}")
                 result['_observations'] = observations
             
             return Response(result)

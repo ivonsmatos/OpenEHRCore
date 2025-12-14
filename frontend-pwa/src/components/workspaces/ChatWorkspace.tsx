@@ -57,6 +57,8 @@ const ChatWorkspace: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [loadingPractitioners, setLoadingPractitioners] = useState(false);
     const [attachment, setAttachment] = useState<{ name: string; type: string; size: number; data: string } | null>(null);
+    const [imageModal, setImageModal] = useState<{ src: string; name: string } | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
@@ -231,8 +233,10 @@ const ChatWorkspace: React.FC = () => {
 
     // Fetch messages when channel changes
     useEffect(() => {
+        // Clear messages first to avoid showing wrong conversation
+        setMessages([]);
         fetchMessages();
-    }, [fetchMessages]);
+    }, [selectedChannel]);
 
     // Auto-refresh messages
     useEffect(() => {
@@ -316,8 +320,99 @@ const ChatWorkspace: React.FC = () => {
         }
     };
 
+    // Handle attachment click
+    const handleAttachmentClick = async (msg: Message) => {
+        if (!msg.attachment) return;
+
+        // If attachment has data (recent message), use it directly
+        if (msg.attachment.data) {
+            if (msg.attachment.type.startsWith('image/')) {
+                // Open image in modal
+                setImageModal({ src: msg.attachment.data, name: msg.attachment.name });
+            } else {
+                // Download file
+                downloadFile(msg.attachment.data, msg.attachment.name);
+            }
+            return;
+        }
+
+        // Otherwise, fetch from backend
+        try {
+            const headers = getAuthHeaders();
+            const response = await axios.get(
+                `${API_URL}/chat/attachment/${msg.id}/`,
+                { headers }
+            );
+
+            const attachmentData = response.data;
+            if (attachmentData.data) {
+                const base64Data = `data:${attachmentData.type};base64,${attachmentData.data}`;
+                
+                if (attachmentData.type.startsWith('image/')) {
+                    // Open image in modal
+                    setImageModal({ src: base64Data, name: attachmentData.name });
+                } else {
+                    // Download file
+                    downloadFile(base64Data, attachmentData.name);
+                }
+            }
+        } catch (error) {
+            console.error('Error downloading attachment:', error);
+            alert('Erro ao baixar anexo');
+        }
+    };
+
+    // Download file helper
+    const downloadFile = (dataUrl: string, filename: string) => {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Compress image before uploading
+    const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Max dimensions 800x800
+                    const maxSize = 800;
+                    if (width > maxSize || height > maxSize) {
+                        if (width > height) {
+                            height = (height / width) * maxSize;
+                            width = maxSize;
+                        } else {
+                            width = (width / height) * maxSize;
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to JPEG with 0.7 quality for better compression
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.onerror = reject;
+                img.src = e.target?.result as string;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
     // Handle file selection
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -355,17 +450,33 @@ const ChatWorkspace: React.FC = () => {
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = () => {
-            const base64 = reader.result as string;
+        try {
+            let base64: string;
+            let finalType = file.type || 'text/plain';
+            
+            // Compress images to avoid 431 errors
+            if (file.type.startsWith('image/')) {
+                base64 = await compressImage(file);
+                finalType = 'image/jpeg'; // Always JPEG after compression
+            } else {
+                // Non-images: read as-is
+                base64 = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                });
+            }
+            
             setAttachment({
                 name: file.name,
-                type: file.type || 'text/plain',
-                size: file.size,
+                type: finalType,
+                size: base64.length, // Update size to compressed size
                 data: base64
             });
-        };
-        reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Error processing file:', error);
+            alert('Erro ao processar arquivo');
+        }
     };
 
     // Remove attachment
@@ -430,29 +541,45 @@ const ChatWorkspace: React.FC = () => {
                     <h3 className="sidebar-title sidebar-title--dm">
                         Mensagens Diretas
                         <span className="practitioner-count">
-                            ({practitioners.length})
+                            ({channels.filter(c => c.type === 'dm').length})
                         </span>
                     </h3>
 
                     {channels.filter(c => c.type === 'dm').length === 0 ? (
                         <div className="no-practitioners">
-                            <p>Nenhum profissional</p>
-                            <button
-                                className="new-chat-button"
-                                onClick={() => navigate('/practitioners')}
-                            >
-                                + Nova Conversa
-                            </button>
+                            <p>Nenhum profissional cadastrado</p>
+                            <p className="no-practitioners-hint">Cadastre profissionais para iniciar conversas</p>
                         </div>
                     ) : (
                         <>
-                            <button
-                                className="new-chat-button new-chat-button--inline"
-                                onClick={() => navigate('/practitioners')}
-                            >
-                                + Iniciar Nova Conversa
-                            </button>
-                            {channels.filter(c => c.type === 'dm').map(channel => (
+                            {/* Search Input */}
+                            <div className="practitioner-search">
+                                <input
+                                    type="text"
+                                    placeholder="Buscar profissional..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="search-input"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        className="search-clear"
+                                        onClick={() => setSearchQuery('')}
+                                        type="button"
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {channels
+                                .filter(c => c.type === 'dm')
+                                .filter(c => 
+                                    !searchQuery || 
+                                    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                    c.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                                )
+                                .map(channel => (
                                 <div
                                     key={channel.id}
                                     onClick={() => setSelectedChannel(channel.id)}
@@ -470,6 +597,22 @@ const ChatWorkspace: React.FC = () => {
                                     </div>
                                 </div>
                             ))}
+                            
+                            {/* No results message */}
+                            {searchQuery && channels.filter(c => c.type === 'dm').filter(c => 
+                                c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                c.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                            ).length === 0 && (
+                                <div className="no-results">
+                                    <p>🔍 Nenhum profissional encontrado</p>
+                                    <button
+                                        className="clear-search-button"
+                                        onClick={() => setSearchQuery('')}
+                                    >
+                                        Limpar busca
+                                    </button>
+                                </div>
+                            )}
                         </>
                     )}
                 </Card>
@@ -509,7 +652,39 @@ const ChatWorkspace: React.FC = () => {
                                             })}
                                         </span>
                                     </div>
-                                    <p className="message-content">{msg.content}</p>
+                                    {msg.content && <p className="message-content">{msg.content}</p>}
+                                    {msg.attachment && (
+                                        <div 
+                                            className="message-attachment"
+                                            onClick={() => handleAttachmentClick(msg)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            {msg.attachment.type.startsWith('image/') ? (
+                                                msg.attachment.data ? (
+                                                    <img 
+                                                        src={msg.attachment.data} 
+                                                        alt={msg.attachment.name}
+                                                        className="message-attachment-image"
+                                                        title="Clique para ampliar"
+                                                    />
+                                                ) : (
+                                                    <div className="message-attachment-file">
+                                                        <span className="attachment-icon">🖼️</span>
+                                                        <span className="attachment-name">{msg.attachment.name}</span>
+                                                        <span className="attachment-size">({formatFileSize(msg.attachment.size)})</span>
+                                                        <span className="attachment-hint">Clique para visualizar</span>
+                                                    </div>
+                                                )
+                                            ) : (
+                                                <div className="message-attachment-file">
+                                                    <span className="attachment-icon">📎</span>
+                                                    <span className="attachment-name">{msg.attachment.name}</span>
+                                                    <span className="attachment-size">({formatFileSize(msg.attachment.size)})</span>
+                                                    <span className="attachment-hint">Clique para baixar</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             ))
                         )}
@@ -580,6 +755,25 @@ const ChatWorkspace: React.FC = () => {
                     </div>
                 </Card>
             </div>
+
+            {/* Image Modal */}
+            {imageModal && (
+                <div 
+                    className="image-modal"
+                    onClick={() => setImageModal(null)}
+                >
+                    <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            className="image-modal-close"
+                            onClick={() => setImageModal(null)}
+                        >
+                            ×
+                        </button>
+                        <img src={imageModal.src} alt={imageModal.name} />
+                        <p className="image-modal-name">{imageModal.name}</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

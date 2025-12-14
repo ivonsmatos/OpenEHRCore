@@ -33,7 +33,8 @@ for root, dirs, files in os.walk(ROOT):
             try:
                 with open(path, 'r', encoding='utf-8') as f:
                     content = f.read()
-            except:
+            except (IOError, UnicodeDecodeError) as e:
+                print(f"Skipping {path}: {str(e)}")
                 continue
             
             # Use regex to find block: if (loading) return <div...>...</div>;

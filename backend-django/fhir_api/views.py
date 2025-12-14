@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
 from .services.fhir_core import FHIRService, FHIRServiceException
+from .utils.validators import validate_cpf, sanitize_cpf
 
 
 logger = logging.getLogger(__name__)
@@ -89,13 +90,26 @@ def create_patient(request):
                     "error": f"Campo obrigatório ausente: {field}"
                 }, status=status.HTTP_400_BAD_REQUEST)
         
+        # Validar CPF se fornecido
+        cpf = data.get('cpf')
+        if cpf:
+            # Sanitizar CPF (remover formatação)
+            cpf = sanitize_cpf(cpf)
+            
+            # Validar CPF
+            if not validate_cpf(cpf):
+                return Response({
+                    "error": "CPF inválido",
+                    "detail": "O CPF fornecido não é válido. Verifique o número e o dígito verificador."
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
         fhir_service = FHIRService()
         
         result = fhir_service.create_patient_resource(
             first_name=data.get('first_name'),
             last_name=data.get('last_name'),
             birth_date=data.get('birth_date'),
-            cpf=data.get('cpf'),
+            cpf=cpf,  # Usar CPF sanitizado
             gender=data.get('gender'),
             telecom=data.get('telecom'),
         )

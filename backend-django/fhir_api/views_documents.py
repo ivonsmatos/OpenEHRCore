@@ -211,8 +211,12 @@ def generate_pdf(request, composition_id):
                 patient_name = f"{given} {family}".strip()
             else:
                 patient_name = subject_ref or "N/A"
-        except:
-             patient_name = "Erro ao buscar nome do paciente"
+        except FHIRServiceException as e:
+            logger.warning(f"Could not fetch patient name for document: {e}")
+            patient_name = "Erro ao buscar nome do paciente"
+        except Exception as e:
+            logger.error(f"Unexpected error fetching patient name: {e}", exc_info=True)
+            patient_name = "Erro ao buscar nome do paciente"
 
         # 3. Buscar Nome do Profissional
         practitioner_name = "Profissional Não Identificado"
@@ -222,8 +226,10 @@ def generate_pdf(request, composition_id):
                  practitioner_name = "Dr. Ivon Matos (Responsável Técnico)" # Valor fixo para o mock
             elif author_ref:
                  practitioner_name = author_ref
-        except:
-            pass
+        except KeyError as e:
+            logger.debug(f"Missing author field in document: {e}")
+        except Exception as e:
+            logger.warning(f"Error fetching practitioner name: {e}")
 
         # 4. Construir o PDF
         buffer = BytesIO()

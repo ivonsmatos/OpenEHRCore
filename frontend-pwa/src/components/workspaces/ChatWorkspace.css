@@ -186,8 +186,88 @@
     transform: translateY(-1px);
 }
 
-.new-chat-button--inline {
-    margin-top: 0.5rem;
+.new-chat-button--compact {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Practitioner Search */
+.practitioner-search {
+    position: relative;
+    margin-bottom: 0.75rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    padding-right: 2rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.search-input::placeholder {
+    color: #94a3b8;
+}
+
+.search-clear {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.search-clear:hover {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* No Results */
+.no-results {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.no-results p {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+}
+
+.clear-search-button {
+    background: #f1f5f9;
+    border: 1px solid #e5e7eb;
+    color: #64748b;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clear-search-button:hover {
+    background: #e5e7eb;
+    color: #475569;
 }
 
 /* Messages Area */
@@ -388,6 +468,24 @@
 
 /* Message with attachment */
 .message-attachment {
+    margin-top: 0.5rem;
+}
+
+.message-attachment-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.message-attachment-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.message-attachment-file {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -395,21 +493,101 @@
     background: #f8fafc;
     border: 1px solid #e5e7eb;
     border-radius: 6px;
-    margin-top: 0.5rem;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, border-color 0.2s;
 }
 
-.message-attachment:hover {
-    background: #f1f5f9;
+.message-attachment-file:hover {
+    background: #e0f2fe;
+    border-color: #0ea5e9;
 }
 
-.message-attachment-icon {
+.message-attachment-file .attachment-icon {
     font-size: 1rem;
 }
 
-.message-attachment-name {
+.message-attachment-file .attachment-name {
     font-size: 0.875rem;
     color: #0369a1;
-    text-decoration: underline;
+    font-weight: 500;
+}
+
+.message-attachment-file .attachment-hint {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-left: auto;
+    font-style: italic;
+}
+
+/* Image Modal */
+.image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.image-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.image-modal-content img {
+    max-width: 100%;
+    max-height: calc(90vh - 80px);
+    display: block;
+    border-radius: 8px;
+}
+
+.image-modal-close {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 40px;
+    height: 40px;
+    background: #ef4444;
+    color: white;
+    border: 3px solid white;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.image-modal-close:hover {
+    background: #b91c1c;
+}
+
+.image-modal-name {
+    margin: 0.75rem 0 0 0;
+    text-align: center;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
 }

@@ -22,8 +22,9 @@ def check_endpoint(name, url):
             content = response.json()
             print("Body (JSON):")
             print(json.dumps(content, indent=2, ensure_ascii=False))
-        except:
-            print("Body (Text/HTML) - Saving to last_error.html")
+        except (ValueError, json.JSONDecodeError) as e:
+            print(f"Body (Text/HTML) - Not JSON: {str(e)}")
+            print("Saving to last_error.html")
             with open("last_error.html", "w", encoding="utf-8") as f:
                 f.write(response.text)
             print(response.text[:200]) # First 200 chars

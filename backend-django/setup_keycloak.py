@@ -85,7 +85,7 @@ if __name__ == "__main__":
         try:
             requests.get(f"{KEYCLOAK_URL}/realms/master")
             break
-        except:
+        except requests.exceptions.RequestException as e:
             time.sleep(2)
             print(".", end="", flush=True)
     print("\nStarting setup...")

@@ -28,7 +28,8 @@ def process_file(path):
     try:
         with open(path, 'r', encoding='utf-8') as f:
             content = f.read()
-    except:
+    except (IOError, UnicodeDecodeError) as e:
+        print(f"Skipping {path}: {str(e)}")
         return
 
     targets = ["Carregando...", "Loading...", "Spinner"]

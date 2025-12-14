@@ -623,8 +623,18 @@ class LGPDService:
                     "oldest": min([r.get("meta", {}).get("lastUpdated", "") for r in resources]) if resources else None,
                     "newest": max([r.get("meta", {}).get("lastUpdated", "") for r in resources]) if resources else None
                 }
-            except:
-                pass
+            except FHIRServiceException as e:
+                logger.warning(f"Could not fetch {resource_type} for data inventory: {e}")
+                data_inventory["resources"][resource_type] = {
+                    "count": 0,
+                    "error": str(e)
+                }
+            except Exception as e:
+                logger.error(f"Unexpected error fetching {resource_type} inventory: {e}", exc_info=True)
+                data_inventory["resources"][resource_type] = {
+                    "count": 0,
+                    "error": "Internal error"
+                }
         
         data_inventory["total_records"] = sum(
             d["count"] for d in data_inventory["resources"].values()
@@ -652,8 +662,17 @@ class LGPDService:
                     for c in consents
                 ]
             }
-        except:
-            report["sections"]["consents"] = {"error": "Could not fetch consents"}
+        except FHIRServiceException as e:
+            logger.warning(f"Could not fetch consents for patient {patient_id}: {e}")
+            report["sections"]["consents"] = {
+                "error": "Could not fetch consents",
+                "detail": str(e)
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error fetching consents: {e}", exc_info=True)
+            report["sections"]["consents"] = {
+                "error": "Internal error fetching consents"
+            }
         
         # 3. Access Logs (last 90 days)
         access_logs = cls.get_access_logs(

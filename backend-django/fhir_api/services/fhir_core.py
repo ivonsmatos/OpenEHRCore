@@ -10,8 +10,9 @@ Princípio: O HAPI FHIR é a autoridade absoluta dos dados clínicos.
 
 import requests
 import logging
+import threading
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.conf import settings
 
 from fhirclient.models.patient import Patient
@@ -49,6 +50,11 @@ class FHIRServiceException(Exception):
     pass
 
 
+class CircuitBreakerOpen(FHIRServiceException):
+    """Exceção lançada quando circuit breaker está aberto."""
+    pass
+
+
 class FHIRService:
     """
     Serviço centralizado para comunicação com HAPI FHIR Server.
@@ -59,11 +65,22 @@ class FHIRService:
     - Tratamento de erros padronizado
     - Logging de todas as operações
     - Cache para buscas frequentes (TTL 5 minutos)
+    - Circuit Breaker para resiliência
     """
     
     # Cache class-level para buscas (shared entre instâncias)
     _cache: Dict[str, tuple] = {}
     _cache_ttl_seconds = 300  # 5 minutos
+    
+    # Circuit Breaker state (shared entre instâncias)
+    _circuit_open = False
+    _circuit_open_until: Optional[datetime] = None
+    _failure_count = 0
+    _lock = threading.Lock()
+    
+    # Circuit Breaker configuração
+    FAILURE_THRESHOLD = getattr(settings, 'FHIR_CIRCUIT_BREAKER_THRESHOLD', 5)
+    CIRCUIT_OPEN_DURATION = getattr(settings, 'FHIR_CIRCUIT_BREAKER_DURATION', 60)
 
     def __init__(self, user: Optional[Any] = None):
         self.base_url = settings.FHIR_SERVER_URL
@@ -74,6 +91,77 @@ class FHIRService:
             'Accept': 'application/fhir+json',
         })
         self.user = user # Contexto do usuário para auditoria (Provenance)
+    
+    @classmethod
+    def _check_circuit(cls):
+        """
+        Verifica se circuit breaker está aberto.
+        
+        Raises:
+            CircuitBreakerOpen: Se circuito está aberto
+        """
+        with cls._lock:
+            if cls._circuit_open:
+                if datetime.now() > cls._circuit_open_until:
+                    logger.info("Circuit breaker: Attempting to close (half-open state)")
+                    cls._circuit_open = False
+                    cls._failure_count = 0
+                else:
+                    seconds_remaining = int((cls._circuit_open_until - datetime.now()).total_seconds())
+                    raise CircuitBreakerOpen(
+                        f"FHIR Server circuit breaker OPEN. "
+                        f"Retry after {seconds_remaining}s"
+                    )
+    
+    @classmethod
+    def _record_success(cls):
+        """Registra sucesso na chamada FHIR."""
+        with cls._lock:
+            if cls._failure_count > 0:
+                logger.info(f"FHIR call succeeded - resetting failure count from {cls._failure_count} to 0")
+            cls._failure_count = 0
+    
+    @classmethod
+    def _record_failure(cls):
+        """Registra falha e abre circuito se necessário."""
+        with cls._lock:
+            cls._failure_count += 1
+            logger.warning(f"FHIR call failed - failure count: {cls._failure_count}/{cls.FAILURE_THRESHOLD}")
+            
+            if cls._failure_count >= cls.FAILURE_THRESHOLD:
+                cls._circuit_open = True
+                cls._circuit_open_until = datetime.now() + timedelta(seconds=cls.CIRCUIT_OPEN_DURATION)
+                logger.error(
+                    f"Circuit breaker OPENED after {cls._failure_count} failures. "
+                    f"Will retry at {cls._circuit_open_until.strftime('%H:%M:%S')}"
+                )
+    
+    @classmethod
+    def get_circuit_state(cls) -> Dict[str, Any]:
+        """
+        Retorna estado atual do circuit breaker.
+        
+        Returns:
+            Dict com estado do circuito
+        """
+        with cls._lock:
+            return {
+                "open": cls._circuit_open,
+                "failure_count": cls._failure_count,
+                "threshold": cls.FAILURE_THRESHOLD,
+                "retry_at": cls._circuit_open_until.isoformat() if cls._circuit_open_until else None,
+                "seconds_until_retry": int((cls._circuit_open_until - datetime.now()).total_seconds()) 
+                    if cls._circuit_open and cls._circuit_open_until else 0
+            }
+    
+    @classmethod
+    def reset_circuit(cls):
+        """Reset manual do circuit breaker (para testes/admin)."""
+        with cls._lock:
+            cls._circuit_open = False
+            cls._circuit_open_until = None
+            cls._failure_count = 0
+            logger.info("Circuit breaker manually reset")
 
     @classmethod
     def _get_cache_key(cls, resource_type: str, params: Dict[str, Any]) -> str:
@@ -132,19 +220,38 @@ class FHIRService:
             bool: True se o servidor está saudável
             
         Raises:
+            CircuitBreakerOpen: Se circuit breaker está aberto
             FHIRServiceException: Se o servidor não responde
         """
+        # Verificar circuit breaker antes de tentar
+        self._check_circuit()
+        
         try:
             response = self.session.get(
                 f"{self.base_url}/metadata",
                 timeout=self.timeout
             )
             response.raise_for_status()
+            
+            # Sucesso - resetar contadores
+            self._record_success()
             logger.info("FHIR Server health check: OK")
             return True
-        except requests.RequestException as e:
-            logger.error(f"FHIR Server health check failed: {str(e)}")
+            
+        except requests.exceptions.Timeout as e:
+            self._record_failure()
+            logger.error(f"FHIR Server health check timeout: {str(e)}")
+            raise FHIRServiceException(f"FHIR Server timeout: {str(e)}")
+            
+        except requests.exceptions.ConnectionError as e:
+            self._record_failure()
+            logger.error(f"FHIR Server connection error: {str(e)}")
             raise FHIRServiceException(f"FHIR Server unreachable: {str(e)}")
+            
+        except requests.RequestException as e:
+            self._record_failure()
+            logger.error(f"FHIR Server health check failed: {str(e)}")
+            raise FHIRServiceException(f"FHIR Server error: {str(e)}")
 
     def create_resource(self, resource_type: str, resource_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -156,7 +263,14 @@ class FHIRService:
             
         Returns:
             Dict com o recurso criado (incluindo ID)
+            
+        Raises:
+            CircuitBreakerOpen: Se circuit breaker está aberto
+            FHIRServiceException: Se criação falhar
         """
+        # Verificar circuit breaker antes de tentar
+        self._check_circuit()
+        
         try:
             logger.info(f"Creating generic {resource_type}")
             response = self.session.post(
@@ -166,15 +280,34 @@ class FHIRService:
             )
             
             if response.status_code not in [200, 201]:
+                self._record_failure()
                 logger.error(f"Failed to create {resource_type}: {response.text}")
                 raise FHIRServiceException(f"Failed to create {resource_type}: {response.status_code}")
-                
+            
+            # Sucesso - resetar contadores
+            self._record_success()
+            
             result = response.json()
             logger.info(f"{resource_type} created successfully: ID={result.get('id')}")
             return result
+        
+        except requests.exceptions.Timeout as e:
+            self._record_failure()
+            logger.error(f"Timeout creating {resource_type}: {str(e)}")
+            raise FHIRServiceException(f"Timeout creating {resource_type}: {str(e)}")
+            
+        except requests.exceptions.ConnectionError as e:
+            self._record_failure()
+            logger.error(f"Connection error creating {resource_type}: {str(e)}")
+            raise FHIRServiceException(f"Connection failed: {str(e)}")
+            
+        except FHIRServiceException:
+            # Já logou e registrou falha
+            raise
             
         except Exception as e:
-            logger.error(f"Error creating {resource_type}: {str(e)}")
+            self._record_failure()
+            logger.error(f"Error creating {resource_type}: {str(e)}", exc_info=True)
             raise FHIRServiceException(f"Error creating {resource_type}: {str(e)}")
 
     def update_resource(self, resource_type: str, resource_id: str, resource_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -427,8 +560,12 @@ class FHIRService:
             Dict com o recurso Patient completo
             
         Raises:
+            CircuitBreakerOpen: Se circuit breaker está aberto
             FHIRServiceException: Se o recurso não for encontrado
         """
+        # Verificar circuit breaker antes de tentar
+        self._check_circuit()
+        
         try:
             response = self.session.get(
                 f"{self.base_url}/Patient/{patient_id}",
@@ -436,14 +573,41 @@ class FHIRService:
             )
             
             if response.status_code == 404:
+                # 404 não é falha de servidor, não registrar no circuit breaker
                 raise FHIRServiceException(f"Patient not found: {patient_id}")
             
             response.raise_for_status()
             
+            # Tentar parsear JSON
+            try:
+                result = response.json()
+            except ValueError as e:
+                # JSON malformado - registrar falha
+                self._record_failure()
+                logger.error(f"Invalid JSON from FHIR server for Patient {patient_id}: {str(e)}")
+                raise FHIRServiceException(f"Invalid JSON response from FHIR server: {str(e)}")
+            
+            # Sucesso - resetar contadores
+            self._record_success()
             logger.info(f"Patient retrieved: ID={patient_id}")
-            return response.json()
+            return result
+        
+        except FHIRServiceException:
+            # 404 ou erro específico - não registrar como falha de infraestrutura
+            raise
+            
+        except requests.exceptions.Timeout as e:
+            self._record_failure()
+            logger.error(f"Timeout retrieving Patient {patient_id}: {str(e)}")
+            raise FHIRServiceException(f"FHIR Server timeout: {str(e)}")
+            
+        except requests.exceptions.ConnectionError as e:
+            self._record_failure()
+            logger.error(f"Connection error retrieving Patient {patient_id}: {str(e)}")
+            raise FHIRServiceException(f"FHIR Server connection failed: {str(e)}")
             
         except requests.RequestException as e:
+            self._record_failure()
             logger.error(f"Error retrieving Patient {patient_id}: {str(e)}")
             raise FHIRServiceException(f"Failed to retrieve Patient: {str(e)}")
 

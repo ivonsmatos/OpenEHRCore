@@ -116,6 +116,7 @@ urlpatterns = [
     path('chat/channels/create/', views_chat.create_channel, name='create_channel'),
     path('chat/messages/', views_chat.list_messages, name='list_messages'),
     path('chat/send/', views_chat.send_message, name='send_message'),
+    path('chat/attachment/<str:message_id>/', views_chat.download_attachment, name='download_attachment'),
 
     # Sprint 16: Inpatient Management (Bed Management)
     path('ipd/locations/', views_ipd.list_locations, name='list_locations'),
