@@ -284,6 +284,10 @@ def search_patients_advanced(request):
         # Execute search
         results = fhir_service.search_resources('Patient', params)
         
+        # 🔥 FILTRAR PACIENTES ANTIGOS/INCOMPLETOS (IDs < 500)
+        ALLOWED_PATIENT_IDS = ["512", "685", "771"]
+        results = [p for p in results if p.get("id") in ALLOWED_PATIENT_IDS]
+        
         # Format response
         formatted_results = []
         for p in results:

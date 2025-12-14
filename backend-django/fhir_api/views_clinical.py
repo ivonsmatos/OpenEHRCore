@@ -100,7 +100,7 @@ def create_diagnostic_report(request):
 @permission_classes([IsAuthenticated])
 def get_diagnostic_reports(request, patient_id):
     """
-    Lista resultados de exames de um paciente.
+    Lista resultados de exames de um paciente com dados completos.
     """
     try:
         fhir_service = FHIRService()
@@ -108,12 +108,59 @@ def get_diagnostic_reports(request, patient_id):
         
         data = []
         for res in results:
+            # Extrair código do exame
+            code_obj = res.get('code', {})
+            code_display = code_obj.get('coding', [{}])[0].get('display', 'Exame sem nome')
+            code_code = code_obj.get('coding', [{}])[0].get('code', '')
+            
+            # Extrair categoria
+            category_obj = res.get('category', [{}])[0] if res.get('category') else {}
+            category_coding = category_obj.get('coding', [{}])[0] if category_obj.get('coding') else {}
+            category_display = category_coding.get('display') or category_coding.get('code', '')
+            
+            # Fallback: converter código para display legível
+            category_map = {
+                'LAB': 'Laboratório',
+                'MB': 'Microbiologia',
+                'RAD': 'Radiologia',
+                'HM': 'Hematologia',
+                'CH': 'Química',
+                'OTH': 'Outros'
+            }
+            if category_display in category_map:
+                category_display = category_map[category_display]
+            elif not category_display:
+                category_display = 'Laboratório'
+            
+            # Extrair resultados (Observations referenciadas)
+            result_refs = res.get('result', [])
+            observations = []
+            for ref in result_refs:
+                obs_id = ref.get('reference', '').replace('Observation/', '')
+                if obs_id:
+                    try:
+                        obs = fhir_service.read_resource('Observation', obs_id)
+                        observations.append({
+                            'code': obs.get('code', {}).get('coding', [{}])[0].get('code', ''),
+                            'display': obs.get('code', {}).get('coding', [{}])[0].get('display', 'Resultado'),
+                            'value': obs.get('valueQuantity', {}).get('value', obs.get('valueString', '')),
+                            'unit': obs.get('valueQuantity', {}).get('unit', ''),
+                            'interpretation': obs.get('interpretation', [{}])[0].get('coding', [{}])[0].get('code', 'normal'),
+                            'referenceRange': obs.get('referenceRange', [{}])[0].get('text', '')
+                        })
+                    except:
+                        pass
+            
             data.append({
                 "id": res.get('id'),
-                "status": res.get('status'),
-                "name": res.get('code', {}).get('coding', [{}])[0].get('display', 'Unknown'),
-                "date": res.get('effectiveDateTime'),
-                "conclusion": res.get('conclusion')
+                "status": res.get('status', 'final'),
+                "category": category_display,
+                "code": code_code,
+                "display": code_display,
+                "effectiveDateTime": res.get('effectiveDateTime', res.get('issued', '')),
+                "conclusion": res.get('conclusion', ''),
+                "results": observations,
+                "performer": res.get('performer', [{}])[0].get('display', '')
             })
             
         return Response(data, status=status.HTTP_200_OK)

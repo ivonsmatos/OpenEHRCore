@@ -74,6 +74,9 @@ class AIService:
         conditions = patient_data.get('conditions', [])
         medications = patient_data.get('medications', [])
         vital_signs = patient_data.get('vital_signs', [])
+        immunizations = patient_data.get('immunizations', [])
+        diagnostic_reports = patient_data.get('diagnostic_reports', [])
+        appointments = patient_data.get('appointments', [])
         
         cond_text = ", ".join([c.get('code', {}).get('text', 'Condição') for c in conditions]) if conditions else "Nenhuma condição crônica registrada"
         med_text = ", ".join([m.get('medicationCodeableConcept', {}).get('text', 'Medicamento') for m in medications]) if medications else "Nenhum medicamento em uso"
@@ -81,20 +84,124 @@ class AIService:
         # Construct Prompt (Mistral Format) with Bias Prevention Guardrails
         from .bias_prevention_service import BiasPreventionService
         
-        base_prompt = f"""Você é um assistente clínico especializado. Gere um resumo clínico conciso e profissional em Português para o seguinte paciente.
+        # Preparar informações sobre sinais vitais
+        vitals_text = "Não disponível"
+        if vital_signs:
+            vitals_list = []
+            for vs in vital_signs[:5]:  # Apenas últimos 5 para o prompt
+                code = vs.get('code', {})
+                display = code.get('text', code.get('coding', [{}])[0].get('display', 'Vital'))
+                value_qty = vs.get('valueQuantity', {})
+                if value_qty:
+                    value = value_qty.get('value')
+                    unit = value_qty.get('unit', '')
+                    vitals_list.append(f"{display}: {value} {unit}")
+            vitals_text = ", ".join(vitals_list) if vitals_list else "Não disponível"
         
-        Dados do Paciente:
-        - Nome: {name}
-        - Idade: {age}
-        - Sexo: {gender}
+        # Preparar informações sobre vacinas
+        vaccines_text = "Não disponível"
+        if immunizations:
+            vaccines_list = []
+            for imm in immunizations[:5]:  # Últimas 5 vacinas
+                vaccine_code = imm.get('vaccineCode', {})
+                vaccine_name = vaccine_code.get('text', vaccine_code.get('coding', [{}])[0].get('display', 'Vacina'))
+                date = imm.get('occurrenceDateTime', imm.get('occurrenceString', ''))
+                vaccines_list.append(f"{vaccine_name} ({date[:10] if date else 'data N/A'})")
+            vaccines_text = ", ".join(vaccines_list)
         
-        Histórico Médico:
-        - Condições: {cond_text}
-        - Medicamentos em uso: {med_text}
+        # Preparar informações sobre exames
+        exams_text = "Não disponível"
+        if diagnostic_reports:
+            exams_list = []
+            for report in diagnostic_reports[:3]:  # Últimos 3 exames
+                code_obj = report.get('code', {})
+                exam_name = code_obj.get('text', code_obj.get('coding', [{}])[0].get('display', 'Exame'))
+                date = report.get('effectiveDateTime', report.get('issued', ''))
+                conclusion = report.get('conclusion', '')[:100]  # Resumo
+                exams_list.append(f"{exam_name} ({date[:10] if date else 'data N/A'})")
+                if conclusion:
+                    exams_list.append(f"  → {conclusion}")
+            exams_text = "\n".join(exams_list)
         
-        Sua tarefa: Crie um resumo de 3-5 linhas destacando os pontos principais para um médico ler rapidamente antes da consulta. Use termos técnicos apropriados.
+        # Preparar informações sobre agendamentos
+        next_appointment = "Nenhum agendamento futuro"
+        if appointments:
+            from datetime import datetime
+            now = datetime.now()
+            future_appts = []
+            for appt in appointments:
+                appt_start = appt.get('start', '')
+                if appt_start:
+                    try:
+                        appt_date = datetime.fromisoformat(appt_start.replace('Z', '+00:00'))
+                        if appt_date > now:
+                            desc = appt.get('description', 'Consulta')
+                            future_appts.append(f"{desc} em {appt_start[:10]}")
+                    except:
+                        pass
+            if future_appts:
+                next_appointment = future_appts[0]  # Próximo agendamento
         
-        IMPORTANTE: Base suas recomendações SOMENTE em evidências clínicas. NÃO faça generalizações baseadas em raça, etnia ou condição socioeconômica."""
+        base_prompt = f"""Você é um assistente clínico especializado em medicina baseada em evidências. Seu objetivo é ajudar médicos a tomar decisões clínicas assertivas e seguras.
+
+CONTEXTO DO PACIENTE:
+====================
+Nome: {name}
+Idade: {age} anos
+Sexo: {gender}
+
+DADOS CLÍNICOS:
+==============
+📋 Condições Diagnosticadas: {cond_text}
+
+💊 Medicamentos em Uso: {med_text}
+
+💓 Sinais Vitais (Últimos Registros): {vitals_text}
+
+💉 Vacinas Recentes: {vaccines_text}
+
+🧪 Exames Recentes:
+{exams_text}
+
+📅 Próximo Agendamento: {next_appointment}
+
+SUA TAREFA:
+==========
+Gere um resumo clínico estruturado e fidedigno que ajude o profissional de saúde a tomar decisões assertivas. O resumo deve conter:
+
+1. **PERFIL CLÍNICO** (2-3 linhas):
+   - Caracterização do paciente com foco nas condições mais relevantes
+   - Nível de complexidade clínica (ex: "paciente com comorbidades complexas", "quadro clínico estável")
+
+2. **PONTOS DE ATENÇÃO** (lista objetiva):
+   - Condições que exigem monitoramento especial
+   - Alertas sobre polifarmácia (≥5 medicamentos)
+   - Interações medicamentosas potenciais conhecidas
+   - Sinais vitais fora da faixa de referência
+   - Vacinas em atraso (influenza anual, pneumocócica para idosos)
+   - Exames laboratoriais pendentes ou com resultados alterados
+
+3. **RECOMENDAÇÕES BASEADAS EM EVIDÊNCIAS** (lista objetiva):
+   - Sugestões de exames ou avaliações necessárias
+   - Ajustes terapêuticos a considerar
+   - Medidas preventivas ou de acompanhamento
+   - Encaminhamentos para especialistas se aplicável
+   - Vacinas a atualizar
+
+DIRETRIZES IMPORTANTES:
+======================
+✅ Use linguagem técnica e precisa
+✅ Base todas as recomendações em evidências clínicas
+✅ Destaque riscos e alertas de segurança do paciente
+✅ Seja objetivo e direto - médicos precisam de informação rápida e confiável
+✅ Se faltar informação crítica (ex: alergias, exames), mencione isso como ponto de atenção
+
+❌ NÃO faça generalizações baseadas em raça, etnia ou condição socioeconômica
+❌ NÃO invente dados ou exames que não foram fornecidos
+❌ NÃO use termos vagos ou ambíguos
+❌ NÃO omita alertas de segurança importantes
+
+Este resumo será usado para tomada de decisão clínica. Seja preciso e completo."""
         
         # Add guardrails and format for Mistral
         guarded_prompt = BiasPreventionService.add_guardrails_to_prompt(base_prompt)
@@ -114,18 +221,23 @@ class AIService:
             else:
                 # Fallback implementation with clinical analysis
                 logger.info("Using fallback summary with clinical analysis.")
-                return self._fallback_summary(name, age, gender, conditions, medications, vital_signs)
+                return self._fallback_summary(name, age, gender, conditions, medications, vital_signs, immunizations, diagnostic_reports, appointments)
 
         except Exception as e:
             logger.error(f"Erro na geração de resumo IA: {str(e)}")
             return "Não foi possível gerar o resumo clínico (Erro no modelo)."
 
-    def _fallback_summary(self, name, age, gender, conditions, medications, vital_signs=None):
+    def _fallback_summary(self, name, age, gender, conditions, medications, vital_signs=None, immunizations=None, diagnostic_reports=None, appointments=None):
         """
         Gera resumo clínico inteligente sem modelo LLM.
         Usa lógica médica baseada em regras e faixas de referência para sinais vitais.
+        Inclui análise de vacinas, exames e agendamentos.
         """
+        logger.info("🔥🔥🔥 USANDO _FALLBACK_SUMMARY ATUALIZADO - VERSÃO COMPLETA! 🔥🔥🔥")
         vital_signs = vital_signs or []
+        immunizations = immunizations or []
+        diagnostic_reports = diagnostic_reports or []
+        appointments = appointments or []
         
         # Normalizar gênero
         gender_display = {
@@ -141,15 +253,17 @@ class AIService:
         
         # Header do paciente
         age_text = f"{age} anos" if age and age not in ("Desconhecida", "N/A") else "idade não informada"
-        summary_parts.append(f"📋 **Perfil do Paciente**")
-        summary_parts.append(f"Paciente {name}, {age_text}, sexo {gender_display}.")
-        summary_parts.append("")
+        summary_parts.append(f"## 📋 PERFIL DO PACIENTE\n")
+        summary_parts.append(f"**Nome:** {name}  ")
+        summary_parts.append(f"**Idade:** {age_text}  ")
+        summary_parts.append(f"**Sexo:** {gender_display}\n")
+        summary_parts.append("---\n")
         
         # =====================================================
         # ANÁLISE DE SINAIS VITAIS COM FAIXAS DE REFERÊNCIA
         # =====================================================
         if vital_signs:
-            summary_parts.append("💓 **Sinais Vitais (Últimos Registros)**")
+            summary_parts.append("## 💓 SINAIS VITAIS\n")
             
             # Organizar sinais vitais por tipo
             vitals_by_type = {}
@@ -174,19 +288,20 @@ class AIService:
             
             for va in vital_analysis:
                 status_icon = "✅" if va['status'] == 'normal' else "⚠️" if va['status'] == 'attention' else "🔴"
-                summary_parts.append(f"• {status_icon} **{va['name']}:** {va['value']} {va['unit']} - {va['interpretation']}")
+                summary_parts.append(f"- {status_icon} **{va['name']}:** `{va['value']} {va['unit']}`")
+                summary_parts.append(f"  - {va['interpretation']}\n")
                 
                 if va['status'] == 'critical':
-                    alerts.append(f"🚨 {va['name']}: {va['value']} {va['unit']} - {va['clinical_action']}")
+                    alerts.append(f"🚨 **{va['name']}:** {va['value']} {va['unit']} - {va['clinical_action']}")
                 elif va['status'] == 'attention':
-                    alerts.append(f"⚠️ {va['name']} requer atenção: {va['interpretation']}")
+                    alerts.append(f"⚠️ **{va['name']}** requer atenção: {va['interpretation']}")
             
-            summary_parts.append("")
+            summary_parts.append("---\n")
         
         # =====================================================
         # CONDIÇÕES CLÍNICAS
         # =====================================================
-        summary_parts.append("🩺 **Condições Clínicas**")
+        summary_parts.append("## 🩺 CONDIÇÕES CLÍNICAS\n")
         if conditions:
             condition_names = []
             active_conditions = []
@@ -200,17 +315,15 @@ class AIService:
                 clinical_status = c.get('clinicalStatus', {}).get('coding', [{}])[0].get('code', '')
                 if clinical_status == 'active':
                     active_conditions.append(cond_name)
+                    summary_parts.append(f"- 🔴 **{cond_name}** (CID: {icd_code}) - Status: ATIVO\n")
+                else:
+                    summary_parts.append(f"- ⚪ **{cond_name}** (CID: {icd_code}) - Status: {clinical_status}\n")
             
-            summary_parts.append(f"• {len(conditions)} diagnóstico(s) registrado(s)")
-            if active_conditions:
-                summary_parts.append(f"• **Condições Ativas:** {', '.join(active_conditions[:5])}")
-                if len(active_conditions) > 3:
-                    alerts.append(f"⚠️ Paciente com {len(active_conditions)} comorbidades ativas")
-            else:
-                summary_parts.append(f"• Histórico: {', '.join(condition_names[:3])}")
+            if len(active_conditions) > 3:
+                alerts.append(f"⚠️ **COMORBIDADES MÚLTIPLAS:** {len(active_conditions)} condições ativas requerem monitoramento integrado")
         else:
-            summary_parts.append("• Nenhum diagnóstico registrado no prontuário.")
-        summary_parts.append("")
+            summary_parts.append("- ℹ️ Nenhum diagnóstico registrado no prontuário.\n")
+        summary_parts.append("---\n")
         
         # =====================================================
         # MEDICAMENTOS
@@ -235,38 +348,255 @@ class AIService:
         summary_parts.append("")
         
         # =====================================================
+        # VACINAS (IMMUNIZATIONS)
+        # =====================================================
+        summary_parts.append("## 💉 HISTÓRICO DE VACINAÇÃO\n")
+        if immunizations:
+            summary_parts.append("**Vacinas Registradas:**\n")
+            
+            for imm in immunizations[:5]:  # Últimas 5 vacinas
+                vaccine_code = imm.get('vaccineCode', {})
+                vaccine_name = vaccine_code.get('text', vaccine_code.get('coding', [{}])[0].get('display', 'Vacina'))
+                date = imm.get('occurrenceDateTime', imm.get('occurrenceString', ''))
+                date_display = date[:10] if date else 'data N/A'
+                lot_number = imm.get('lotNumber', 'Lote N/A')
+                summary_parts.append(f"- ✅ **{vaccine_name}** - Data: {date_display} | Lote: {lot_number}\n")
+            
+            # Verificar vacinas importantes em atraso
+            vaccine_names_lower = ' '.join([vaccine_code.get('text', vaccine_code.get('coding', [{}])[0].get('display', '')).lower() for imm in immunizations for vaccine_code in [imm.get('vaccineCode', {})]])
+            if age and isinstance(age, (int, float)) and age >= 65:
+                if 'influenza' not in vaccine_names_lower and 'gripe' not in vaccine_names_lower:
+                    alerts.append("⚠️ **VACINA EM ATRASO:** Influenza (gripe) anual recomendada para ≥65 anos")
+                if 'pneumo' not in vaccine_names_lower:
+                    alerts.append("⚠️ **VACINA EM ATRASO:** Pneumocócica recomendada para ≥65 anos")
+        else:
+            summary_parts.append("- ⚠️ Nenhum registro de vacinação no sistema\n")
+            alerts.append("⚠️ **DADOS INCOMPLETOS:** Atualizar cartão de vacinação no prontuário")
+        summary_parts.append("---\n")
+        
+        # =====================================================
+        # EXAMES LABORATORIAIS (DIAGNOSTIC REPORTS)
+        # =====================================================
+        summary_parts.append("## 🧪 EXAMES LABORATORIAIS\n")
+        if diagnostic_reports:
+            summary_parts.append("**Últimos Resultados:**\n")
+            
+            for idx, report in enumerate(diagnostic_reports[:5], 1):
+                code_obj = report.get('code', {})
+                exam_name = code_obj.get('text', code_obj.get('coding', [{}])[0].get('display', 'Exame'))
+                date = report.get('effectiveDateTime', report.get('issued', ''))
+                date_display = date[:10] if date else 'data N/A'
+                status = report.get('status', 'final')
+                
+                summary_parts.append(f"\n**{idx}. {exam_name}**")
+                summary_parts.append(f"- Data: {date_display} | Status: {status}")
+                
+                # Adicionar conclusão se disponível
+                conclusion = report.get('conclusion', '')
+                if conclusion:
+                    summary_parts.append(f"- Conclusão: _{conclusion[:200]}{'...' if len(conclusion) > 200 else ''}_\n")
+                else:
+                    summary_parts.append("- Conclusão: Não disponível\n")
+            
+            # Verificar se exames estão atualizados
+            from datetime import datetime, timedelta
+            most_recent_date = None
+            for report in diagnostic_reports:
+                date_str = report.get('effectiveDateTime', report.get('issued', ''))
+                if date_str:
+                    try:
+                        exam_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                        if most_recent_date is None or exam_date > most_recent_date:
+                            most_recent_date = exam_date
+                    except:
+                        pass
+            
+            if most_recent_date and (datetime.now() - most_recent_date).days > 180:
+                alerts.append(f"⚠️ **EXAMES DESATUALIZADOS:** Último exame há {(datetime.now() - most_recent_date).days} dias")
+        else:
+            summary_parts.append("- ⚠️ Nenhum exame laboratorial registrado\n")
+            alerts.append("⚠️ **DADOS INCOMPLETOS:** Solicitar exames de rotina conforme condições clínicas")
+        summary_parts.append("---\n")
+        
+        # =====================================================
+        # AGENDAMENTOS (APPOINTMENTS)
+        # =====================================================
+        summary_parts.append("## 📅 AGENDAMENTOS\n")
+        if appointments:
+            from datetime import datetime
+            now = datetime.now()
+            past_appts = []
+            future_appts = []
+            
+            for appt in appointments:
+                appt_start = appt.get('start', '')
+                status_appt = appt.get('status', '')
+                description = appt.get('description', 'Consulta')
+                
+                if appt_start:
+                    try:
+                        appt_date = datetime.fromisoformat(appt_start.replace('Z', '+00:00'))
+                        date_display = appt_start[:10]
+                        time_display = appt_start[11:16] if len(appt_start) > 11 else ''
+                        
+                        if appt_date > now:
+                            future_appts.append(f"- 📌 **{description}** - {date_display} às {time_display} | Status: `{status_appt}`\n")
+                        else:
+                            past_appts.append(f"- ✅ **{description}** - {date_display}\n")
+                    except:
+                        pass
+            
+            if future_appts:
+                summary_parts.append("**Próximas Consultas:**\n")
+                summary_parts.extend(future_appts[:3])
+            else:
+                summary_parts.append("- ⚠️ Nenhum agendamento futuro\n")
+                alerts.append("⚠️ **ACOMPANHAMENTO:** Agendar consulta de retorno")
+            
+            if past_appts:
+                summary_parts.append("\n**Consultas Recentes:**\n")
+                summary_parts.extend(past_appts[:2])
+        else:
+            summary_parts.append("- ℹ️ Nenhum agendamento no sistema\n")
+        summary_parts.append("---\n")
+        
+        # =====================================================
         # ALERTAS CRÍTICOS (NO TOPO DO RESUMO FINAL)
         # =====================================================
         if alerts:
-            alert_section = ["🚨 **ALERTAS CLÍNICOS**"]
-            for alert in alerts[:5]:  # Limitar a 5 alertas mais importantes
-                alert_section.append(alert)
-            alert_section.append("")
+            alert_section = ["## 🚨 ALERTAS CLÍNICOS\n"]
+            alert_section.append("> **ATENÇÃO:** Revisar imediatamente os seguintes pontos:\n")
+            for alert in alerts[:10]:
+                alert_section.append(f"{alert}\n")
+            alert_section.append("---\n")
             # Inserir alertas no início
             summary_parts = alert_section + summary_parts
         
         # =====================================================
-        # RECOMENDAÇÕES
+        # RECOMENDAÇÕES CLÍNICAS BASEADAS EM EVIDÊNCIAS
         # =====================================================
-        summary_parts.append("📌 **Recomendações Clínicas**")
+        summary_parts.append("## 📌 RECOMENDAÇÕES CLÍNICAS\n")
+        summary_parts.append("> **Baseadas em evidências e guidelines clínicos**\n")
         recommendations = []
         
+        # Análise de prontuário incompleto
         if not conditions and not medications:
-            recommendations.append("• Considerar anamnese detalhada - prontuário sem histórico.")
+            recommendations.append("- ⚠️ **PRONTUÁRIO INCOMPLETO**")
+            recommendations.append("  - Realizar anamnese detalhada e registrar histórico médico completo\n")
         
+        # Recomendações por complexidade clínica
         if conditions and len(conditions) >= 3 and medications and len(medications) >= 3:
-            recommendations.append("• Revisar plano terapêutico - múltiplas comorbidades e medicações.")
+            recommendations.append("- 🔴 **ALTA COMPLEXIDADE**")
+            recommendations.append("  - Revisar plano terapêutico integrado considerando todas as comorbidades")
+            recommendations.append("  - Avaliar aderência medicamentosa e possíveis interações\n")
+        
+        # Alertas específicos de condições comuns (baseado em guidelines)
+        active_conditions_lower = [c.lower() for c in active_conditions] if conditions else []
+        
+        if any('diabetes' in c for c in active_conditions_lower):
+            recommendations.append("- 💉 **DIABETES MELLITUS**")
+            recommendations.append("  - Verificar última HbA1c (meta <7%)")
+            recommendations.append("  - Solicitar exame de fundo de olho anual")
+            recommendations.append("  - Avaliar função renal (creatinina/TFG)\n")
+        
+        if any('hipertens' in c for c in active_conditions_lower):
+            recommendations.append("- 🩺 **HIPERTENSÃO ARTERIAL**")
+            recommendations.append("  - Meta: PA <140/90 mmHg (ou <130/80 se diabético/DRC)")
+            recommendations.append("  - Avaliar adesão ao tratamento anti-hipertensivo\n")
+        
+        if any('insuficiência cardíaca' in c or 'icc' in c for c in active_conditions_lower):
+            recommendations.append("- ❤️ **INSUFICIÊNCIA CARDÍACA**")
+            recommendations.append("  - Monitorar peso diário")
+            recommendations.append("  - Avaliar sintomas de descompensação")
+            recommendations.append("  - Verificar função renal\n")
         
         # Recomendações baseadas nos sinais vitais
         if vital_signs:
-            recommendations.append("• Sinais vitais disponíveis - verificar tendência nas últimas consultas.")
+            vital_analysis = self._analyze_vitals(vitals_by_type, age, gender) if 'vitals_by_type' in locals() else []
+            critical_vitals = [va for va in vital_analysis if va['status'] in ['attention', 'critical'] and va.get('clinical_action')]
+            
+            if critical_vitals:
+                recommendations.append("- 💓 **SINAIS VITAIS ALTERADOS**")
+                for va in critical_vitals:
+                    recommendations.append(f"  - {va['name']}: {va['clinical_action']}\n")
         else:
-            recommendations.append("• ⚠️ Sem sinais vitais registrados - aferição recomendada.")
+            recommendations.append("- ⚠️ **SINAIS VITAIS AUSENTES**")
+            recommendations.append("  - Aferir PA, FC, temperatura, SpO2 e peso hoje\n")
         
+        # Prevenção e rastreamento
+        screening_recs = []
+        if age and isinstance(age, (int, float)):
+            if age >= 50:
+                screening_recs.append("  - Colonoscopia (≥50 anos)")
+            if gender == 'female' and age >= 40:
+                screening_recs.append("  - Mamografia anual (≥40 anos)")
+            if age >= 65:
+                screening_recs.append("  - Vacinação antipneumocócica")
+                screening_recs.append("  - Influenza anual")
+        
+        if screening_recs:
+            recommendations.append("- 🎯 **PREVENÇÃO E RASTREAMENTO**")
+            recommendations.extend(screening_recs)
+            recommendations.append("")
+        
+        # Informação crítica faltante
+        missing_data = []
+        if not vital_signs:
+            missing_data.append("sinais vitais")
+        if not conditions:
+            missing_data.append("diagnósticos")
+        if not medications:
+            missing_data.append("medicamentos em uso")
+        if not immunizations:
+            missing_data.append("histórico de vacinação")
+        if not diagnostic_reports:
+            missing_data.append("exames laboratoriais")
+        
+        if missing_data:
+            recommendations.append("- 📋 **COMPLETAR PRONTUÁRIO**")
+            for data in missing_data:
+                recommendations.append(f"  - Registrar: {data}")
+            recommendations.append("")
+            if age >= 50:
+                recommendations.append("• **RASTREAMENTO (≥50 anos)**: Verificar status de colonoscopia")
+        
+        # Recomendações de exames
+        if not diagnostic_reports or (diagnostic_reports and (datetime.now() - most_recent_date).days > 365 if 'most_recent_date' in locals() and most_recent_date else True):
+            recommendations.append("• **EXAMES**: Solicitar hemograma, glicemia, função renal e lipidograma (exames de rotina)")
+        
+        # Pelo menos uma recomendação padrão se lista estiver vazia
         if not recommendations:
-            recommendations = ["• Manter acompanhamento de rotina."]
+            recommendations = ["• Manter acompanhamento conforme protocolo estabelecido"]
         
         summary_parts.extend(recommendations)
+        
+        # =====================================================
+        # RESUMO EXECUTIVO NO INÍCIO
+        # =====================================================
+        complexity = "BAIXA"
+        if (conditions and len(conditions) >= 3) or (medications and len(medications) >= 5):
+            complexity = "ALTA"
+        elif (conditions and len(conditions) >= 1) or (medications and len(medications) >= 1):
+            complexity = "MODERADA"
+        
+        executive_summary = [
+            f"🎯 **RESUMO EXECUTIVO**",
+            f"Paciente com complexidade clínica **{complexity}**.",
+        ]
+        
+        if conditions and len(active_conditions) > 0:
+            executive_summary.append(f"Principais condições ativas: {', '.join(active_conditions[:3])}.")
+        
+        if medications and len(medications) >= 5:
+            executive_summary.append(f"⚠️ Polifarmácia identificada ({len(medications)} medicamentos).")
+        
+        if len(alerts) > 0:
+            executive_summary.append(f"🚨 **{len(alerts)} alerta(s) clínico(s)** - verificar seção de alertas.")
+        
+        executive_summary.append("")
+        
+        # Inserir resumo executivo no topo
+        summary_parts = executive_summary + summary_parts
         
         return "\n\n".join([p for p in summary_parts if p])  # Double newline for line-by-line display
     

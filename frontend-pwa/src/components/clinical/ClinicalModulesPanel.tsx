@@ -38,6 +38,7 @@ const ClinicalModulesPanel: React.FC<ClinicalModulesPanelProps> = ({ patientId }
     const { token } = useAuth();
     const { data, loading, refresh } = useClinicalData(patientId, token);
     const [activeModule, setActiveModule] = useState<ModuleType>(null);
+    const [expandedExamId, setExpandedExamId] = useState<string | null>(null);
 
     const modules = [
         { id: 'vaccines' as const, label: 'Vacinas', icon: Syringe, color: '#ec4899', count: data.immunizations.length },
@@ -100,31 +101,121 @@ const ClinicalModulesPanel: React.FC<ClinicalModulesPanelProps> = ({ patientId }
                             <p className="text-gray-500 italic">Nenhum exame registrado.</p>
                         ) : (
                             <div className="space-y-3">
-                                {data.diagnosticResults.map(exam => (
-                                    <div key={exam.id} className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-medium">{exam.display}</p>
-                                                <p className="text-sm text-gray-500">{exam.category}</p>
-                                            </div>
-                                            <span className="text-sm text-gray-400">{formatDate(exam.effectiveDate)}</span>
-                                        </div>
-                                        {exam.results.length > 0 && (
-                                            <div className="mt-2 pt-2 border-t border-blue-100">
-                                                {exam.results.slice(0, 3).map((r, i) => (
-                                                    <div key={i} className="flex justify-between text-sm">
-                                                        <span className="text-gray-600">{r.display}</span>
-                                                        <span className={`font-medium ${r.interpretation === 'high' || r.interpretation === 'low' ? 'text-amber-600' :
-                                                                r.interpretation === 'critical' ? 'text-red-600' : 'text-gray-700'
-                                                            }`}>
-                                                            {r.value} {r.unit}
-                                                        </span>
+                                {data.diagnosticResults.map(exam => {
+                                    const isExpanded = expandedExamId === exam.id;
+                                    return (
+                                        <div 
+                                            key={exam.id} 
+                                            className="p-3 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer hover:shadow-md transition-all"
+                                            onClick={() => setExpandedExamId(isExpanded ? null : exam.id)}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-medium">{exam.display}</p>
+                                                        <ChevronRight 
+                                                            size={16} 
+                                                            className={`text-blue-600 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                                                        />
                                                     </div>
-                                                ))}
+                                                    <p className="text-sm text-gray-500">{exam.category}</p>
+                                                </div>
+                                                <span className="text-sm text-gray-400">{formatDate(exam.effectiveDate)}</span>
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
+                                            
+                                            {/* Expanded Details */}
+                                            {isExpanded && (
+                                                <div className="mt-4 pt-3 border-t border-blue-200 space-y-3 animate-fadeIn">
+                                                    <div className="bg-white p-3 rounded-md">
+                                                        <p className="text-xs font-semibold text-blue-700 uppercase mb-2">Informações do Exame</p>
+                                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                                            <div>
+                                                                <span className="text-gray-500">Data:</span>
+                                                                <span className="ml-2 font-medium">{formatDate(exam.effectiveDate)}</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-gray-500">Categoria:</span>
+                                                                <span className="ml-2 font-medium">{exam.category}</span>
+                                                            </div>
+                                                            {exam.status && (
+                                                                <div>
+                                                                    <span className="text-gray-500">Status:</span>
+                                                                    <span className={`ml-2 font-medium ${
+                                                                        exam.status === 'final' ? 'text-green-600' : 
+                                                                        exam.status === 'preliminary' ? 'text-yellow-600' : 
+                                                                        'text-gray-600'
+                                                                    }`}>
+                                                                        {exam.status === 'final' ? 'Finalizado' : 
+                                                                         exam.status === 'preliminary' ? 'Preliminar' : 
+                                                                         exam.status}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            {exam.code && (
+                                                                <div>
+                                                                    <span className="text-gray-500">Código:</span>
+                                                                    <span className="ml-2 font-medium text-xs">{exam.code}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {exam.results.length > 0 && (
+                                                        <div className="bg-white p-3 rounded-md">
+                                                            <p className="text-xs font-semibold text-blue-700 uppercase mb-2">
+                                                                Resultados ({exam.results.length})
+                                                            </p>
+                                                            <div className="space-y-2">
+                                                                {exam.results.map((r, i) => (
+                                                                    <div key={i} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                                                        <div className="flex-1">
+                                                                            <span className="text-gray-700 font-medium">{r.display}</span>
+                                                                            {r.code && (
+                                                                                <span className="ml-2 text-xs text-gray-400">({r.code})</span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className={`font-bold ${
+                                                                                r.interpretation === 'high' || r.interpretation === 'low' ? 'text-amber-600' :
+                                                                                r.interpretation === 'critical' ? 'text-red-600' : 
+                                                                                r.interpretation === 'normal' ? 'text-green-600' :
+                                                                                'text-gray-700'
+                                                                            }`}>
+                                                                                {r.value} {r.unit}
+                                                                            </span>
+                                                                            {r.interpretation && (
+                                                                                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                                                                    r.interpretation === 'high' ? 'bg-amber-100 text-amber-700' :
+                                                                                    r.interpretation === 'low' ? 'bg-blue-100 text-blue-700' :
+                                                                                    r.interpretation === 'critical' ? 'bg-red-100 text-red-700' :
+                                                                                    r.interpretation === 'normal' ? 'bg-green-100 text-green-700' :
+                                                                                    'bg-gray-100 text-gray-700'
+                                                                                }`}>
+                                                                                    {r.interpretation === 'high' ? 'Alto' :
+                                                                                     r.interpretation === 'low' ? 'Baixo' :
+                                                                                     r.interpretation === 'critical' ? 'Crítico' :
+                                                                                     r.interpretation === 'normal' ? 'Normal' :
+                                                                                     r.interpretation}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {exam.conclusion && (
+                                                        <div className="bg-blue-100 p-3 rounded-md">
+                                                            <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Conclusão</p>
+                                                            <p className="text-sm text-gray-700">{exam.conclusion}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'healthstack-v2.0.1';
+const CACHE_NAME = 'healthstack-v2.0.2';
 const OFFLINE_URL = '/offline.html';
 
 // Static assets to cache - only files that exist
@@ -6,6 +6,7 @@ const STATIC_ASSETS = [
     '/',
     '/offline.html',
     '/manifest.json',
+    '/favicon.svg',
 ];
 
 // API endpoints to cache for offline
@@ -145,6 +146,14 @@ async function cacheFirstStrategy(request) {
         if (request.mode === 'navigate') {
             return caches.match(OFFLINE_URL);
         }
+        
+        // Ignore errors for non-critical resources (favicon, etc)
+        const url = new URL(request.url);
+        if (url.pathname.includes('favicon') || url.pathname.includes('.ico')) {
+            console.log('[SW] Ignoring missing favicon');
+            return new Response('', { status: 204 });
+        }
+        
         throw error;
     }
 }
@@ -231,8 +240,29 @@ async function syncPendingRequests() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open('healthstack-offline', 1);
 
+        // Create object store if it doesn't exist
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('pending-requests')) {
+                db.createObjectStore('pending-requests', { keyPath: 'id', autoIncrement: true });
+            }
+        };
+
+        request.onerror = () => {
+            console.error('[SW] IndexedDB error:', request.error);
+            reject(request.error);
+        };
+
         request.onsuccess = async (event) => {
             const db = event.target.result;
+            
+            // Check if object store exists before accessing
+            if (!db.objectStoreNames.contains('pending-requests')) {
+                console.log('[SW] No pending requests store yet');
+                resolve();
+                return;
+            }
+            
             const tx = db.transaction('pending-requests', 'readwrite');
             const store = tx.objectStore('pending-requests');
             const allRequests = store.getAll();
