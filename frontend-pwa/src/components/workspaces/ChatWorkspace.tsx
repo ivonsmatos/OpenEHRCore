@@ -40,6 +40,12 @@ interface Message {
     senderName: string;
     content: string;
     timestamp: string;
+    attachment?: {
+        name: string;
+        type: string;
+        size: number;
+        data?: string; // base64 encoded
+    };
 }
 
 const ChatWorkspace: React.FC = () => {
@@ -50,7 +56,9 @@ const ChatWorkspace: React.FC = () => {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [loadingPractitioners, setLoadingPractitioners] = useState(false);
+    const [attachment, setAttachment] = useState<{ name: string; type: string; size: number; data: string } | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
 
     const getAuthHeaders = () => {
@@ -285,6 +293,73 @@ const ChatWorkspace: React.FC = () => {
         }
     };
 
+    // Handle file selection
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Allow text files and images
+        const allowedTypes = [
+            // Text files
+            'text/plain',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'text/csv',
+            'application/json',
+            'text/xml',
+            'application/xml',
+            // Images
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/bmp'
+        ];
+
+        const isAllowed = allowedTypes.includes(file.type) ||
+            file.name.endsWith('.txt') ||
+            file.type.startsWith('image/');
+
+        if (!isAllowed) {
+            alert('Apenas arquivos de texto e imagens são permitidos');
+            return;
+        }
+
+        // Max 5MB
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Arquivo muito grande. Máximo 5MB.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64 = reader.result as string;
+            setAttachment({
+                name: file.name,
+                type: file.type || 'text/plain',
+                size: file.size,
+                data: base64
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // Remove attachment
+    const removeAttachment = () => {
+        setAttachment(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    // Format file size
+    const formatFileSize = (bytes: number) => {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    };
+
     // Get selected channel info
     const getSelectedChannelInfo = () => {
         return channels.find(c => c.id === selectedChannel);
@@ -420,21 +495,65 @@ const ChatWorkspace: React.FC = () => {
 
                     {/* Message Input */}
                     <div className="message-input-area">
+                        {/* Hidden file input */}
                         <input
-                            type="text"
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                            placeholder="Digite uma mensagem..."
-                            className="message-input"
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileSelect}
+                            accept=".txt,.pdf,.doc,.docx,.csv,.json,.xml,.jpg,.jpeg,.png,.gif,.webp,.bmp,image/*"
+                            className="file-input-hidden"
+                            title="Selecionar arquivo"
                         />
-                        <button
-                            onClick={sendMessage}
-                            className="send-button"
-                            disabled={!newMessage.trim()}
-                        >
-                            Enviar
-                        </button>
+
+                        {/* Attachment preview */}
+                        {attachment && (
+                            <div className="attachment-preview">
+                                {attachment.type.startsWith('image/') ? (
+                                    <img
+                                        src={attachment.data}
+                                        alt={attachment.name}
+                                        className="attachment-thumbnail"
+                                    />
+                                ) : (
+                                    <span className="attachment-icon">📎</span>
+                                )}
+                                <span className="attachment-name">{attachment.name}</span>
+                                <span className="attachment-size">({formatFileSize(attachment.size)})</span>
+                                <button
+                                    className="attachment-remove"
+                                    onClick={removeAttachment}
+                                    type="button"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="message-input-row">
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="attach-button"
+                                type="button"
+                                title="Anexar arquivo"
+                            >
+                                📎
+                            </button>
+                            <input
+                                type="text"
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                                placeholder="Digite uma mensagem..."
+                                className="message-input"
+                            />
+                            <button
+                                onClick={sendMessage}
+                                className="send-button"
+                                disabled={!newMessage.trim() && !attachment}
+                            >
+                                Enviar
+                            </button>
+                        </div>
                     </div>
                 </Card>
             </div>

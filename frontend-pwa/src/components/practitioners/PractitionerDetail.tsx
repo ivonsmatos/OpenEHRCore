@@ -6,13 +6,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import Card from '../base/Card';
 import Button from '../base/Button';
 import { ArrowLeft, MessageCircle, Phone, Mail, Edit, Calendar } from 'lucide-react';
+import { usePractitioners } from '../../hooks/usePractitioners';
 import './PractitionerDetail.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 interface Practitioner {
     id: string;
@@ -49,23 +47,19 @@ interface Practitioner {
 const PractitionerDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { getPractitioner } = usePractitioners();
     const [practitioner, setPractitioner] = useState<Practitioner | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('access_token');
-        return token ? { Authorization: `Bearer ${token}` } : {};
-    };
 
     useEffect(() => {
         const fetchPractitioner = async () => {
             if (!id) return;
 
             try {
-                const headers = getAuthHeaders();
-                const response = await axios.get(`${API_URL}/practitioners/${id}/`, { headers });
-                setPractitioner(response.data);
+                setLoading(true);
+                const data = await getPractitioner(id);
+                setPractitioner(data as Practitioner);
             } catch (err) {
                 console.error('Error fetching practitioner:', err);
                 setError('Não foi possível carregar os dados do profissional.');
@@ -75,7 +69,7 @@ const PractitionerDetail: React.FC = () => {
         };
 
         fetchPractitioner();
-    }, [id]);
+    }, [id, getPractitioner]);
 
     const handleStartChat = () => {
         if (!practitioner) return;
