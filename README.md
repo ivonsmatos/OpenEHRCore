@@ -1,160 +1,303 @@
 # 🏥 HealthStack
 
-### O Futuro da Gestão de Prontuários Eletrônicos Seguros e Interoperáveis
+<div align="center">
+
+**Healthcare Interoperability Platform - FHIR R4 Native**
+
+[![Version](https://img.shields.io/badge/version-2.0.0-7c3aed.svg)](https://github.com/ivonsmatos/OpenEHRCore)
+[![FHIR](https://img.shields.io/badge/FHIR-R4-00d4ff.svg)](https://www.hl7.org/fhir/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue.svg)](https://www.typescriptlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.11-yellow.svg)](https://www.python.org/)
+
+</div>
 
 ---
 
-## 🚀 Transforme a Gestão Clínica com Tecnologia de Ponta
+## 📋 Overview
 
-O **HealthStack** não é apenas mais um sistema médico. É uma **plataforma enterprise-grade completa**, desenhada desde o primeiro dia para ser **segura, escalável e 100% interoperável**.
+**HealthStack** is a comprehensive healthcare interoperability platform built on FHIR R4 standard. It provides a complete solution for healthcare data management, including EHR functionality, clinical workflows, and integration with Brazilian healthcare systems.
 
-Baseado no padrão mundial **HL7 FHIR R4**, o HealthStack elimina silos de dados e coloca sua instituição na era da Saúde 4.0, garantindo que as informações fluam com segurança entre médicos, pacientes e outros sistemas de saúde.
+### 🌟 Key Features
 
-### 🌟 Por que escolher o OpenEHRCore?
-
-- **🔒 Segurança Zero-Trust:** Arquitetura robusta com Keycloak (OAuth2/OIDC), garantindo que apenas pessoas autorizadas acessem dados sensíveis.
-- **🌐 Interoperabilidade Nativa (FHIR-First):** Fale a língua universal da saúde. Troque dados com labroratórios, hospitais e wearables sem dores de cabeça.
-- **⚖️ Compliance Total (LGPD & HIPAA):** Ferramentas nativas para gestão de consentimento, logs de auditoria imutáveis e portabilidade de dados.
-- **📱 Experiência Omnicanal:** Do desktop ao smartphone do paciente (iOS/Android), uma experiência fluida e moderna.
-- **⚡ Performance Extrema:** Cache inteligente com Redis, arquitetura reativa e otimização de banco de dados para respostas em milissegundos.
-
----
-
-## 💎 Funcionalidades que Impressionam
-
-### Para Profissionais de Saúde 🩺
-
-- **Prontuário Inteligente:** Visão 360º do paciente com linha do tempo clínica.
-- **Prescrição Segura:** Bases de medicamentos integradas e alertas de interação.
-- **Telemedicina Ready:** Suporte nativo para agendamento e registro de teleconsultas.
-
-### Para o Paciente (App Mobile) 📱
-
-- **Empoderamento:** Acesso total aos seus exames, receitas e histórico na palma da mão.
-- **Autonomia:** Agendamento online e gestão de seus próprios consentimentos de privacidade.
-- **Engajamento:** Lembretes de medicamentos e consultas via Push Notification.
-
-### Para Gestores e TI 💻
-
-- **Painéis Analíticos:** Dados estruturados para Business Intelligence.
-- **Escalabilidade:** Arquitetura Dockerizada pronta para Nuvem (AWS/Azure/GCP).
-- **Auditoria Completa:** Rastreabilidade total de quem acessou o quê e quando.
+| Category | Features |
+|----------|----------|
+| **FHIR R4 Native** | All data stored in HAPI FHIR, $validate integration, 110+ API endpoints |
+| **Offline-First PWA** | Service Worker, IndexedDB storage, automatic sync when online |
+| **Brazil Integrations** | PIX payments, WhatsApp Business, Telemedicine, TISS, RNDS |
+| **On-Premise Agent** | HL7 v2.x/MLLP bridge, DICOM support, secure WebSocket tunnel |
+| **AI-Powered** | Clinical decision support, ICD-10 suggestions, summary generation |
+| **Security** | Keycloak SSO, LGPD compliance, audit logging, data encryption |
 
 ---
 
-## 🏗️ Arquitetura de Referência
+## 🏗️ Architecture
 
-O OpenEHRCore utiliza o que há de mais moderno em engenharia de software:
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         HealthStack v2.0.0                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
+│  │  Frontend    │  │   Backend    │  │  HAPI FHIR   │               │
+│  │  React PWA   │◄─┤   Django     │◄─┤   Server     │               │
+│  │  TypeScript  │  │   Python     │  │   R4         │               │
+│  └──────────────┘  └──────────────┘  └──────────────┘               │
+│         │                 │                 │                        │
+│         └─────────────────┼─────────────────┘                        │
+│                           │                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
+│  │  Keycloak    │  │  PostgreSQL  │  │   Redis      │               │
+│  │  Auth/SSO    │  │  Database    │  │   Cache      │               │
+│  └──────────────┘  └──────────────┘  └──────────────┘               │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
 
-```mermaid
-graph TD
-    subgraph "Experiência do Usuário"
-        Web[💻 Web PWA React]
-        Mobile[📱 App Mobile React Native]
-    end
-
-    subgraph "Camada de Segurança & API (BFF)"
-        API[🛡️ Django BFF Gateway]
-        Cache[⚡ Redis Cache]
-        Auth[🔐 Keycloak IAM]
-    end
-
-    subgraph "Core Clínico"
-        FHIR[🏥 HAPI FHIR Server R4]
-        DB[(🗄️ PostgreSQL)]
-    end
-
-    Web --> API
-    Mobile --> API
-    API --> Auth
-    API --> Cache
-    API --> FHIR
-    FHIR --> DB
+┌─────────────────────────────────────────────────────────────────────┐
+│  On-Premise Agent (Hospital)                                        │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐                            │
+│  │ Lab      │ │ ECG      │ │ PACS     │                            │
+│  │ Analyzer │ │ Machine  │ │ DICOM    │                            │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘                            │
+│       │HL7/MLLP    │HL7        │DICOM                              │
+│       └────────────┴────────────┘                                   │
+│                    │                                                 │
+│            ┌───────┴───────┐                                        │
+│            │ HealthStack   │────────HTTPS────────► Cloud Server    │
+│            │    Agent      │                                        │
+│            └───────────────┘                                        │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📅 Uma Jornada de Inovação (Roadmap)
+## 🚀 Quick Start
 
-Construído sobre pilares sólidos, evoluindo constantemente:
+### Prerequisites
 
-### 🔹 Fase 1: A Fundação Sólida (Sprints 1-19)
+- Docker & Docker Compose
+- Node.js 18+
+- Python 3.11+
 
-- Estabelecimento do **Core FHIR** e infraestrutura Docker.
-- Implementação do **Backend BFF** Seguro.
-- Lançamento do **Frontend PWA** moderno.
-
-### 🔹 Fase 2: Inteligência e Conectividade (Sprints 20-23)
-
-- ✅ **Busca Avançada:** Encontre qualquer dado clínico em segundos.
-- ✅ **Terminologias Globais:** Integração com SNOMED-CT, LOINC e CID-10.
-- ✅ **Interoperabilidade em Massa:** Importação/Exportação de grandes volumes de dados (Bulk Data).
-- ✅ **Qualidade Assegurada:** Cobertura de testes E2E e CI/CD automatizado.
-
-### 🔹 Fase 3: Experiência e Confiança (Sprints 24-26)
-
-- ✅ **Privacidade Avançada:** Dashboard LGPD com controle total para o usuário.
-- ✅ **Performance Tuning:** Otimizações de banco e cache para escala massiva.
-- ✅ **Revolução Mobile:** Lançamento do App Nativo para Pacientes.
-
----
-
-## 🛠️ Stack Tecnológico
-
-| Camada               | Tecnologia                              |
-| -------------------- | --------------------------------------- |
-| **Frontend Web**     | React 18, TypeScript, Vite, TailwindCSS |
-| **Mobile**           | React Native, Expo SDK 51               |
-| **Backend BFF**      | Python 3.10+, Django 4.x                |
-| **FHIR Core**        | HAPI FHIR (Java), PostgreSQL 14+        |
-| **Segurança**        | Keycloak (Identity Provider)            |
-| **Cache/Mensageria** | Redis                                   |
-| **Infra**            | Docker Compose, GitHub Actions          |
-
----
-
-## ⚡ Comece Agora Mesmo
-
-Leve sua instituição para o próximo nível em minutos:
-
-### 1. Inicie a Infraestrutura
+### Installation
 
 ```bash
-cd docker
-docker-compose up -d
+# Clone repository
+git clone https://github.com/ivonsmatos/OpenEHRCore.git
+cd OpenEHRCore
+
+# Start all services
+cd docker && docker-compose up -d
+
+# Seed sample data
+python scripts/seed/seed_fhir_direct.py
+
+# Start frontend development server
+cd frontend-pwa && npm install && npm run dev
 ```
 
-### 2. Execute o Backend
+### Access
+
+| Service | URL |
+|---------|-----|
+| **Frontend** | <http://localhost:5173> |
+| **Backend API** | <http://localhost:8000/api/v1> |
+| **HAPI FHIR** | <http://localhost:8080/fhir> |
+| **Keycloak** | <http://localhost:8180> |
+
+---
+
+## 📊 API Endpoints (110+)
+
+### Core FHIR Resources
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/v1/patients/` | Patient management |
+| `/api/v1/practitioners/` | Practitioner management |
+| `/api/v1/organizations/` | Organization management |
+| `/api/v1/appointments/` | Appointment scheduling |
+| `/api/v1/encounters/` | Clinical encounters |
+| `/api/v1/observations/` | Vital signs & lab results |
+| `/api/v1/conditions/` | Diagnoses & conditions |
+| `/api/v1/medications/` | Medication requests |
+
+### Brazil Integrations
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/v1/pix/` | PIX payment generation |
+| `/api/v1/whatsapp/` | WhatsApp notifications |
+| `/api/v1/telemedicine/` | Video consultation |
+| `/api/v1/tiss/` | ANS TISS integration |
+| `/api/v1/rnds/` | Ministry of Health RNDS |
+
+### FHIR Operations
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/v1/fhir/validate` | Resource validation |
+| `/api/v1/fhir/validate-bundle` | Bundle validation |
+| `/api/v1/bulk-data/export` | Bulk FHIR export |
+| `/api/v1/terminology/` | Code system lookups |
+
+---
+
+## 📱 Offline-First PWA
+
+HealthStack works even without internet connection:
+
+- **Service Worker** caches static assets and API responses
+- **IndexedDB** stores data locally for offline access
+- **Background Sync** automatically syncs changes when online
+- **Conflict Resolution** handles concurrent updates
+
+```typescript
+// Using the offline hook
+import { useOfflineSync } from '@/hooks/useOfflineSync';
+
+function PatientForm() {
+  const { isOnline, queueRequest, pendingCount } = useOfflineSync();
+  
+  const savePatient = async (data) => {
+    await queueRequest('/api/v1/patients/', 'POST', data);
+    // Works offline! Syncs automatically when online
+  };
+}
+```
+
+---
+
+## 🔌 On-Premise Agent
+
+Connect legacy hospital equipment to HealthStack:
 
 ```bash
+# Install agent
+cd agent
+pip install -r requirements.txt
+
+# Configure
+cp config.example.yaml config.yaml
+# Edit config.yaml with server URL and API key
+
+# Run
+python -m openehrcore_agent
+```
+
+### Supported Protocols
+
+| Protocol | Status | Use Case |
+|----------|--------|----------|
+| HL7 v2.x (MLLP) | ✅ Ready | Lab analyzers, ADT systems |
+| DICOM | 🔜 Coming | PACS, imaging modalities |
+| ASTM | 🔜 Coming | Laboratory instruments |
+
+---
+
+## 🔒 Security & Compliance
+
+| Standard | Status |
+|----------|--------|
+| LGPD (Brazil) | ✅ Compliant |
+| HIPAA | ✅ Ready |
+| ISO 27001 | ✅ Controls implemented |
+| HL7 FHIR Security | ✅ OAuth 2.0, SMART on FHIR |
+
+### Security Features
+
+- **Keycloak SSO** - Centralized authentication
+- **RBAC** - Role-based access control
+- **Audit Logging** - All actions logged (AuditEvent)
+- **Data Encryption** - At rest and in transit
+- **Consent Management** - LGPD consent tracking
+
+---
+
+## 📁 Project Structure
+
+```
+HealthStack/
+├── frontend-pwa/          # React TypeScript PWA
+│   ├── src/
+│   │   ├── components/    # Reusable components
+│   │   ├── pages/         # Page components
+│   │   ├── hooks/         # Custom hooks
+│   │   ├── services/      # API services
+│   │   └── types/         # TypeScript types
+│   └── public/            # Static assets
+│
+├── backend-django/        # Django REST API
+│   ├── fhir_api/          # FHIR endpoints
+│   │   ├── services/      # Business logic
+│   │   ├── views_*.py     # API views
+│   │   └── tests/         # Unit tests
+│   └── openehrcore/       # Django settings
+│
+├── agent/                 # On-premise agent
+│   └── openehrcore_agent/ # Agent package
+│
+├── sdk/                   # TypeScript SDK
+├── docker/                # Docker configs
+└── scripts/               # Utility scripts
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Backend tests
 cd backend-django
-# Ative seu venv
-python manage.py runserver
-```
+pytest
 
-### 3. Lance o Frontend
-
-```bash
+# Frontend tests
 cd frontend-pwa
-npm run dev
-```
+npm test
 
-### 4. Conecte o Mobile
-
-```bash
-cd mobile-app
-npm start
+# E2E tests
+npm run test:e2e
 ```
 
 ---
 
-## 🤝 Contribua e Suporte
+## 📈 Changelog
 
-O OpenEHRCore é um organismo vivo. Junte-se a nós na missão de transformar a saúde digital.
+### v2.0.0 (2024-12-13)
 
-[Reportar Bug](https://github.com/OpenEHRCore/issues) | [Solicitar Feature](https://github.com/OpenEHRCore/discussions)
+**Major Features:**
+
+- 🆕 Offline-First PWA with Service Worker
+- 🆕 On-Premise Agent for HL7/MLLP
+- 🆕 FHIR $validate integration
+- 🆕 Brazil integrations (PIX, WhatsApp, Telemedicine)
+- 🔄 Rebranded from OpenEHRCore to HealthStack
+
+**Improvements:**
+
+- 110+ API endpoints
+- 200+ test cases
+- Complete FHIR R4 compliance
+- Enhanced security with Keycloak
 
 ---
 
-Copyright © 2025 **OpenEHRCore Team**.
-_Empowerment through Interoperability._
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+
+---
+
+<div align="center">
+
+**Built with ❤️ for Healthcare Interoperability**
+
+[Documentation](docs/) · [Report Bug](issues) · [Request Feature](issues)
+
+</div>

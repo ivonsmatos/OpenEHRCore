@@ -1,47 +1,32 @@
-/**
- * OpenEHRCore Service Worker
- * 
- * Provides offline support for the PWA:
- * - Cache static assets
- * - Cache API responses
- * - Background sync for pending requests
- * - Push notifications support
- */
+const CACHE_NAME = 'healthstack-v2.0.0';
+const OFFLINE_URL = '/offline.html';
 
-const CACHE_NAME = 'openehrcore-v1';
-const STATIC_CACHE = 'openehrcore-static-v1';
-const API_CACHE = 'openehrcore-api-v1';
-
-// Assets to cache on install
+// Static assets to cache
 const STATIC_ASSETS = [
     '/',
     '/index.html',
+    '/offline.html',
     '/manifest.json',
     '/favicon.ico',
-    '/src/main.tsx',
-    '/src/App.tsx',
 ];
 
-// API endpoints to cache
-const CACHEABLE_API_ROUTES = [
-    '/api/v1/patients',
-    '/api/v1/practitioners',
-    '/api/v1/organizations',
-    '/api/v1/cbo/families',
-    '/api/v1/cbo/doctors',
+// API endpoints to cache for offline
+const API_CACHE_PATTERNS = [
+    /\/api\/v1\/patients\/?$/,
+    /\/api\/v1\/practitioners\/?$/,
+    /\/api\/v1\/organizations\/?$/,
+    /\/api\/v1\/locations\/?$/,
 ];
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing Service Worker');
+    console.log('[SW] Installing Service Worker...');
 
     event.waitUntil(
-        caches.open(STATIC_CACHE)
+        caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS).catch(err => {
-                    console.warn('[SW] Some assets failed to cache:', err);
-                });
+                return cache.addAll(STATIC_ASSETS);
             })
             .then(() => self.skipWaiting())
     );
@@ -49,14 +34,14 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating Service Worker');
+    console.log('[SW] Activating Service Worker...');
 
     event.waitUntil(
         caches.keys()
             .then((cacheNames) => {
                 return Promise.all(
                     cacheNames
-                        .filter((name) => name !== STATIC_CACHE && name !== API_CACHE)
+                        .filter((name) => name !== CACHE_NAME)
                         .map((name) => {
                             console.log('[SW] Deleting old cache:', name);
                             return caches.delete(name);
@@ -67,77 +52,56 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch event - serve from cache or network
+// Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
     // Skip non-GET requests
     if (request.method !== 'GET') {
+        // Queue POST/PUT/DELETE for sync when offline
+        if (!navigator.onLine) {
+            event.respondWith(handleOfflineRequest(request));
+        }
         return;
     }
 
-    // Skip external requests
-    if (!url.origin.includes(self.location.origin) &&
-        !url.origin.includes('localhost:8000')) {
-        return;
-    }
-
-    // API requests - Network first, then cache
-    if (url.pathname.includes('/api/')) {
+    // API requests - Network first, cache fallback
+    if (url.pathname.startsWith('/api/')) {
         event.respondWith(networkFirstStrategy(request));
         return;
     }
 
-    // Static assets - Cache first, then network
+    // Static assets - Cache first, network fallback
     event.respondWith(cacheFirstStrategy(request));
 });
 
-/**
- * Cache First Strategy
- * For static assets - serve from cache, fall back to network
- */
-async function cacheFirstStrategy(request) {
-    const cachedResponse = await caches.match(request);
-
-    if (cachedResponse) {
-        // Refresh cache in background
-        fetchAndCache(request);
-        return cachedResponse;
-    }
-
-    return fetchAndCache(request);
-}
-
-/**
- * Network First Strategy
- * For API requests - try network, fall back to cache
- */
+// Network first strategy (for API calls)
 async function networkFirstStrategy(request) {
     try {
-        const networkResponse = await fetch(request);
+        const response = await fetch(request);
 
-        // Cache successful API responses
-        if (networkResponse.ok && shouldCacheApiResponse(request.url)) {
-            const cache = await caches.open(API_CACHE);
-            cache.put(request, networkResponse.clone());
+        // Cache successful GET responses
+        if (response.ok && shouldCacheAPI(request.url)) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, response.clone());
         }
 
-        return networkResponse;
+        return response;
     } catch (error) {
-        console.log('[SW] Network failed, trying cache:', request.url);
-
-        const cachedResponse = await caches.match(request);
-        if (cachedResponse) {
-            return cachedResponse;
+        // Network failed, try cache
+        const cached = await caches.match(request);
+        if (cached) {
+            console.log('[SW] Serving from cache:', request.url);
+            return cached;
         }
 
-        // Return offline fallback for API
+        // Return offline response for API
         return new Response(
             JSON.stringify({
-                error: 'Offline',
-                message: 'Você está offline. Os dados mostrados podem estar desatualizados.',
-                cached: true
+                error: 'offline',
+                message: 'You are offline. Data will sync when connection is restored.',
+                cached: false
             }),
             {
                 status: 503,
@@ -147,149 +111,155 @@ async function networkFirstStrategy(request) {
     }
 }
 
-/**
- * Fetch and cache response
- */
-async function fetchAndCache(request) {
+// Cache first strategy (for static assets)
+async function cacheFirstStrategy(request) {
+    const cached = await caches.match(request);
+
+    if (cached) {
+        // Return cached, but also fetch in background to update
+        fetchAndCache(request);
+        return cached;
+    }
+
     try {
         const response = await fetch(request);
 
         if (response.ok) {
-            const cache = await caches.open(STATIC_CACHE);
+            const cache = await caches.open(CACHE_NAME);
             cache.put(request, response.clone());
         }
 
         return response;
     } catch (error) {
-        console.error('[SW] Fetch failed:', error);
+        // Return offline page for navigation requests
+        if (request.mode === 'navigate') {
+            return caches.match(OFFLINE_URL);
+        }
         throw error;
     }
 }
 
-/**
- * Check if API response should be cached
- */
-function shouldCacheApiResponse(url) {
-    return CACHEABLE_API_ROUTES.some(route => url.includes(route));
+// Background fetch and cache update
+async function fetchAndCache(request) {
+    try {
+        const response = await fetch(request);
+        if (response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, response.clone());
+        }
+    } catch (error) {
+        // Ignore background update errors
+    }
 }
 
-// Background Sync - for pending mutations
-self.addEventListener('sync', (event) => {
-    console.log('[SW] Background sync triggered:', event.tag);
+// Check if API response should be cached
+function shouldCacheAPI(url) {
+    return API_CACHE_PATTERNS.some(pattern => pattern.test(url));
+}
 
+// Handle offline POST/PUT/DELETE requests
+async function handleOfflineRequest(request) {
+    // Queue request for later sync
+    const requestData = {
+        url: request.url,
+        method: request.method,
+        headers: Object.fromEntries(request.headers.entries()),
+        body: await request.clone().text(),
+        timestamp: Date.now()
+    };
+
+    // Store in IndexedDB for later sync
+    await storeOfflineRequest(requestData);
+
+    return new Response(
+        JSON.stringify({
+            status: 'queued',
+            message: 'Request queued for sync when online',
+            offline: true
+        }),
+        {
+            status: 202,
+            headers: { 'Content-Type': 'application/json' }
+        }
+    );
+}
+
+// Store offline request in IndexedDB
+async function storeOfflineRequest(requestData) {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('healthstack-offline', 1);
+
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('pending-requests')) {
+                db.createObjectStore('pending-requests', { keyPath: 'timestamp' });
+            }
+        };
+
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const tx = db.transaction('pending-requests', 'readwrite');
+            const store = tx.objectStore('pending-requests');
+            store.add(requestData);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        };
+
+        request.onerror = () => reject(request.error);
+    });
+}
+
+// Background sync - process queued requests
+self.addEventListener('sync', (event) => {
     if (event.tag === 'sync-pending-requests') {
         event.waitUntil(syncPendingRequests());
     }
 });
 
-/**
- * Sync pending requests when back online
- */
+// Sync all pending requests
 async function syncPendingRequests() {
-    try {
-        // Get pending requests from IndexedDB
-        const db = await openDB();
-        const pending = await getAllPending(db);
-
-        for (const item of pending) {
-            try {
-                await fetch(item.url, {
-                    method: item.method,
-                    headers: item.headers,
-                    body: item.body
-                });
-
-                // Remove from pending
-                await removePending(db, item.id);
-                console.log('[SW] Synced request:', item.url);
-            } catch (error) {
-                console.error('[SW] Failed to sync:', item.url);
-            }
-        }
-    } catch (error) {
-        console.error('[SW] Sync failed:', error);
-    }
-}
-
-// IndexedDB helpers for offline queue
-function openDB() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open('openehrcore-offline', 1);
+        const request = indexedDB.open('healthstack-offline', 1);
 
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-
-        request.onupgradeneeded = (event) => {
+        request.onsuccess = async (event) => {
             const db = event.target.result;
-            if (!db.objectStoreNames.contains('pending')) {
-                db.createObjectStore('pending', { keyPath: 'id', autoIncrement: true });
-            }
+            const tx = db.transaction('pending-requests', 'readwrite');
+            const store = tx.objectStore('pending-requests');
+            const allRequests = store.getAll();
+
+            allRequests.onsuccess = async () => {
+                const requests = allRequests.result;
+
+                for (const reqData of requests) {
+                    try {
+                        await fetch(reqData.url, {
+                            method: reqData.method,
+                            headers: reqData.headers,
+                            body: reqData.body
+                        });
+
+                        // Remove successful request from queue
+                        store.delete(reqData.timestamp);
+                        console.log('[SW] Synced request:', reqData.url);
+                    } catch (error) {
+                        console.error('[SW] Sync failed:', reqData.url, error);
+                    }
+                }
+
+                resolve();
+            };
         };
-    });
-}
-
-function getAllPending(db) {
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction('pending', 'readonly');
-        const store = tx.objectStore('pending');
-        const request = store.getAll();
 
         request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
     });
 }
 
-function removePending(db, id) {
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction('pending', 'readwrite');
-        const store = tx.objectStore('pending');
-        const request = store.delete(id);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve();
-    });
-}
-
-// Push notifications
-self.addEventListener('push', (event) => {
-    console.log('[SW] Push notification received');
-
-    let data = { title: 'OpenEHRCore', body: 'Nova notificação' };
-
-    if (event.data) {
-        try {
-            data = event.data.json();
-        } catch (e) {
-            data.body = event.data.text();
-        }
-    }
-
-    const options = {
-        body: data.body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        vibrate: [100, 50, 100],
-        data: data.url || '/',
-        actions: [
-            { action: 'open', title: 'Abrir' },
-            { action: 'close', title: 'Fechar' }
-        ]
-    };
-
-    event.waitUntil(
-        self.registration.showNotification(data.title, options)
-    );
-});
-
-// Notification click handler
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-
-    if (event.action === 'open' || !event.action) {
-        event.waitUntil(
-            clients.openWindow(event.notification.data || '/')
-        );
+// Listen for online event to trigger sync
+self.addEventListener('message', (event) => {
+    if (event.data === 'ONLINE') {
+        console.log('[SW] Online - triggering sync');
+        syncPendingRequests();
     }
 });
 
-console.log('[SW] Service Worker loaded');
+console.log('[SW] HealthStack Service Worker loaded');

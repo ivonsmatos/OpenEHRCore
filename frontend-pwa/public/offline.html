@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthStack - Offline</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    
+    .container {
+      text-align: center;
+      padding: 2rem;
+      max-width: 500px;
+    }
+    
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(90deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    p {
+      color: #a0a0a0;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      font-size: 0.9rem;
+    }
+    
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: #ff6b6b;
+      border-radius: 50%;
+      animation: blink 1s infinite;
+    }
+    
+    .status-dot.online {
+      background: #51cf66;
+      animation: none;
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    
+    .actions {
+      margin-top: 2rem;
+    }
+    
+    button {
+      padding: 0.75rem 2rem;
+      background: linear-gradient(90deg, #7c3aed, #00d4ff);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+    }
+    
+    .info {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(0, 212, 255, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+    
+    .info h3 {
+      font-size: 0.9rem;
+      color: #00d4ff;
+      margin-bottom: 0.5rem;
+    }
+    
+    .info p {
+      font-size: 0.85rem;
+      color: #888;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📡</div>
+    
+    <h1>Você está offline</h1>
+    
+    <p>
+      Não foi possível conectar ao servidor. Suas alterações serão salvas localmente 
+      e sincronizadas automaticamente quando a conexão for restaurada.
+    </p>
+    
+    <div class="status">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Aguardando conexão...</span>
+    </div>
+    
+    <div class="actions">
+      <button onclick="window.location.reload()">Tentar novamente</button>
+    </div>
+    
+    <div class="info">
+      <h3>💾 Dados salvos localmente</h3>
+      <p>Suas alterações pendentes serão sincronizadas automaticamente.</p>
+    </div>
+  </div>
+  
+  <script>
+    // Check online status
+    function updateStatus() {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      
+      if (navigator.onLine) {
+        dot.classList.add('online');
+        text.textContent = 'Conectado! Recarregando...';
+        
+        // Notify service worker
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage('ONLINE');
+        }
+        
+        // Reload after a short delay
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        dot.classList.remove('online');
+        text.textContent = 'Aguardando conexão...';
+      }
+    }
+    
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    
+    // Initial check
+    updateStatus();
+  </script>
+</body>
+</html>
