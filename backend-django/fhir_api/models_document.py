@@ -6,7 +6,6 @@ Permite anexar documentos médicos (PDFs, imagens, laudos) aos pacientes
 """
 
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
 from django.core.validators import FileExtensionValidator
 from django.conf import settings
 import uuid
@@ -55,49 +54,40 @@ class DocumentReference(models.Model):
     category = models.CharField(max_length=100, blank=True, null=True,
                                  help_text='Categoria: Clinical Note, Imaging, etc')
     
-    # Paciente (subject)
-    patient = models.ForeignKey(
-        'Patient',
-        on_delete=models.CASCADE,
-        related_name='documents'
+    # Paciente (subject) - Referência FHIR
+    patient_reference = models.JSONField(
+        help_text='Referência FHIR ao paciente: {"reference": "Patient/123", "display": "Nome"}'
     )
     
     # Data do documento
     date = models.DateTimeField(auto_now_add=True)
     
-    # Autor/Criador
-    author = models.ForeignKey(
-        'Practitioner',
-        on_delete=models.SET_NULL,
+    # Autor/Criador - Referência FHIR
+    author_reference = models.JSONField(
         null=True,
         blank=True,
-        related_name='authored_documents'
+        help_text='Referência FHIR ao autor: Practitioner'
     )
     
-    # Autenticador (quem validou)
-    authenticator = models.ForeignKey(
-        'Practitioner',
-        on_delete=models.SET_NULL,
+    # Autenticador (quem validou) - Referência FHIR
+    authenticator_reference = models.JSONField(
         null=True,
         blank=True,
-        related_name='authenticated_documents'
+        help_text='Referência FHIR ao autenticador: Practitioner'
     )
     
-    # Contexto clínico
-    encounter = models.ForeignKey(
-        'Encounter',
-        on_delete=models.SET_NULL,
+    # Contexto clínico - Referência FHIR
+    encounter_reference = models.JSONField(
         null=True,
         blank=True,
-        related_name='documents'
+        help_text='Referência FHIR ao encontro: Encounter'
     )
     
     # Descrição
     description = models.TextField(blank=True, null=True)
     
     # Security labels (confidencialidade)
-    security_label = ArrayField(
-        models.CharField(max_length=50),
+    security_label = models.JSONField(
         default=list,
         blank=True,
         help_text='Níveis de confidencialidade: N (normal), R (restricted), V (very restricted)'
@@ -121,13 +111,13 @@ class DocumentReference(models.Model):
         db_table = 'fhir_document_reference'
         ordering = ['-date']
         indexes = [
-            models.Index(fields=['patient', '-date']),
             models.Index(fields=['type', '-date']),
             models.Index(fields=['status']),
         ]
     
     def __str__(self):
-        return f"{self.get_type_display()} - {self.patient} ({self.date.strftime('%Y-%m-%d')})"
+        patient_display = self.patient_reference.get('display', 'Unknown') if self.patient_reference else 'Unknown'
+        return f"{self.get_type_display()} - {patient_display} ({self.date.strftime('%Y-%m-%d')})"
     
     def to_fhir(self):
         """Converte para formato FHIR JSON"""
@@ -147,23 +137,12 @@ class DocumentReference(models.Model):
             'category': [{
                 'text': self.category
             }] if self.category else [],
-            'subject': {
-                'reference': f'Patient/{self.patient.id}',
-                'display': self.patient.name
-            },
+            'subject': self.patient_reference if self.patient_reference else {'reference': 'Patient/unknown'},
             'date': self.date.isoformat(),
-            'author': [{
-                'reference': f'Practitioner/{self.author.id}',
-                'display': self.author.name
-            }] if self.author else [],
-            'authenticator': {
-                'reference': f'Practitioner/{self.authenticator.id}',
-                'display': self.authenticator.name
-            } if self.authenticator else None,
+            'author': [self.author_reference] if self.author_reference else [],
+            'authenticator': self.authenticator_reference if self.authenticator_reference else None,
             'context': {
-                'encounter': [{
-                    'reference': f'Encounter/{self.encounter.id}'
-                }] if self.encounter else []
+                'encounter': [self.encounter_reference] if self.encounter_reference else []
             },
             'description': self.description,
             'securityLabel': [

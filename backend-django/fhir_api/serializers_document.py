@@ -38,18 +38,15 @@ class DocumentAttachmentSerializer(serializers.ModelSerializer):
 class DocumentReferenceSerializer(serializers.ModelSerializer):
     """Serializer para DocumentReference"""
     
-    attachments = DocumentAttachmentSerializer(many=True, read_only=True)
-    patient_name = serializers.CharField(source='patient.name', read_only=True)
-    author_name = serializers.CharField(source='author.name', read_only=True, allow_null=True)
     type_display = serializers.CharField(source='get_type_display', read_only=True)
     
     class Meta:
         model = DocumentReference
         fields = [
             'id', 'status', 'doc_status', 'type', 'type_code', 'type_display',
-            'category', 'patient', 'patient_name', 'date', 'author', 'author_name',
-            'authenticator', 'encounter', 'description', 'security_label',
-            'content', 'attachments', 'created_at', 'updated_at'
+            'category', 'patient_reference', 'date', 'author_reference',
+            'authenticator_reference', 'encounter_reference', 'description', 'security_label',
+            'content', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'date', 'created_at', 'updated_at']
     

@@ -17,7 +17,6 @@ Bundle Types:
 """
 
 from django.db import models, transaction
-from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import uuid

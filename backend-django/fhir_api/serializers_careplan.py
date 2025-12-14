@@ -20,7 +20,7 @@ class CarePlanActivitySerializer(serializers.ModelSerializer):
             'kind', 'kind_display', 'code', 'description',
             'reason_code', 'reason_reference', 'goal',
             'scheduled_period_start', 'scheduled_period_end',
-            'scheduled_string', 'location', 'performers',
+            'scheduled_string', 'location_reference', 'performers',
             'product_reference', 'daily_amount', 'quantity',
             'progress', 'outcome_codeable_concept', 'outcome_reference',
             'created_at', 'updated_at'
@@ -46,8 +46,6 @@ class CarePlanSerializer(serializers.ModelSerializer):
     
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     intent_display = serializers.CharField(source='get_intent_display', read_only=True)
-    patient_name = serializers.CharField(source='patient.name', read_only=True)
-    author_name = serializers.CharField(source='author.get_full_name', read_only=True)
     activity_count = serializers.SerializerMethodField()
     
     class Meta:
@@ -55,9 +53,9 @@ class CarePlanSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'identifier', 'status', 'status_display',
             'intent', 'intent_display', 'title', 'description',
-            'categories', 'patient', 'patient_name',
-            'encounter', 'period_start', 'period_end',
-            'author', 'author_name', 'care_team',
+            'categories', 'patient_reference',
+            'encounter_reference', 'period_start', 'period_end',
+            'author', 'care_team_reference',
             'addresses', 'goals', 'notes', 'activity_count',
             'created_at', 'updated_at'
         ]
@@ -73,17 +71,15 @@ class CarePlanDetailSerializer(serializers.ModelSerializer):
     
     activities = CarePlanActivitySerializer(many=True, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    patient_name = serializers.CharField(source='patient.name', read_only=True)
-    author_name = serializers.CharField(source='author.get_full_name', read_only=True)
     
     class Meta:
         model = CarePlan
         fields = [
             'id', 'identifier', 'status', 'status_display',
             'intent', 'title', 'description', 'categories',
-            'patient', 'patient_name', 'encounter',
-            'period_start', 'period_end', 'author', 'author_name',
-            'care_team', 'addresses', 'goals', 'notes',
+            'patient_reference', 'encounter_reference',
+            'period_start', 'period_end', 'author',
+            'care_team_reference', 'addresses', 'goals', 'notes',
             'activities', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']

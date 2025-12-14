@@ -249,13 +249,7 @@ urlpatterns = [
     # ================================================================
     # Sprint 25: Novos Módulos FHIR
     # ================================================================
-    
-    # CarePlan - Plano de Cuidados
-    path('careplans/', views_careplan.manage_careplans, name='manage_careplans'),
-    path('careplans/<str:careplan_id>/', views_careplan.careplan_detail, name='careplan_detail'),
-    path('careplans/<str:careplan_id>/activities/', views_careplan.add_careplan_activity, name='add_careplan_activity'),
-    path('patients/<str:patient_id>/careplans/', views_careplan.patient_careplans, name='patient_careplans'),
-    path('goals/', views_careplan.manage_goals, name='manage_goals'),
+    # CarePlan - REMOVIDO: ViewSets já registrados no router
     
     # Composition - Prontuário Estruturado
     path('compositions/', views_composition.manage_compositions, name='manage_compositions'),

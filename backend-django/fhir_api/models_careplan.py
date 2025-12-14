@@ -12,7 +12,6 @@ Features:
 """
 
 from django.db import models
-from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import uuid
@@ -58,8 +57,7 @@ class CarePlan(models.Model):
     intent = models.CharField(max_length=20, choices=INTENT_CHOICES, default='plan')
     
     # Categorias (pode ter múltiplas)
-    categories = ArrayField(
-        models.CharField(max_length=50, choices=CATEGORY_CHOICES),
+    categories = models.JSONField(
         default=list,
         blank=True
     )
@@ -68,20 +66,16 @@ class CarePlan(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     
-    # Paciente (subject)
-    patient = models.ForeignKey(
-        'Patient',
-        on_delete=models.CASCADE,
-        related_name='care_plans'
+    # Paciente (subject) - Referência FHIR
+    patient_reference = models.JSONField(
+        help_text='Referência FHIR ao paciente: {"reference": "Patient/123", "display": "Nome"}'
     )
     
-    # Encontro associado
-    encounter = models.ForeignKey(
-        'Encounter',
-        on_delete=models.SET_NULL,
+    # Encontro associado - Referência FHIR
+    encounter_reference = models.JSONField(
         null=True,
         blank=True,
-        related_name='care_plans'
+        help_text='Referência FHIR ao encontro: Encounter'
     )
     
     # Período de validade
@@ -96,23 +90,21 @@ class CarePlan(models.Model):
         related_name='authored_careplans'
     )
     
-    # Equipe de cuidado
-    care_team = models.ForeignKey(
-        'CareTeam',
-        on_delete=models.SET_NULL,
+    # Equipe de cuidado - Referência FHIR
+    care_team_reference = models.JSONField(
         null=True,
         blank=True,
-        related_name='care_plans'
+        help_text='Referência FHIR à equipe: CareTeam'
     )
     
     # Endereços (references a outros recursos)
-    addresses = JSONField(
+    addresses = models.JSONField(
         default=list,
         help_text='Condições/problemas que o plano endereça'
     )
     
     # Objetivos
-    goals = JSONField(
+    goals = models.JSONField(
         default=list,
         help_text='Array de referências para Goal resources'
     )
@@ -135,13 +127,13 @@ class CarePlan(models.Model):
         verbose_name_plural = 'Care Plans'
         ordering = ['-period_start']
         indexes = [
-            models.Index(fields=['patient', '-period_start']),
             models.Index(fields=['status', '-period_start']),
             models.Index(fields=['author', '-created_at']),
         ]
     
     def __str__(self):
-        return f"{self.title} - {self.patient.name if hasattr(self.patient, 'name') else 'N/A'}"
+        patient_display = self.patient_reference.get('display', 'N/A') if self.patient_reference else 'N/A'
+        return f"{self.title} - {patient_display}"
     
     def clean(self):
         """Validações customizadas"""
@@ -174,10 +166,7 @@ class CarePlan(models.Model):
             'status': self.status,
             'intent': self.intent,
             'title': self.title,
-            'subject': {
-                'reference': f"Patient/{self.patient.id}",
-                'display': getattr(self.patient, 'name', 'Unknown')
-            },
+            'subject': self.patient_reference if self.patient_reference else {'reference': 'Patient/unknown'},
             'period': {
                 'start': self.period_start.isoformat(),
             }
@@ -212,10 +201,8 @@ class CarePlan(models.Model):
             fhir_careplan['description'] = self.description
         
         # Encounter
-        if self.encounter:
-            fhir_careplan['encounter'] = {
-                'reference': f"Encounter/{self.encounter.id}"
-            }
+        if self.encounter_reference:
+            fhir_careplan['encounter'] = self.encounter_reference
         
         # Author
         if self.author:
@@ -225,10 +212,8 @@ class CarePlan(models.Model):
             }
         
         # Care Team
-        if self.care_team:
-            fhir_careplan['careTeam'] = [{
-                'reference': f"CareTeam/{self.care_team.id}"
-            }]
+        if self.care_team_reference:
+            fhir_careplan['careTeam'] = [self.care_team_reference]
         
         # Addresses
         if self.addresses:
@@ -296,28 +281,28 @@ class CarePlanActivity(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not-started')
     
     # Outcome (código SNOMED/LOINC)
-    outcome_codeable_concept = JSONField(blank=True, null=True)
-    outcome_reference = JSONField(blank=True, null=True)
+    outcome_codeable_concept = models.JSONField(blank=True, null=True)
+    outcome_reference = models.JSONField(blank=True, null=True)
     
     # Progress notes
     progress = models.TextField(blank=True, null=True)
     
     # Detail
     kind = models.CharField(max_length=50, choices=KIND_CHOICES, blank=True, null=True)
-    code = JSONField(help_text='Código da atividade (SNOMED CT)')
+    code = models.JSONField(help_text='Código da atividade (SNOMED CT)')
     
     # Razão (por que fazer)
-    reason_code = JSONField(blank=True, null=True)
-    reason_reference = JSONField(blank=True, null=True)
+    reason_code = models.JSONField(blank=True, null=True)
+    reason_reference = models.JSONField(blank=True, null=True)
     
     # Objetivos relacionados
-    goal = JSONField(default=list, help_text='Referências para Goal resources')
+    goal = models.JSONField(default=list, help_text='Referências para Goal resources')
     
     # Descrição
     description = models.TextField(blank=True, null=True)
     
     # Agendamento
-    scheduled_timing = JSONField(
+    scheduled_timing = models.JSONField(
         blank=True,
         null=True,
         help_text='Timing para atividades recorrentes'
@@ -326,23 +311,21 @@ class CarePlanActivity(models.Model):
     scheduled_period_end = models.DateTimeField(blank=True, null=True)
     scheduled_string = models.CharField(max_length=255, blank=True, null=True)
     
-    # Localização
-    location = models.ForeignKey(
-        'Location',
-        on_delete=models.SET_NULL,
+    # Localização - Referência FHIR
+    location_reference = models.JSONField(
         null=True,
         blank=True,
-        related_name='careplan_activities'
+        help_text='Referência FHIR à localização: Location'
     )
     
     # Executores
-    performers = JSONField(
+    performers = models.JSONField(
         default=list,
         help_text='Profissionais responsáveis pela atividade'
     )
     
     # Produto (medicamento, dispositivo, etc.)
-    product_reference = JSONField(blank=True, null=True)
+    product_reference = models.JSONField(blank=True, null=True)
     
     # Quantidade
     daily_amount = models.DecimalField(
@@ -428,11 +411,8 @@ class CarePlanActivity(models.Model):
             detail['scheduledString'] = self.scheduled_string
         
         # Location
-        if self.location:
-            detail['location'] = {
-                'reference': f"Location/{self.location.id}",
-                'display': getattr(self.location, 'name', 'Unknown')
-            }
+        if self.location_reference:
+            detail['location'] = self.location_reference
         
         # Performers
         if self.performers:
