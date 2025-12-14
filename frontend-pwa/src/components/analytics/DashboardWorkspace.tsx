@@ -229,39 +229,47 @@ const MedicalDashboard: React.FC = () => {
                             {/* Legend placeholders */}
                         </div>
                     </div>
-                    <div style={{ width: '99%', height: '300px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={surveyChartData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
-                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
-                                <Line type="monotone" dataKey="patients" stroke="#6366F1" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-                                <Line type="monotone" dataKey="recovery" stroke="#A5B4FC" strokeWidth={3} strokeDasharray="5 5" dot={false} />
-                            </LineChart>
-                        </ResponsiveContainer>
+                    <div style={{ width: '100%', height: 300, minWidth: 300 }}>
+                        {surveyChartData && surveyChartData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <LineChart data={surveyChartData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+                                    <Line type="monotone" dataKey="patients" stroke="#6366F1" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="recovery" stroke="#A5B4FC" strokeWidth={3} strokeDasharray="5 5" dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9CA3AF' }}>Carregando dados...</div>
+                        )}
                     </div>
                 </Card>
 
                 {/* Heart Surgeries / Clinical Stats */}
                 <Card padding="lg">
                     <h3 style={{ fontWeight: 600, color: colors.text.primary, marginBottom: spacing.lg }}>Tratamentos Médicos (Top Condições)</h3>
-                    <div style={{ width: '99%', height: '300px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={conditionsData}>
-                                <defs>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                <XAxis dataKey="name" hide />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
-                                <Tooltip />
-                                <Area type="monotone" dataKey="value" stroke="#10B981" fillOpacity={1} fill="url(#colorValue)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <div style={{ width: '100%', height: 300, minWidth: 300 }}>
+                        {conditionsData && conditionsData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <AreaChart data={conditionsData}>
+                                    <defs>
+                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                    <XAxis dataKey="name" hide />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+                                    <Tooltip />
+                                    <Area type="monotone" dataKey="value" stroke="#10B981" fillOpacity={1} fill="url(#colorValue)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9CA3AF' }}>Carregando dados...</div>
+                        )}
                     </div>
                 </Card>
             </div>
