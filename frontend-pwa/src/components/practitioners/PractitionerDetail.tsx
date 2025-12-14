@@ -74,18 +74,18 @@ const PractitionerDetail: React.FC = () => {
     const handleStartChat = () => {
         if (!practitioner) return;
 
-        // Store practitioner info for chat
-        const fullName = getFullName();
-        sessionStorage.setItem('chat-practitioner', JSON.stringify({
-            id: practitioner.id,
-            name: fullName
-        }));
-        navigate('/chat');
+        // Navigate directly to the DM channel for this practitioner
+        // The channel ID format is 'dm-{practitionerId}'
+        navigate(`/chat?channel=dm-${practitioner.id}`);
     };
 
     const handleScheduleAppointment = () => {
-        // Navigate to appointment scheduling with this practitioner
-        navigate(`/agenda?practitioner=${id}`);
+        // Navigate to scheduling with practitioner pre-selected
+        navigate(`/scheduling?practitioner=${id}`);
+    };
+
+    const handleEdit = () => {
+        navigate(`/practitioners/${id}/edit`);
     };
 
     // Helper functions
@@ -182,24 +182,24 @@ const PractitionerDetail: React.FC = () => {
                         <Button
                             onClick={handleStartChat}
                             className="action-button action-button--primary"
+                            leftIcon={<MessageCircle size={20} />}
                         >
-                            <MessageCircle size={20} />
                             Iniciar Chat
                         </Button>
                         <Button
                             variant="secondary"
                             onClick={handleScheduleAppointment}
                             className="action-button"
+                            leftIcon={<Calendar size={20} />}
                         >
-                            <Calendar size={20} />
                             Agendar Consulta
                         </Button>
                         <Button
-                            variant="ghost"
-                            onClick={() => navigate(`/profissionais/${id}/editar`)}
+                            variant="secondary"
+                            onClick={handleEdit}
                             className="action-button"
+                            leftIcon={<Edit size={20} />}
                         >
-                            <Edit size={20} />
                             Editar
                         </Button>
                     </div>

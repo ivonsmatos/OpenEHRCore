@@ -114,7 +114,7 @@ const PractitionerCard: React.FC<PractitionerCardProps> = ({ practitioner, onCli
                             color: colors.text.secondary,
                             fontSize: '0.9rem',
                         }}>
-                            <Stethoscope size={14} />
+                            <Stethoscope size={16} style={{ flexShrink: 0 }} />
                             <span>{crm}</span>
                         </div>
                     )}
@@ -132,13 +132,13 @@ const PractitionerCard: React.FC<PractitionerCardProps> = ({ practitioner, onCli
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.md, fontSize: '0.85rem' }}>
                         {phone && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: colors.text.secondary }}>
-                                <Phone size={12} />
+                                <Phone size={14} style={{ flexShrink: 0 }} />
                                 <span>{phone}</span>
                             </div>
                         )}
                         {email && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: colors.text.secondary }}>
-                                <Mail size={12} />
+                                <Mail size={14} style={{ flexShrink: 0 }} />
                                 <span>{email}</span>
                             </div>
                         )}

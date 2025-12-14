@@ -6,6 +6,7 @@ import { colors, spacing } from '../../theme/colors';
 
 const routeNameMap: Record<string, string> = {
     'patients': 'Pacientes',
+    'practitioners': 'Profissionais',
     'scheduling': 'Agenda',
     'checkin': 'Check-in',
     'finance': 'Financeiro',
@@ -18,7 +19,10 @@ const routeNameMap: Record<string, string> = {
 
 // Helper to check if a segment is an ID (simple check: length > 2 and mixed/numbers)
 const isId = (segment: string) => {
-    return segment.length > 8 || !isNaN(Number(segment));
+    // If segment is in the route map, it's a route name, not an ID
+    if (routeNameMap[segment]) return false;
+    // Check if it's a number or a short alphanumeric string (UUIDs, etc)
+    return !isNaN(Number(segment)) || (segment.length <= 36 && /^[a-zA-Z0-9-]+$/.test(segment) && segment.length < 15);
 };
 
 const Breadcrumbs: React.FC = () => {
@@ -46,10 +50,18 @@ const Breadcrumbs: React.FC = () => {
             {pathnames.map((value, index) => {
                 const last = index === pathnames.length - 1;
                 const to = `/${pathnames.slice(0, index + 1).join('/')}`;
+                const previousSegment = index > 0 ? pathnames[index - 1] : null;
 
                 // Resolve display name
                 let displayName = routeNameMap[value] || value;
-                if (isId(value)) displayName = "Detalhes"; // Generic name for IDs
+                
+                // If current segment is an ID and previous is a known route, skip showing it
+                // (to avoid "Profissionais > Profissionais" or similar duplications)
+                if (isId(value) && previousSegment && routeNameMap[previousSegment]) {
+                    // Only show this breadcrumb if it's a sub-action like 'edit', 'new', etc.
+                    // Otherwise, the parent name is enough context
+                    return null;
+                }
 
                 return (
                     <React.Fragment key={to}>

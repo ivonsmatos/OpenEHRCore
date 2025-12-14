@@ -79,6 +79,7 @@ const ChatWorkspace = lazyLoad(() => import('./components/workspaces/ChatWorkspa
 const BedManagementWorkspace = lazyLoad(() => import('./components/workspaces/BedManagementWorkspace'));
 const PractitionerWorkspace = lazyLoad(() => import('./components/workspaces/PractitionerWorkspace'));
 const PractitionerDetail = lazyLoad(() => import('./components/practitioners/PractitionerDetail'));
+const PractitionerEdit = lazyLoad(() => import('./components/practitioners/PractitionerEdit'));
 
 // These need named exports, handle differently
 const PatientPortalWorkspace = lazyLoad(() =>
@@ -135,6 +136,7 @@ const ProtectedRoutes: React.FC = () => {
                     <Route path="/patients/:id/encounter/new" element={<ClinicalWorkspace />} />
                     <Route path="/practitioners" element={<PractitionerWorkspace />} />
                     <Route path="/practitioners/:id" element={<PractitionerDetail />} />
+                    <Route path="/practitioners/:id/edit" element={<PractitionerEdit />} />
                     <Route path="/scheduling" element={<SchedulingWorkspace />} />
                     <Route path="/checkin" element={<CheckInWorkspace />} />
                     <Route path="/portal" element={<PatientPortalWorkspace />} />

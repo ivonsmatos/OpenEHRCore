@@ -126,6 +126,12 @@ export const PatientDetail: React.FC<PatientDetailProps> = (props) => {
     }
   };
 
+  const handleAudit = () => {
+    if (!currentPatient?.id) return;
+    // Navigate to audit log view
+    navigate(`/patients/${currentPatient.id}/audit`);
+  };
+
   if (error) {
     return (
       <div

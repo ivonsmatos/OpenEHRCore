@@ -40,3 +40,15 @@ input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 30px white inset !important;
     -webkit-text-fill-color: inherit !important;
 }
+
+/* Global icon alignment - ensures icons are vertically centered with text */
+svg {
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* For flex containers with icons and text */
+.flex.items-center svg,
+[style*="display: flex"][style*="align-items: center"] svg {
+  flex-shrink: 0;
+}

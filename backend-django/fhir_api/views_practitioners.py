@@ -285,6 +285,175 @@ def get_practitioner(request, practitioner_id):
         )
 
 
+@api_view(['PUT'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def update_practitioner(request, practitioner_id):
+    """
+    Update practitioner by ID
+    
+    PUT /api/v1/practitioners/{id}/
+    
+    Body: Same as create_practitioner
+    """
+    try:
+        data = request.data
+        fhir = FHIRService()
+        
+        # Get existing practitioner
+        existing = fhir.get_resource('Practitioner', practitioner_id)
+        if not existing:
+            return Response(
+                {"error": "Practitioner not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Validate required fields
+        required = ['family_name', 'given_names']
+        for field in required:
+            if field not in data:
+                return Response(
+                    {"error": f"Campo obrigatório ausente: {field}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Build updated FHIR Practitioner resource
+        practitioner = {
+            "resourceType": "Practitioner",
+            "id": practitioner_id,
+            "active": data.get('active', True),
+            "name": [{
+                "use": "official",
+                "family": data['family_name'],
+                "given": data['given_names'] if isinstance(data['given_names'], list) else [data['given_names']]
+            }],
+            "gender": data.get('gender', 'unknown'),
+        }
+        
+        # Add prefix if provided
+        if data.get('prefix'):
+            practitioner['name'][0]['prefix'] = [data['prefix']]
+        
+        # Add birthDate if provided
+        if data.get('birthDate'):
+            practitioner['birthDate'] = data['birthDate']
+        
+        # Add telecom (phone and email)
+        telecom = []
+        if data.get('phone'):
+            telecom.append({
+                "system": "phone",
+                "value": data['phone'],
+                "use": "work"
+            })
+        if data.get('email'):
+            telecom.append({
+                "system": "email",
+                "value": data['email'],
+                "use": "work"
+            })
+        if telecom:
+            practitioner['telecom'] = telecom
+        
+        # Add identifier (CRM or similar)
+        conselho = data.get('conselho', 'CRM')
+        numero_conselho = data.get('numero_conselho')
+        uf_conselho = data.get('uf_conselho', 'SP')
+        
+        if numero_conselho:
+            practitioner['identifier'] = [{
+                "system": f"http://www.saude.gov.br/fhir/r4/NamingSystem/BR{conselho}",
+                "value": f"{numero_conselho}",
+                "type": {
+                    "coding": [{
+                        "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                        "code": "MD",
+                        "display": conselho
+                    }]
+                },
+                "_value": {
+                    "extension": [{
+                        "url": "http://www.saude.gov.br/fhir/r4/StructureDefinition/BREstado",
+                        "valueCode": uf_conselho
+                    }]
+                }
+            }]
+        
+        # Add qualification
+        codigo_cbo = data.get('codigo_cbo')
+        if codigo_cbo:
+            # Validate CBO code
+            if cbo_service.validar_codigo(codigo_cbo):
+                ocupacao = cbo_service.buscar_por_codigo(codigo_cbo)
+                
+                practitioner['qualification'] = [{
+                    "code": {
+                        "coding": [{
+                            "system": "http://www.saude.gov.br/fhir/r4/CodeSystem/BRClassificacaoBrasileiradeOcupacoes",
+                            "code": codigo_cbo,
+                            "display": ocupacao.nome if ocupacao else codigo_cbo
+                        }, {
+                            "system": "http://terminology.hl7.org/CodeSystem/v2-0360",
+                            "code": data.get('qualification_code', 'MD'),
+                            "display": data.get('qualification_display', ocupacao.nome if ocupacao else 'Doctor')
+                        }],
+                        "text": ocupacao.nome if ocupacao else data.get('qualification_display', 'Médico')
+                    }
+                }]
+            else:
+                # No CBO but has qualification
+                practitioner['qualification'] = [{
+                    "code": {
+                        "coding": [{
+                            "system": "http://terminology.hl7.org/CodeSystem/v2-0360",
+                            "code": data.get('qualification_code', 'MD'),
+                            "display": data.get('qualification_display', 'Doctor')
+                        }],
+                        "text": data.get('qualification_display', 'Médico')
+                    }
+                }]
+        else:
+            # No CBO provided, use qualification_code and display
+            practitioner['qualification'] = [{
+                "code": {
+                    "coding": [{
+                        "system": "http://terminology.hl7.org/CodeSystem/v2-0360",
+                        "code": data.get('qualification_code', 'MD'),
+                        "display": data.get('qualification_display', 'Doctor')
+                    }],
+                    "text": data.get('qualification_display', 'Médico')
+                }
+            }]
+            
+            if numero_conselho:
+                practitioner['qualification'][0]['identifier'] = [{
+                    "system": f"http://www.saude.gov.br/fhir/r4/NamingSystem/BR{conselho or 'CRM'}",
+                    "value": f"{numero_conselho}/{uf_conselho}"
+                }]
+        
+        # Update in FHIR server
+        result = fhir.update_resource('Practitioner', practitioner_id, practitioner)
+        
+        # Add CBO info to response
+        if codigo_cbo and cbo_service.validar_codigo(codigo_cbo):
+            ocupacao = cbo_service.buscar_por_codigo(codigo_cbo)
+            if ocupacao:
+                result['_cbo'] = {
+                    'codigo': ocupacao.codigo,
+                    'nome': ocupacao.nome,
+                    'familia': ocupacao.familia_nome
+                }
+        
+        return Response(result, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error updating practitioner: {e}")
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
 @api_view(['POST'])
 @authentication_classes([KeycloakAuthentication])
 @permission_classes([IsAuthenticated])

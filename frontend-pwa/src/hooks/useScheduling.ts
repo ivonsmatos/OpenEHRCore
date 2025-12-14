@@ -78,12 +78,45 @@ export const useScheduling = () => {
         }
     }, []);
 
+    const createAppointment = async (data: {
+        practitionerId: string;
+        patientId: string;
+        start: string;
+        end: string;
+        reason?: string;
+    }) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const token = localStorage.getItem('access_token');
+            const response = await axios.post(`${API_URL}/appointments/`, {
+                practitioner_id: data.practitionerId,
+                patient_id: data.patientId,
+                start: data.start,
+                end: data.end,
+                reason: data.reason || 'Consulta médica',
+                status: 'booked'
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erro ao criar consulta');
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         slots,
         loading,
         error,
         createSchedule,
         createSlot,
-        fetchSlots
+        fetchSlots,
+        createAppointment
     };
 };

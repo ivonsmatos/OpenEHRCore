@@ -85,8 +85,7 @@ const PractitionerWorkspace: React.FC = () => {
                         Gerencie médicos, enfermeiros e outros profissionais
                     </p>
                 </div>
-                <Button onClick={() => setShowForm(true)}>
-                    <Plus size={20} style={{ marginRight: spacing.xs }} />
+                <Button onClick={() => setShowForm(true)} leftIcon={<Plus size={20} />}>
                     Adicionar Profissional
                 </Button>
             </div>
@@ -148,8 +147,7 @@ const PractitionerWorkspace: React.FC = () => {
 
                     {/* Search Button */}
                     <div>
-                        <Button onClick={handleSearch} variant="secondary">
-                            <Search size={18} style={{ marginRight: spacing.xs }} />
+                        <Button onClick={handleSearch} variant="secondary" leftIcon={<Search size={18} />}>
                             Buscar
                         </Button>
                     </div>
@@ -188,8 +186,7 @@ const PractitionerWorkspace: React.FC = () => {
                     </div>
 
                     {/* Apply Filters */}
-                    <Button onClick={loadPractitioners} variant="secondary">
-                        <Filter size={18} style={{ marginRight: spacing.xs }} />
+                    <Button onClick={loadPractitioners} variant="secondary" leftIcon={<Filter size={18} />}>
                         Aplicar Filtros
                     </Button>
                 </div>

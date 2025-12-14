@@ -135,7 +135,8 @@ urlpatterns = [
     path('practitioners/search/', views_search.search_practitioners, name='search_practitioners'),  # Sprint 20
     path('practitioners/specialties/', views_practitioners.list_specialties, name='list_specialties'),  # Sprint 21
     path('practitioners/validate-identifier/', views_practitioners.validate_identifier, name='validate_identifier'),  # Sprint 21
-    path('practitioners/<str:practitioner_id>/', views_practitioners.get_practitioner, name='get_practitioner'),
+    path('practitioners/<str:practitioner_id>/', views_practitioners.get_practitioner, name='get_practitioner'),  # GET
+    path('practitioners/<str:practitioner_id>/', views_practitioners.update_practitioner, name='update_practitioner'),  # PUT
     path('practitioner-roles/', views_practitioners.create_practitioner_role, name='create_practitioner_role'),
     
     # Sprint 24: Consent & Privacy (LGPD)

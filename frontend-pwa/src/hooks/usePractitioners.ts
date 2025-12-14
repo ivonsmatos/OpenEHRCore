@@ -105,6 +105,38 @@ export const usePractitioners = () => {
         }
     }, [token]);
 
+    const updatePractitioner = useCallback(async (id: string, data: PractitionerFormData): Promise<Practitioner> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(
+                `${API_BASE}/practitioners/${id}/`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update practitioner');
+            }
+
+            return await response.json();
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
+
     const createPractitionerRole = useCallback(async (data: {
         practitioner_id: string;
         organization_id?: string;
@@ -152,6 +184,7 @@ export const usePractitioners = () => {
         fetchPractitioners,
         getPractitioner,
         createPractitioner,
+        updatePractitioner,
         createPractitionerRole
     };
 };

@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import Card from '../base/Card';
 import './ChatWorkspace.css';
@@ -62,6 +62,7 @@ const ChatWorkspace: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('access_token');
@@ -206,7 +207,14 @@ const ChatWorkspace: React.FC = () => {
             await fetchPractitioners();
             setLoading(false);
 
-            // Check if coming from practitioner card click
+            // Check URL params first (priority)
+            const channelParam = searchParams.get('channel');
+            if (channelParam) {
+                setSelectedChannel(channelParam);
+                return;
+            }
+
+            // Check if coming from practitioner card click (fallback)
             const chatPractitioner = sessionStorage.getItem('chat-practitioner');
             if (chatPractitioner) {
                 try {
@@ -220,7 +228,7 @@ const ChatWorkspace: React.FC = () => {
             }
         };
         init();
-    }, [fetchPractitioners]);
+    }, [fetchPractitioners, searchParams]);
 
     // Auto-refresh practitioners
     useEffect(() => {
