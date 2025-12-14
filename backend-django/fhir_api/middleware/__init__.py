@@ -1,5 +1,5 @@
-# Middleware package for OpenEHRCore
-from .rate_limit import RateLimitMiddleware, rate_limit, check_rate_limit, reset_rate_limit
+# Middleware package for HealthStack
+from .rate_limit import RateLimitMiddleware, get_rate_limiter
 from .performance import (
     PerformanceMiddleware,
     CompressionMiddleware,
@@ -9,11 +9,10 @@ from .performance import (
 
 __all__ = [
     'RateLimitMiddleware', 
-    'rate_limit', 
-    'check_rate_limit', 
-    'reset_rate_limit',
+    'get_rate_limiter',
     'PerformanceMiddleware',
     'CompressionMiddleware',
     'CacheControlMiddleware',
     'ETaggerMiddleware'
 ]
+

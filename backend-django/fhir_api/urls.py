@@ -16,6 +16,11 @@ urlpatterns = [
     path('health/ready/', views_health.health_check_ready, name='health_ready'),
     path('metrics/', metrics_view, name='metrics'),
     
+    # API Documentation (OpenAPI/Swagger)
+    path('docs/openapi.json', __import__('fhir_api.openapi', fromlist=['openapi_schema']).openapi_schema, name='openapi_schema'),
+    path('docs/swagger/', __import__('fhir_api.openapi', fromlist=['swagger_ui']).swagger_ui, name='swagger_ui'),
+    path('docs/redoc/', __import__('fhir_api.openapi', fromlist=['redoc']).redoc, name='redoc'),
+    
     # Autenticação
     path('auth/login/', views_auth.login, name='login'),
     
