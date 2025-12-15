@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useEncounters } from '../../hooks/useEncounters';
 import { Syringe, Calendar, Building2, User } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
 
 interface ImmunizationFormProps {
-    encounterId: string | null;
     patientId?: string;
+    encounterId: string | null;
 }
 
 interface ImmunizationData {
@@ -61,7 +61,7 @@ const ROUTES = [
 ];
 
 const ImmunizationForm: React.FC<ImmunizationFormProps> = ({ encounterId, patientId }) => {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+    const { createImmunization, loading: hookLoading } = useEncounters(patientId);
     const isMobile = useIsMobile();
 
     const [formData, setFormData] = useState<ImmunizationData>({
@@ -163,11 +163,20 @@ const ImmunizationForm: React.FC<ImmunizationFormProps> = ({ encounterId, patien
                 }] : undefined
             };
 
-            await axios.post(
-                `${API_URL}/patients/${patientId}/immunizations/`,
-                payload,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await createImmunization({
+                vaccine_code: formData.vaccineCode,
+                vaccine_name: formData.vaccineName,
+                occurrence_date_time: formData.occurrenceDateTime,
+                lot_number: formData.lotNumber,
+                manufacturer: formData.manufacturer,
+                site: formData.site,
+                route: formData.route,
+                dose_quantity: formData.doseQuantity,
+                performer: formData.performer,
+                notes: formData.notes,
+                encounter_id: encounterId,
+                status: 'completed'
+            });
 
             setSuccessMessage('Vacina registrada com sucesso!');
             

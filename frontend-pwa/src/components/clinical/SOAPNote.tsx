@@ -5,12 +5,13 @@ import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
 
 interface SOAPNoteProps {
+    patientId?: string;
     encounterId?: string | null;
     onSuccess?: () => void;
 }
 
-export const SOAPNote: React.FC<SOAPNoteProps> = ({ encounterId, onSuccess }) => {
-    const { createSOAPNote, loading } = useEncounters();
+export const SOAPNote: React.FC<SOAPNoteProps> = ({ patientId, encounterId, onSuccess }) => {
+    const { createSOAPNote, loading } = useEncounters(patientId);
     const isMobile = useIsMobile();
 
     const [subjective, setSubjective] = useState<string>('');
@@ -46,12 +47,13 @@ ${plan || '-'}
         `.trim();
 
         try {
-            await createSOAPNote({
+            const result = await createSOAPNote({
                 summary: summary,
                 status: 'completed',
                 encounter_id: encounterId
             });
 
+            console.log('SOAP Note created successfully:', result);
             setSuccessMessage("Nota de evolução salva com sucesso!");
             setSubjective('');
             setObjective('');
@@ -59,9 +61,10 @@ ${plan || '-'}
             setPlan('');
             if (onSuccess) onSuccess();
 
-        } catch (err) {
-            console.error(err);
-            setError("Erro ao salvar nota. Tente novamente.");
+        } catch (err: any) {
+            console.error('Error saving SOAP note:', err);
+            const errorMsg = err.message || "Erro ao salvar nota. Tente novamente.";
+            setError(errorMsg);
         }
     };
 

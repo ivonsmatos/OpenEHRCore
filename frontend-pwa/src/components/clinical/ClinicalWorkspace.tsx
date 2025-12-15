@@ -262,13 +262,13 @@ export const ClinicalWorkspace: React.FC = () => {
                 {/* Active Form Area */}
                 <main style={{ flex: 1, padding: isMobile ? spacing.md : (isTabletOrBelow ? spacing.lg : spacing.xl), overflowY: 'auto' }}>
                     <Card padding={isMobile ? "md" : "lg"}>
-                        {activeTab === 'soap' && <SOAPNote encounterId={encounterId} />}
-                        {activeTab === 'vitals' && <VitalSignsForm encounterId={encounterId} />}
-                        {activeTab === 'conditions' && <ConditionForm encounterId={encounterId} />}
-                        {activeTab === 'allergies' && <AllergyForm encounterId={encounterId} />}
-                        {activeTab === 'immunizations' && <ImmunizationForm encounterId={encounterId} patientId={id} />}
-                        {activeTab === 'prescriptions' && <PrescriptionForm encounterId={encounterId} patientId={id} />}
-                        {activeTab === 'exams' && <ExamForm encounterId={encounterId} />}
+                        {activeTab === 'soap' && <SOAPNote patientId={id} encounterId={encounterId} />}
+                        {activeTab === 'vitals' && <VitalSignsForm patientId={id} encounterId={encounterId} />}
+                        {activeTab === 'conditions' && <ConditionForm patientId={id} encounterId={encounterId} />}
+                        {activeTab === 'allergies' && <AllergyForm patientId={id} encounterId={encounterId} />}
+                        {activeTab === 'immunizations' && <ImmunizationForm patientId={id} encounterId={encounterId} />}
+                        {activeTab === 'prescriptions' && <PrescriptionForm patientId={id} encounterId={encounterId} />}
+                        {activeTab === 'exams' && <ExamForm patientId={id} encounterId={encounterId} />}
                     </Card>
                 </main>
             </div>

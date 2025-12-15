@@ -219,6 +219,7 @@ def get_patient_summary(request, patient_id):
     ai_service = AIService(request.user)
     
     try:
+        logger.warning(f"🔥 INICIANDO GERAÇÃO DE RESUMO PARA PACIENTE {patient_id}")
         summary = ai_service.generate_patient_summary(patient_data)
         
         # DEBUG: Confirmar tamanho do resumo
@@ -233,7 +234,8 @@ def get_patient_summary(request, patient_id):
         return Response(
             {
                 "summary": summary,
-                "cached": False
+                "cached": False,
+                "using_ai": True  # Indicador se usou IA
             },
             status=status.HTTP_200_OK
         )
@@ -250,15 +252,16 @@ def get_patient_summary(request, patient_id):
         
     except Exception as e:
         logger.error(
-            f"AI service error for patient {patient_id}: {e}",
+            f"🚨 AI SERVICE ERROR FOR PATIENT {patient_id}: {str(e)}",
             exc_info=True
         )
         return Response(
             {
-                "error": "Failed to generate AI summary",
-                "detail": "AI service is currently unavailable"
+                "summary": "Não foi possível gerar o resumo clínico (Erro no modelo).",
+                "error": str(e),
+                "using_ai": False
             },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status=status.HTTP_200_OK  # Retorna 200 com fallback
         )
 
 @api_view(['POST'])

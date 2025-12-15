@@ -284,9 +284,9 @@ def search_patients_advanced(request):
         # Execute search
         results = fhir_service.search_resources('Patient', params)
         
-        # 🔥 FILTRAR PACIENTES ANTIGOS/INCOMPLETOS (IDs < 500)
-        ALLOWED_PATIENT_IDS = ["512", "685", "771"]
-        results = [p for p in results if p.get("id") in ALLOWED_PATIENT_IDS]
+        # 🔥 FILTRAR PACIENTES ANTIGOS/INCOMPLETOS (apenas IDs >= 500)
+        # Pacientes antigos (< 500) têm dados incompletos e devem ser ocultados
+        results = [p for p in results if p.get("id") and int(p.get("id")) >= 500]
         
         # Format response
         formatted_results = []
@@ -746,21 +746,41 @@ def create_service_request(request):
 @permission_classes([IsAuthenticated])
 @require_role('medico', 'enfermeiro', 'admin')
 def create_clinical_impression(request):
+    """
+    Criar ClinicalImpression (SOAP Note) compatível com HL7 FHIR R4.
+    
+    POST /api/v1/clinical-impressions/
+    
+    Body:
+        - patient_id (required): ID do paciente
+        - summary (required): Texto da nota SOAP
+        - status (optional): completed, in-progress, entered-in-error
+        - encounter_id (optional): ID do encounter relacionado
+    """
     try:
         data = request.data
+        
+        # Validação
+        if not data.get('patient_id'):
+            return Response({"error": "patient_id é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not data.get('summary'):
+            return Response({"error": "summary é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+        
         fhir_service = FHIRService(request.user)
         result = fhir_service.create_clinical_impression_resource(
             patient_id=data.get('patient_id'),
             summary=data.get('summary'),
             status=data.get('status', 'completed'),
-            encounter_id=data.get('encounter_id'),
+            encounter_id=data.get('encounter_id') if data.get('encounter_id') else None,
         )
         return Response(result, status=status.HTTP_201_CREATED)
     except FHIRServiceException as e:
+        logger.error(f"FHIRServiceException creating ClinicalImpression: {str(e)}")
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         logger.error(f"Error creating ClinicalImpression: {str(e)}")
-        return Response({"error": "Erro ao criar nota de evolução"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": f"Erro ao criar nota de evolução: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

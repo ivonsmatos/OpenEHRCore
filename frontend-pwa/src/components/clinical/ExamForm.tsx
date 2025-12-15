@@ -5,6 +5,7 @@ import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
 
 interface ExamFormProps {
+    patientId?: string;
     encounterId?: string | null;
     onSuccess?: () => void;
 }
@@ -22,8 +23,8 @@ const COMMON_EXAMS = [
     { code: '11524-6', display: 'Eletrocardiograma' },
 ];
 
-export const ExamForm: React.FC<ExamFormProps> = ({ encounterId, onSuccess }) => {
-    const { createExam, loading } = useEncounters();
+export const ExamForm: React.FC<ExamFormProps> = ({ patientId, encounterId, onSuccess }) => {
+    const { createExam, loading } = useEncounters(patientId);
     const isMobile = useIsMobile();
 
     const [selectedExam, setSelectedExam] = useState<string>('');

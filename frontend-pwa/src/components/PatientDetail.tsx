@@ -401,7 +401,7 @@ Log de Auditoria - Paciente ${currentPatient.id}
           <>
             {/* AI Copilot Section */}
             <div style={{ marginBottom: spacing.lg }}>
-              <AICopilot patientId={mockPatient.id} />
+              <AICopilot patientId={currentPatient?.id} />
             </div>
 
             {/* Section: Sinais Vitais */}

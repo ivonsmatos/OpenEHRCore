@@ -5,6 +5,7 @@ import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
 
 interface AllergyFormProps {
+    patientId?: string;
     encounterId?: string | null;
     onSuccess?: () => void;
 }
@@ -21,8 +22,8 @@ const COMMON_ALLERGIES = [
     { code: '256277009', display: 'Alergia a Pólen' },
 ];
 
-export const AllergyForm: React.FC<AllergyFormProps> = ({ encounterId, onSuccess }) => {
-    const { createAllergy, loading } = useEncounters();
+export const AllergyForm: React.FC<AllergyFormProps> = ({ patientId, encounterId, onSuccess }) => {
+    const { createAllergy, loading } = useEncounters(patientId);
     const isMobile = useIsMobile();
 
     const [selectedAllergy, setSelectedAllergy] = useState<string>('');

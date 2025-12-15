@@ -228,4 +228,9 @@ LOGGING = {
 # Rate Limiting Configuration (Sprint 22)
 RATE_LIMIT_ENABLED = config('RATE_LIMIT_ENABLED', default=True, cast=bool)
 
+# =====================================================
+# AI Configuration (Ollama)
+# =====================================================
+OLLAMA_BASE_URL = config('OLLAMA_BASE_URL', default='http://localhost:11434')
+OLLAMA_MODEL = config('OLLAMA_MODEL', default='mistral-nemo')  # Mistral Nemo 12B
 

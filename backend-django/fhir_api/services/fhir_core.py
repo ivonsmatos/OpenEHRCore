@@ -10,6 +10,7 @@ Princípio: O HAPI FHIR é a autoridade absoluta dos dados clínicos.
 
 import requests
 import logging
+import json
 import threading
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
@@ -1036,14 +1037,30 @@ class FHIRService:
             
             condition.recordedDate = FHIRDateTime(datetime.utcnow().isoformat())
             
+            # Log do payload para debug
+            payload = condition.as_json()
+            logger.info(f"Creating Condition with payload: {json.dumps(payload, indent=2)}")
+            
             response = self.session.post(
                 f"{self.base_url}/Condition",
-                json=condition.as_json(),
+                json=payload,
                 timeout=self.timeout
             )
             
+            logger.info(f"FHIR Response Status: {response.status_code}")
+            logger.info(f"FHIR Response: {response.text[:500]}")
+            
             if response.status_code not in [200, 201]:
-                raise FHIRServiceException(f"Failed to create Condition: {response.text}")
+                error_msg = response.text
+                logger.error(f"Failed to create Condition. Status: {response.status_code}, Error: {error_msg}")
+                # Extrair mensagem de erro mais específica se possível
+                try:
+                    error_json = response.json()
+                    if 'issue' in error_json and len(error_json['issue']) > 0:
+                        error_msg = error_json['issue'][0].get('diagnostics', error_msg)
+                except:
+                    pass
+                raise FHIRServiceException(f"Failed to create Condition: {error_msg}")
             
             result = response.json()
             condition_id = result.get("id")
@@ -1117,14 +1134,30 @@ class FHIRService:
             
             allergy.recordedDate = FHIRDateTime(datetime.utcnow().isoformat())
             
+            # Log do payload para debug
+            payload = allergy.as_json()
+            logger.info(f"Creating AllergyIntolerance with payload: {json.dumps(payload, indent=2)}")
+            
             response = self.session.post(
                 f"{self.base_url}/AllergyIntolerance",
-                json=allergy.as_json(),
+                json=payload,
                 timeout=self.timeout
             )
             
+            logger.info(f"FHIR Response Status: {response.status_code}")
+            logger.info(f"FHIR Response: {response.text[:500]}")
+            
             if response.status_code not in [200, 201]:
-                raise FHIRServiceException(f"Failed to create Allergy: {response.text}")
+                error_msg = response.text
+                logger.error(f"Failed to create AllergyIntolerance. Status: {response.status_code}, Error: {error_msg}")
+                # Extrair mensagem de erro mais específica
+                try:
+                    error_json = response.json()
+                    if 'issue' in error_json and len(error_json['issue']) > 0:
+                        error_msg = error_json['issue'][0].get('diagnostics', error_msg)
+                except:
+                    pass
+                raise FHIRServiceException(f"Failed to create Allergy: {error_msg}")
             
             result = response.json()
             allergy_id = result.get("id")
@@ -1285,33 +1318,63 @@ class FHIRService:
         status: str = "completed",
         encounter_id: Optional[str] = None,
     ) -> Dict[str, Any]:
+        """
+        Criar ClinicalImpression compatível com HL7 FHIR R4.
+        
+        ClinicalImpression representa uma avaliação clínica (SOAP note) de um paciente.
+        """
         try:
-            from fhirclient.models.clinicalimpression import ClinicalImpression
+            # Construir ClinicalImpression manualmente para garantir compatibilidade FHIR
+            clinical_impression = {
+                "resourceType": "ClinicalImpression",
+                "status": status,  # completed, in-progress, entered-in-error
+                "subject": {
+                    "reference": f"Patient/{patient_id}"
+                },
+                "effectiveDateTime": datetime.utcnow().isoformat(),
+                "description": summary,  # Usar description ao invés de summary
+                "note": [
+                    {
+                        "text": summary
+                    }
+                ]
+            }
             
-            impression = ClinicalImpression()
-            impression.status = status
-            impression.summary = summary
-            
-            # Subject
-            from fhirclient.models.fhirreference import FHIRReference
-            impression.subject = FHIRReference(jsondict={"reference": f"Patient/{patient_id}"})
-            
-            # Encounter
+            # Adicionar encounter se fornecido
             if encounter_id:
-                impression.encounter = FHIRReference(jsondict={"reference": f"Encounter/{encounter_id}"})
-            
-            impression.effectiveDateTime = FHIRDateTime(datetime.utcnow().isoformat())
+                clinical_impression["encounter"] = {
+                    "reference": f"Encounter/{encounter_id}"
+                }
             
             response = self.session.post(
                 f"{self.base_url}/ClinicalImpression",
-                json=impression.as_json(),
+                json=clinical_impression,
                 timeout=self.timeout
             )
             
             if response.status_code not in [200, 201]:
-                raise FHIRServiceException(f"Failed to create ClinicalImpression: {response.text}")
+                try:
+                    error_text = response.text
+                except:
+                    error_text = response.content.decode('utf-8', errors='ignore')
+                logger.error(f"FHIR Server error creating ClinicalImpression: Status {response.status_code}, Body: {error_text}")
+                raise FHIRServiceException(f"Failed to create ClinicalImpression (HTTP {response.status_code})")
             
-            result = response.json()
+            try:
+                result = response.json()
+            except Exception as json_err:
+                logger.error(f"Failed to parse FHIR response as JSON: {str(json_err)}")
+                # Se conseguiu criar mas não consegue parsear, retornar sucesso básico
+                return {
+                    "resourceType": "ClinicalImpression",
+                    "id": "unknown",
+                    "patientId": patient_id,
+                    "encounterId": encounter_id,
+                    "summary": summary,
+                    "status": status,
+                    "created_at": datetime.utcnow().isoformat(),
+                }
+            
             impression_id = result.get("id")
             
             return {

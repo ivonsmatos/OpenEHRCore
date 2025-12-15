@@ -234,19 +234,23 @@ const ClinicalModulesPanel: React.FC<ClinicalModulesPanelProps> = ({ patientId }
                             <div className="relative">
                                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
                                 <div className="space-y-4">
-                                    {[...data.timeline, ...data.encounters.map((e: any) => ({
-                                        id: e.id,
-                                        type: 'encounter',
-                                        date: e.period?.start || e.date,
-                                        title: e.type?.[0]?.coding?.[0]?.display || 'Atendimento',
-                                        description: e.reasonCode?.[0]?.text || '',
-                                        icon: '🏥',
-                                        status: e.status
-                                    }))]
+                                    {[
+                                        ...data.timeline.map((t: any) => ({ ...t, uniqueKey: `timeline-${t.id}` })),
+                                        ...data.encounters.map((e: any) => ({
+                                            id: e.id,
+                                            uniqueKey: `encounter-${e.id}`,
+                                            type: 'encounter',
+                                            date: e.period?.start || e.date,
+                                            title: e.type?.[0]?.coding?.[0]?.display || 'Atendimento',
+                                            description: e.reasonCode?.[0]?.text || '',
+                                            icon: '🏥',
+                                            status: e.status
+                                        }))
+                                    ]
                                         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                                         .slice(0, 10)
                                         .map((event: any) => (
-                                            <div key={event.id} className="flex gap-4 relative">
+                                            <div key={event.uniqueKey} className="flex gap-4 relative">
                                                 <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-lg z-10">
                                                     {event.icon || '📋'}
                                                 </div>

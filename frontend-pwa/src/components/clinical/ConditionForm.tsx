@@ -5,6 +5,7 @@ import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
 
 interface ConditionFormProps {
+    patientId?: string;
     encounterId?: string | null;
     onSuccess?: () => void;
 }
@@ -22,8 +23,8 @@ const COMMON_CONDITIONS = [
     { code: '233604007', display: 'Pneumonia' },
 ];
 
-export const ConditionForm: React.FC<ConditionFormProps> = ({ encounterId, onSuccess }) => {
-    const { createCondition, loading } = useEncounters();
+export const ConditionForm: React.FC<ConditionFormProps> = ({ patientId, encounterId, onSuccess }) => {
+    const { createCondition, loading } = useEncounters(patientId);
     const isMobile = useIsMobile();
 
     const [selectedCondition, setSelectedCondition] = useState<string>('');

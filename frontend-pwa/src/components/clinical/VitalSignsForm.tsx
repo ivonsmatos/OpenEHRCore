@@ -5,6 +5,7 @@ import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
 
 interface VitalSignsFormProps {
+    patientId?: string;
     encounterId?: string | null;
     onSuccess?: () => void;
 }
@@ -32,8 +33,8 @@ const LOINC_CODES = {
     HEIGHT: '8302-2',
 };
 
-export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ encounterId, onSuccess }) => {
-    const { createObservation, loading } = useEncounters();
+export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ patientId, encounterId, onSuccess }) => {
+    const { createObservation, loading } = useEncounters(patientId);
     const isMobile = useIsMobile();
 
     const [formData, setFormData] = useState<VitalSignData>({});

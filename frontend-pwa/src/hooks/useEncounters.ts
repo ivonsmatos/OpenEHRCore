@@ -87,12 +87,16 @@ export const useEncounters = (patientId?: string) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.post(`${API_URL}/observations/`, {
+            const payload = {
                 ...data,
                 patient_id: patientId
-            });
+            };
+            console.log('Creating observation with payload:', JSON.stringify(payload, null, 2));
+            const response = await axios.post(`${API_URL}/observations/`, payload);
+            console.log('Observation created successfully:', response.data);
             return response.data;
-        } catch (err) {
+        } catch (err: any) {
+            console.error('Error creating observation:', err.response?.data || err.message);
             setError(err instanceof Error ? err.message : 'Erro ao criar observação');
             throw err;
         } finally {
@@ -104,12 +108,16 @@ export const useEncounters = (patientId?: string) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.post(`${API_URL}/conditions/`, {
+            const payload = {
                 ...data,
                 patient_id: patientId
-            });
+            };
+            console.log('Creating condition with payload:', JSON.stringify(payload, null, 2));
+            const response = await axios.post(`${API_URL}/conditions/`, payload);
+            console.log('Condition created successfully:', response.data);
             return response.data;
-        } catch (err) {
+        } catch (err: any) {
+            console.error('Error creating condition:', err.response?.data || err.message);
             setError(err instanceof Error ? err.message : 'Erro ao criar condição');
             throw err;
         } finally {
@@ -121,12 +129,16 @@ export const useEncounters = (patientId?: string) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.post(`${API_URL}/allergies/`, {
+            const payload = {
                 ...data,
                 patient_id: patientId
-            });
+            };
+            console.log('Creating allergy with payload:', JSON.stringify(payload, null, 2));
+            const response = await axios.post(`${API_URL}/allergies/`, payload);
+            console.log('Allergy created successfully:', response.data);
             return response.data;
-        } catch (err) {
+        } catch (err: any) {
+            console.error('Error creating allergy:', err.response?.data || err.message);
             setError(err instanceof Error ? err.message : 'Erro ao criar alergia');
             throw err;
         } finally {
@@ -168,6 +180,27 @@ export const useEncounters = (patientId?: string) => {
         }
     };
 
+    const createImmunization = async (data: any) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const payload = {
+                ...data,
+                patient_id: patientId
+            };
+            console.log('Creating immunization with payload:', JSON.stringify(payload, null, 2));
+            const response = await axios.post(`${API_URL}/immunizations/`, payload);
+            console.log('Immunization created successfully:', response.data);
+            return response.data;
+        } catch (err: any) {
+            console.error('Error creating immunization:', err.response?.data || err.message);
+            setError(err instanceof Error ? err.message : 'Erro ao criar vacinação');
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const createSOAPNote = async (data: any) => {
         setLoading(true);
         setError(null);
@@ -176,10 +209,18 @@ export const useEncounters = (patientId?: string) => {
                 ...data,
                 patient_id: patientId
             });
-            return response.data;
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erro ao criar nota de evolução');
-            throw err;
+            
+            // Verificar se a resposta foi bem-sucedida
+            if (response.status === 201 || response.status === 200) {
+                return response.data;
+            } else {
+                throw new Error(`Unexpected status code: ${response.status}`);
+            }
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.error || err.message || 'Erro ao criar nota de evolução';
+            setError(errorMessage);
+            console.error('Error creating SOAP note:', err.response?.data || err);
+            throw new Error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -201,6 +242,7 @@ export const useEncounters = (patientId?: string) => {
         createCondition,
         createAllergy,
         createPrescription,
+        createImmunization,
         createExam,
         createSOAPNote
     };
