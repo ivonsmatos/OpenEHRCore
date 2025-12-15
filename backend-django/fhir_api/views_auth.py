@@ -151,11 +151,17 @@ def manage_patients(request):
                 })
                 
             from django.http import JsonResponse
+            # Retornar no formato FHIR Bundle para compatibilidade com frontend
             return JsonResponse({
-                "count": total,
+                "resourceType": "Bundle",
+                "type": "searchset",
+                "total": total,
+                "entry": [{"resource": p} for p in results],
+                # Metadata de paginação
                 "current_page": page,
                 "page_size": page_size,
-                "results": results
+                "total_count": total,
+                "total_pages": (total + page_size - 1) // page_size
             }, status=200)
             
         except FHIRServiceException as e:
@@ -283,10 +289,6 @@ def search_patients_advanced(request):
         
         # Execute search
         results = fhir_service.search_resources('Patient', params)
-        
-        # 🔥 FILTRAR PACIENTES ANTIGOS/INCOMPLETOS (apenas IDs >= 500)
-        # Pacientes antigos (< 500) têm dados incompletos e devem ser ocultados
-        results = [p for p in results if p.get("id") and int(p.get("id")) >= 500]
         
         # Format response
         formatted_results = []

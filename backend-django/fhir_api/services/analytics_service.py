@@ -206,9 +206,10 @@ class AnalyticsService:
                 
         print(f"DEBUG: surgeries_count = {surgeries_count}")
         
-        # 4. Visitors
-        # Estimate based on patient count
-        visitors_count = int(total_patients * 2.5)
+        # 4. Visitors - BUSCAR DADOS REAIS DO FHIR (RelatedPerson)
+        related_persons = self._fetch_all_resources("RelatedPerson", limit=500)
+        visitors_count = len(related_persons)
+        print(f"DEBUG: visitors_count (REAL) = {visitors_count}")
         
         result = {
             "new_patients": total_patients,

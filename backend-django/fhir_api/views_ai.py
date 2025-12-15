@@ -1,81 +1,42 @@
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from .auth import KeycloakAuthentication
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from .services.fhir_core import FHIRService, FHIRServiceException
 from .services.ai_service import AIService
 from .utils.validators import validate_patient_id, calculate_age
 from .utils.logging_utils import sanitize_for_log
 import logging
-from datetime import datetime, date
-from django.core.cache import cache
+from datetime import datetime
 import requests
 
 logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
-# @authentication_classes([KeycloakAuthentication])  # Temporariamente desabilitado
-@permission_classes([AllowAny])  # Temporariamente AllowAny
+@permission_classes([AllowAny])
 def get_patient_summary(request, patient_id):
     """
-    Gera um resumo clínico inteligente do paciente usando IA.
+    Gera um resumo clínico SEMPRE FRESCO usando IA (SEM CACHE).
     
     GET /api/v1/ai/summary/{patient_id}/
     
-    Security:
-    - Valida patient_id (UUID format)
-    - Requer autenticação Keycloak
-    
-    Performance:
-    - Cache de 5 minutos
-    - Timeout de 30s para IA
-    - Fallback gracioso se dados ausentes
-    
     Returns:
-        200: {"summary": "...", "cached": true/false}
+        200: {"summary": "...", "using_ai": bool, "timestamp": "..."}
         400: Validation error
         404: Patient not found
-        503: FHIR service unavailable
         500: Internal server error
     """
     
-    # ====================================================================
-    # 1. VALIDAÇÃO DE ENTRADA
-    # ====================================================================
+    logger.info(f"🔥 Gerando NOVO resumo para paciente {patient_id}")
     
-    # Validar formato do patient_id (evitar injection, aceita UUID ou ID numérico)
+    # VALIDAÇÃO
     if not validate_patient_id(patient_id):
-        logger.warning(f"Invalid patient_id format attempted: {patient_id}")
         return Response(
-            {
-                "error": "Invalid patient ID format",
-                "detail": "Patient ID must be a valid UUID or numeric ID"
-            },
+            {"error": "Invalid patient ID format"},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # ====================================================================
-    # 2. VERIFICAR CACHE (evitar chamadas desnecessárias à IA)
-    # ====================================================================
-    
-    cache_key = f"ai_summary:patient:{patient_id}"
-    cached_summary = cache.get(cache_key)
-    
-    if cached_summary:
-        logger.info(f"Returning cached AI summary for patient {patient_id}")
-        return Response(
-            {
-                "summary": cached_summary,
-                "cached": True
-            },
-            status=status.HTTP_200_OK
-        )
-    
-    # ====================================================================
-    # 3. RECUPERAR DADOS DO PACIENTE (com tratamento específico de erros)
-    # ====================================================================
-    
+    # BUSCAR DADOS DO FHIR
     fhir_service = FHIRService(request.user)
     
     try:
@@ -84,114 +45,34 @@ def get_patient_summary(request, patient_id):
         error_str = str(e).lower()
         if "not found" in error_str or "404" in error_str:
             return Response(
-                {
-                    "error": "Patient not found",
-                    "patient_id": patient_id
-                },
+                {"error": "Patient not found", "patient_id": patient_id},
                 status=status.HTTP_404_NOT_FOUND
             )
-        elif "circuit breaker" in error_str or "unreachable" in error_str:
-            return Response(
-                {
-                    "error": "FHIR service temporarily unavailable",
-                    "detail": "Please try again in a few moments",
-                    "retry_after": 60
-                },
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
-            )
-        else:
-            logger.error(
-                f"FHIR error fetching patient {patient_id}: {e}", 
-                exc_info=True
-            )
-            return Response(
-                {
-                    "error": "Failed to retrieve patient data",
-                    "detail": str(e)
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    except Exception as e:
-        logger.error(
-            f"Unexpected error fetching patient {patient_id}: {e}",
-            exc_info=True
-        )
         return Response(
-            {"error": "Internal server error"},
+            {"error": "Failed to retrieve patient data"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    # ====================================================================
-    # 4. CALCULAR IDADE
-    # ====================================================================
-    
+    # CALCULAR IDADE
     birth_date = patient.get("birthDate")
     age = calculate_age(birth_date)
     age_display = str(age) if age is not None else "Desconhecida"
     
-    # ====================================================================
-    # 5. RECUPERAR HISTÓRICO CLÍNICO (cada item isolado, não falhamos tudo)
-    # ====================================================================
-    
-    def fetch_resource_safe(resource_type: str, params: dict) -> list:
-        """Busca recursos FHIR com tratamento de erro isolado."""
+    # BUSCAR RECURSOS FHIR
+    def fetch_safe(resource_type: str, params: dict) -> list:
         try:
             return fhir_service.search_resources(resource_type, params)
-        except FHIRServiceException as e:
-            logger.warning(
-                f"Failed to fetch {resource_type} for patient {patient_id}: {e}"
-            )
-            return []
-        except requests.exceptions.Timeout as e:
-            logger.warning(
-                f"Timeout fetching {resource_type} for patient {patient_id}: {e}"
-            )
-            return []
-        except Exception as e:
-            logger.error(
-                f"Unexpected error fetching {resource_type}: {e}",
-                exc_info=True
-            )
+        except:
             return []
     
-    conditions = fetch_resource_safe("Condition", {"patient": patient_id})
-    medications = fetch_resource_safe("MedicationRequest", {
-        "patient": patient_id, 
-        "status": "active"
-    })
-    # Aumentado de 5 para 15 para melhor análise de tendências
-    observations = fetch_resource_safe("Observation", {
-        "patient": patient_id,
-        "category": "vital-signs",
-        "_count": "15",
-        "_sort": "-date"
-    })
+    conditions = fetch_safe("Condition", {"patient": patient_id})
+    medications = fetch_safe("MedicationRequest", {"patient": patient_id, "status": "active"})
+    observations = fetch_safe("Observation", {"patient": patient_id, "category": "vital-signs", "_count": "15", "_sort": "-date"})
+    immunizations = fetch_safe("Immunization", {"patient": patient_id, "_count": "20", "_sort": "-date"})
+    diagnostic_reports = fetch_safe("DiagnosticReport", {"patient": patient_id, "_count": "10", "_sort": "-date"})
+    appointments = fetch_safe("Appointment", {"patient": patient_id, "_count": "10", "_sort": "-date"})
     
-    # Buscar vacinas (immunizations)
-    immunizations = fetch_resource_safe("Immunization", {
-        "patient": patient_id,
-        "_count": "20",
-        "_sort": "-date"
-    })
-    
-    # Buscar exames laboratoriais (diagnostic reports)
-    diagnostic_reports = fetch_resource_safe("DiagnosticReport", {
-        "patient": patient_id,
-        "_count": "10",
-        "_sort": "-date"
-    })
-    
-    # Buscar agendamentos (appointments - últimos e próximos)
-    appointments = fetch_resource_safe("Appointment", {
-        "patient": patient_id,
-        "_count": "10",
-        "_sort": "-date"
-    })
-    
-    # ====================================================================
-    # 6. MONTAR DADOS PARA IA (com defaults seguros)
-    # ====================================================================
-    
+    # MONTAR DADOS
     patient_names = patient.get('name', [{}])
     first_name = patient_names[0].get('given', [''])[0] if patient_names else ''
     family_name = patient_names[0].get('family', '') if patient_names else ''
@@ -209,151 +90,58 @@ def get_patient_summary(request, patient_id):
         "appointments": appointments
     }
     
-    # Log sanitizado (sem CPF, tokens, etc)
-    logger.debug(f"Generating AI summary with data: {sanitize_for_log(patient_data)}")
-    
-    # ====================================================================
-    # 7. GERAR RESUMO COM IA (com timeout e tratamento de erro)
-    # ====================================================================
-    
+    # GERAR RESUMO COM IA
     ai_service = AIService(request.user)
     
     try:
-        logger.warning(f"🔥 INICIANDO GERAÇÃO DE RESUMO PARA PACIENTE {patient_id}")
-        summary = ai_service.generate_patient_summary(patient_data)
+        result = ai_service.generate_patient_summary(patient_data)
+        summary = result['summary']
+        using_ai = result['using_ai']
         
-        # DEBUG: Confirmar tamanho do resumo
-        logger.warning(f"🔥🔥🔥 RESUMO GERADO: {len(summary)} caracteres 🔥🔥🔥")
-        logger.warning(f"Primeiros 200 chars: {summary[:200]}")
+        logger.info(f"✅ Resumo gerado: {len(summary)} chars | AI={using_ai}")
         
-        # Salvar no cache por 5 minutos (300 segundos)
-        cache.set(cache_key, summary, 300)
-        
-        logger.info(f"Generated AI summary for patient {patient_id}")
-        
-        return Response(
-            {
-                "summary": summary,
-                "cached": False,
-                "using_ai": True  # Indicador se usou IA
-            },
-            status=status.HTTP_200_OK
-        )
-        
-    except requests.exceptions.Timeout:
-        logger.error(f"AI service timeout for patient {patient_id}")
-        return Response(
-            {
-                "error": "AI service timeout",
-                "detail": "Summary generation took too long. Please try again."
-            },
-            status=status.HTTP_504_GATEWAY_TIMEOUT
-        )
+        return Response({
+            "summary": summary,
+            "using_ai": using_ai,
+            "timestamp": datetime.now().isoformat()
+        }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        logger.error(
-            f"🚨 AI SERVICE ERROR FOR PATIENT {patient_id}: {str(e)}",
-            exc_info=True
-        )
-        return Response(
-            {
-                "summary": "Não foi possível gerar o resumo clínico (Erro no modelo).",
-                "error": str(e),
-                "using_ai": False
-            },
-            status=status.HTTP_200_OK  # Retorna 200 com fallback
-        )
+        logger.error(f"Erro ao gerar resumo: {e}")
+        return Response({
+            "summary": f"Erro: {str(e)}",
+            "using_ai": False,
+            "timestamp": datetime.now().isoformat()
+        }, status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
-@authentication_classes([KeycloakAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def check_interactions(request):
-    """
-    Verifica interações medicamentosas.
-    
-    POST /api/v1/ai/interactions
-    Body: { 
-        "new_medication": "Aspirina", 
-        "patient_id": "uuid" (optional - will fetch current medications)
-        "current_medications": [...] (optional - can provide directly)
-    }
-    
-    Returns:
-        200: {"alerts": [...]}
-        400: Validation error
-        500: Internal server error
-    """
+    """Verifica interações medicamentosas."""
     try:
         new_medication = request.data.get('new_medication')
-        
-        # Validação básica
         if not new_medication:
-            return Response(
-                {"error": "new_medication is required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "new_medication is required"}, status=status.HTTP_400_BAD_REQUEST)
         
         patient_id = request.data.get('patient_id')
         current_medications = request.data.get('current_medications', [])
         
-        # Se patient_id fornecido, buscar medicações do FHIR
         if patient_id:
-            # Validar patient_id (UUID ou numérico)
             if not validate_patient_id(patient_id):
-                return Response(
-                    {"error": "Invalid patient_id format"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"error": "Invalid patient_id"}, status=status.HTTP_400_BAD_REQUEST)
             
             fhir_service = FHIRService(request.user)
             try:
-                current_medications = fhir_service.search_resources(
-                    "MedicationRequest", 
-                    {"patient": patient_id, "status": "active"}
-                )
-            except FHIRServiceException as e:
-                logger.warning(
-                    f"Failed to fetch medications for patient {patient_id}: {e}"
-                )
-                # Continuar com lista vazia (melhor que falhar completamente)
-                current_medications = []
-            except Exception as e:
-                logger.error(
-                    f"Unexpected error fetching medications: {e}",
-                    exc_info=True
-                )
+                current_medications = fhir_service.search_resources("MedicationRequest", {"patient": patient_id, "status": "active"})
+            except:
                 current_medications = []
         
-        # Verificar interações com AI
         ai_service = AIService(request.user)
+        alerts = ai_service.check_drug_interactions(new_medication, current_medications)
         
-        try:
-            alerts = ai_service.check_drug_interactions(
-                new_medication, 
-                current_medications
-            )
-            
-            return Response({"alerts": alerts}, status=status.HTTP_200_OK)
-            
-        except requests.exceptions.Timeout:
-            logger.error("AI service timeout checking drug interactions")
-            return Response(
-                {
-                    "error": "AI service timeout",
-                    "detail": "Interaction check took too long"
-                },
-                status=status.HTTP_504_GATEWAY_TIMEOUT
-            )
-        except Exception as e:
-            logger.error(f"AI service error checking interactions: {e}", exc_info=True)
-            return Response(
-                {"error": "Failed to check interactions"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
+        return Response({"alerts": alerts}, status=status.HTTP_200_OK)
+        
     except Exception as e:
-        logger.error(f"Erro ao checar interações: {str(e)}", exc_info=True)
-        return Response(
-            {"error": "Internal server error"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        logger.error(f"Erro ao checar interações: {e}")
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

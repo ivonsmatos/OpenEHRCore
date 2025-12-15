@@ -12,11 +12,8 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking');
-
-  useEffect(() => {
-    if (!patientId) return;
-    fetchSummary();
-  }, [patientId]);
+  
+  // NÃO CARREGA AUTOMATICAMENTE - usuário deve clicar no botão
 
   const fetchSummary = async () => {
     if (!patientId) return;
@@ -96,6 +93,34 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId }) => {
           </span>
         )}
       </div>
+
+      {!summary && !loading && !error && (
+        <div style={{ textAlign: 'center', padding: spacing.lg }}>
+          <button
+            onClick={fetchSummary}
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.3)',
+              color: 'white',
+              border: 'none',
+              padding: `${spacing.md} ${spacing.lg}`,
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing.sm,
+              margin: '0 auto',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.4)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.3)'}
+          >
+            <Bot size={20} />
+            🤖 Iniciar Resumo com IA
+          </button>
+        </div>
+      )}
 
       {loading && (
         <div style={{ padding: spacing.md, textAlign: 'center' }}>

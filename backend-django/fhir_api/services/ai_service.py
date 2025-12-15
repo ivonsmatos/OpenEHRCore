@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Ollama configuration
 OLLAMA_BASE_URL = getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', 'mistral')
+OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', 'mistral-nemo')  # mistral-nemo:latest instalado
 
 class AIService:
     """
@@ -45,8 +45,13 @@ class AIService:
                 model_names = [m['name'] for m in models]
                 print(f"🔍 Modelos encontrados: {model_names}")
                 
-                # Check if preferred model exists
-                if OLLAMA_MODEL in model_names or f"{OLLAMA_MODEL}:latest" in model_names:
+                # Check if preferred model exists (permite variações como mistral-nemo, mistral, etc)
+                model_found = any(
+                    OLLAMA_MODEL in name or name.startswith(OLLAMA_MODEL)
+                    for name in model_names
+                )
+                
+                if model_found:
                     logger.info(f"✅ Ollama OK | Modelo: {OLLAMA_MODEL} | Disponíveis: {model_names}")
                     print(f"✅ Modelo {OLLAMA_MODEL} ENCONTRADO!")
                     return True
@@ -95,6 +100,9 @@ class AIService:
         """
         Gera resumo clínico do paciente.
         Tenta Ollama primeiro, fallback para resumo estruturado.
+        
+        Returns:
+            dict: {'summary': str, 'using_ai': bool}
         """
         name = patient_data.get('name', 'Paciente')
         age = patient_data.get('age', 'N/A')
@@ -117,11 +125,17 @@ class AIService:
             
             if ai_summary:
                 logger.info(f"🤖 Resumo gerado por IA (Ollama/{OLLAMA_MODEL}): {len(ai_summary)} chars")
-                return ai_summary
+                return {
+                    'summary': ai_summary,
+                    'using_ai': True
+                }
         
         # Fallback: structured summary
         logger.info(f"📋 Usando resumo estruturado (fallback) para {name}")
-        return self._generate_structured_summary(patient_data)
+        return {
+            'summary': self._generate_structured_summary(patient_data),
+            'using_ai': False
+        }
 
     def _build_clinical_prompt(self, patient_data):
         """Constrói prompt médico para a IA."""
@@ -204,20 +218,21 @@ Resumo clínico:"""
         summary = []
         
         # Header
-        summary.append(f"# Resumo Clínico: {name}\n")
-        summary.append(f"**Idade:** {age} anos | **Sexo:** {gender}\n")
+        summary.append(f"# 🎯 Resumo Clínico: {name}\n\n")
+        summary.append(f"**Idade:** {age} anos | **Sexo:** {gender}\n\n")
         
         # Conditions
         if conditions:
-            summary.append("\n## 🔴 Problemas Ativos\n")
+            summary.append("## 🔴 Problemas Ativos\n\n")
             for c in conditions[:5]:
                 display = c.get('display') or c.get('code', {}).get('text', 'Condição')
                 status = c.get('clinicalStatus', {}).get('coding', [{}])[0].get('code', 'active')
                 summary.append(f"- {display} ({status})\n")
+            summary.append("\n")  # Espaço extra após seção
         
         # Medications
         if medications:
-            summary.append("\n## 💊 Medicações\n")
+            summary.append("## 💊 Medicações\n\n")
             for m in medications[:5]:
                 med_code = m.get('medicationCodeableConcept', {})
                 display = med_code.get('text') or med_code.get('coding', [{}])[0].get('display', 'Medicamento')
@@ -225,10 +240,11 @@ Resumo clínico:"""
             
             if len(medications) >= 5:
                 summary.append("\n⚠️ **Polifarmácia:** Revisar interações medicamentosas\n")
+            summary.append("\n")  # Espaço extra após seção
         
         # Vital Signs
         if vital_signs:
-            summary.append("\n## 🩺 Sinais Vitais Recentes\n")
+            summary.append("## 🩺 Sinais Vitais Recentes\n\n")
             for v in vital_signs[:6]:
                 code = v.get('code', {})
                 display = code.get('text') or code.get('coding', [{}])[0].get('display', 'Sinal')
@@ -237,9 +253,10 @@ Resumo clínico:"""
                 unit = value_qty.get('unit', '')
                 date = v.get('effectiveDateTime', '')[:10]
                 summary.append(f"- **{display}:** {value} {unit} ({date})\n")
+            summary.append("\n")  # Espaço extra após seção
         
         # Clinical Analysis
-        summary.append("\n## 📊 Análise Clínica\n")
+        summary.append("## 📊 Análise Clínica\n\n")
         
         risk_level = "BAIXO"
         if len(conditions) > 3:
@@ -247,12 +264,12 @@ Resumo clínico:"""
         if len(conditions) > 5:
             risk_level = "ALTO"
         
-        summary.append(f"**Nível de Complexidade:** {risk_level}\n")
-        summary.append(f"**Problemas ativos:** {len(conditions)}\n")
-        summary.append(f"**Medicações:** {len(medications)}\n")
+        summary.append(f"**Nível de Complexidade:** {risk_level}\n\n")
+        summary.append(f"**Problemas ativos:** {len(conditions)}\n\n")
+        summary.append(f"**Medicações:** {len(medications)}\n\n")
         
         # Recommendations
-        summary.append("\n## 💡 Recomendações\n")
+        summary.append("## 💡 Recomendações\n\n")
         if not vital_signs:
             summary.append("- Coletar sinais vitais na próxima consulta\n")
         if len(medications) > 5:
@@ -260,7 +277,7 @@ Resumo clínico:"""
         if not conditions and not medications:
             summary.append("- Completar anamnese e histórico clínico\n")
         
-        summary.append("\n---\n")
+        summary.append("\n---\n\n")
         summary.append("*Resumo estruturado automático (HL7 FHIR R4)*\n")
         
         return ''.join(summary)
