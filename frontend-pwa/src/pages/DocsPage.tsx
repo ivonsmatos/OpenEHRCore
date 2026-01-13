@@ -53,37 +53,40 @@ const DocsPage: React.FC<DocsPageProps> = ({ markdownContent, filePath }) => {
         'intro': '/docs/INDEX.md',
         'setup': '/docs/SETUP.md',
         'architecture': '/docs/ARCHITECTURE.md',
-        
+
         // Autenticação
         'auth/keycloak': '/docs/KEYCLOAK_SETUP.md',
         'auth/rbac': '/docs/ARCHITECTURE.md#segurança',
         'auth/tokens': '/docs/ARCHITECTURE.md#autenticação',
-        
+
         // Implementação
         'implementation/responsive': '/docs/implementacao/RESPONSIVIDADE_IMPLEMENTADA.md',
         'implementation/improvements': '/frontend-pwa/MELHORIAS_APLICADAS.md',
         'implementation/design-system': '/docs/DESIGN_SYSTEM.md',
-        
+
         // Pacientes
         'patients/registration': '/docs/WORKFLOWS.md#1-cadastro-de-paciente',
         'patients/ehr': '/docs/WORKFLOWS.md#4-atendimento-clínico-encounter',
         'patients/soap': '/docs/WORKFLOWS.md#5-soap-note',
-        
+
         // Testes
         'testing/guide': '/docs/testes/TESTING_GUIDE.md',
         'testing/playwright': '/docs/testes/PLAYWRIGHT_DEMO.md',
-        
+
         // Segurança
         'security/audit': '/docs/seguranca/SECURITY_AUDIT_REPORT.md',
         'security/devsecops': '/docs/seguranca/EXECUTIVE_SUMMARY_DEVSECOPS.md',
-        
+
         // API
         'api/reference': '/docs/API.md',
         'api/fhir': '/docs/FHIR_IMPLEMENTATION_GUIDE.md',
-        
+
         // FAQ
         'faq/troubleshooting': '/docs/FAQ.md#troubleshooting',
         'faq/performance': '/docs/FAQ.md#performance',
+
+        // Automações
+        'automation/bots': '/docs/AUTOMATION_BOTS.md',
       };
 
       const routeKey = page ? `${category}/${page}` : category || 'intro';
@@ -95,11 +98,11 @@ const DocsPage: React.FC<DocsPageProps> = ({ markdownContent, filePath }) => {
         setIsLoading(true);
         const path = getMarkdownPath();
         const response = await fetch(path);
-        
+
         if (!response.ok) {
           throw new Error(`Failed to load ${path}`);
         }
-        
+
         const text = await response.text();
         setContent(text);
         setError(null);
