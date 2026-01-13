@@ -312,11 +312,53 @@ export interface FHIRObservation {
 }
 
 /**
- * Extrai o nome da observação (ex: "Blood Pressure")
+ * Mapeamento de códigos LOINC para nomes em português
+ */
+const LOINC_DISPLAY_MAP: Record<string, string> = {
+  // Sinais Vitais
+  "8310-5": "Temperatura Corporal",
+  "8867-4": "Frequência Cardíaca",
+  "9279-1": "Frequência Respiratória",
+  "85354-9": "Pressão Arterial",
+  "8480-6": "Pressão Arterial Sistólica",
+  "8462-4": "Pressão Arterial Diastólica",
+  "2708-6": "Saturação de Oxigênio",
+  "59408-5": "SpO2",
+  "29463-7": "Peso Corporal",
+  "8302-2": "Altura",
+  "39156-5": "IMC",
+  // Glicemia
+  "2345-7": "Glicemia",
+  "2339-0": "Glicose Sérica",
+  "41653-7": "Glicose Capilar",
+  // Outros
+  "8331-1": "Temperatura Oral",
+  "8332-9": "Temperatura Retal",
+  "8333-7": "Temperatura Axilar",
+  "8478-0": "Pressão Arterial Média",
+  "2710-2": "Saturação O2 Arterial",
+};
+
+/**
+ * Extrai o nome da observação (ex: "Pressão Arterial")
  */
 export function getObservationName(obs: FHIRObservation): string {
+  // 1. Primeiro tenta o text do code
   if (obs.code?.text) return obs.code.text;
+
+  // 2. Tenta o display do coding
   if (obs.code?.coding?.[0]?.display) return obs.code.coding[0].display;
+
+  // 3. Mapeia pelo código LOINC
+  const loincCode = obs.code?.coding?.find(c => c.system === "http://loinc.org")?.code;
+  if (loincCode && LOINC_DISPLAY_MAP[loincCode]) {
+    return LOINC_DISPLAY_MAP[loincCode];
+  }
+
+  // 4. Retorna o código como fallback
+  const anyCode = obs.code?.coding?.[0]?.code;
+  if (anyCode) return `Código: ${anyCode}`;
+
   return "Observação sem nome";
 }
 
