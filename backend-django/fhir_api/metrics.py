@@ -131,7 +131,8 @@ def format_prometheus_metrics() -> str:
         lines.append('# HELP openehrcore_requests_by_method Requests by HTTP method')
         lines.append('# TYPE openehrcore_requests_by_method counter')
         for method_labels, count in methods.items():
-            lines.append(f'openehrcore_requests_by_method{{{method_labels.replace("'", '"')}}} {count}')
+            formatted_labels = method_labels.replace("'", '"')
+            lines.append(f'openehrcore_requests_by_method{{{formatted_labels}}} {count}')
     
     # Requests by status
     statuses = _metrics.get('requests_by_status', {})
@@ -140,7 +141,8 @@ def format_prometheus_metrics() -> str:
         lines.append('# HELP openehrcore_requests_by_status Requests by HTTP status')
         lines.append('# TYPE openehrcore_requests_by_status counter')
         for status_labels, count in statuses.items():
-            lines.append(f'openehrcore_requests_by_status{{{status_labels.replace("'", '"')}}} {count}')
+            formatted_labels = status_labels.replace("'", '"')
+            lines.append(f'openehrcore_requests_by_status{{{formatted_labels}}} {count}')
     
     # FHIR operations
     fhir_ops = _metrics.get('fhir_operations', {})
