@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { Menu, X, ChevronDown, ChevronRight, Home, Book, Shield, Users, FileText, HelpCircle } from 'lucide-react';
+import { Menu, X, ChevronDown, ChevronRight, Home, Book, Shield, Users, FileText, HelpCircle, Bot } from 'lucide-react';
 
 interface NavSection {
   title: string;
@@ -56,6 +56,13 @@ const navigationSections: NavSection[] = [
       { title: 'Cadastro de Pacientes', path: '/docs/patients/registration' },
       { title: 'Prontuário Eletrônico', path: '/docs/patients/ehr' },
       { title: 'SOAP Note', path: '/docs/patients/soap' },
+    ]
+  },
+  {
+    title: 'Automações',
+    icon: Bot,
+    items: [
+      { title: 'Bots (Documentação)', path: '/docs/automation/bots', badge: 'Novo' },
     ]
   },
   {
