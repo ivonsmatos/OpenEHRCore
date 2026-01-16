@@ -1,5 +1,5 @@
 
-import { Mic, Clock, CheckCircle2, Stethoscope, ArrowRight } from 'lucide-react';
+import { Mic, Clock, CheckCircle2, Stethoscope } from 'lucide-react';
 
 export const MedAsrHighlight = () => {
     return (
