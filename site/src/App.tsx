@@ -2,6 +2,7 @@
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Features } from './components/Features';
+import { MedAsrHighlight } from './components/MedAsrHighlight';
 import { SecuritySection } from './components/SecuritySection';
 import { Footer } from './components/Footer';
 
@@ -11,6 +12,7 @@ function App() {
       <Navbar />
       <main>
         <Hero />
+        <MedAsrHighlight />
         <Features />
         <SecuritySection />
       </main>

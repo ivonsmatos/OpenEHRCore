@@ -73,9 +73,9 @@ export const Hero = () => {
                         </div>
                     </div>
 
-                    {/* Decorative blobs */}
-                    <div className="absolute -top-12 -right-12 w-64 h-64 bg-primary-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 z-[-1] animate-pulse"></div>
-                    <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-accent-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 z-[-1] animate-pulse"></div>
+                    {/* Decorative blobs (Optimized) */}
+                    <div className="absolute -top-12 -right-12 w-64 h-64 bg-primary-100/50 rounded-full z-[-1]"></div>
+                    <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-accent-100/50 rounded-full z-[-1]"></div>
                 </motion.div>
             </div>
         </section>
