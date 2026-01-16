@@ -109,14 +109,14 @@ const RNDSStatus = lazyLoad(() => import('./components/regulatory/RNDSStatus'));
 
 // Clinical Components
 const CarePlanManager = lazyLoad(() => import('./components/clinical/CarePlanManager'));
-const ReferralWorkspace = lazyLoad(() => import('./components/clinical/ReferralWorkspace'));
+// ReferralWorkspace removed - module deleted
 const CompositionEditor = lazyLoad(() => import('./components/clinical/CompositionEditor'));
 
 // Communications
 const MessageInbox = lazyLoad(() => import('./components/communications/MessageInbox'));
 
 // Notifications
-const NotificationsPanel = lazyLoad(() => import('./components/regulatory/NotificationsPanel'));
+// NotificationsPanel removed - module deleted
 
 // Automation (Sprint 29)
 const AutomationPage = lazyLoad(() => import('./pages/AutomationPage'));
@@ -162,11 +162,11 @@ const ProtectedRoutes: React.FC = () => {
                     {/* Regulatory Routes */}
                     <Route path="/tiss" element={<TISSWorkspace />} />
                     <Route path="/rnds" element={<RNDSStatus />} />
-                    <Route path="/notifications" element={<NotificationsPanel />} />
+                    {/* NotificationsPanel route removed */}
 
                     {/* Clinical Routes */}
                     <Route path="/careplan" element={<CarePlanManager />} />
-                    <Route path="/referrals" element={<ReferralWorkspace />} />
+                    {/* ReferralWorkspace route removed */}
                     <Route path="/composition" element={<CompositionEditor patientId="" patientName="" />} />
 
                     {/* Communications */}
@@ -188,14 +188,14 @@ const ProtectedRoutes: React.FC = () => {
                     <Route path="/settings/notifications" element={<SettingsWorkspace section="notifications" />} />
                     <Route path="/settings/preferences" element={<SettingsWorkspace section="preferences" />} />
                     <Route path="/help" element={<HelpWorkspace />} />
-                    
+
                     {/* Documentation Portal */}
                     <Route path="/docs" element={<DocsLayout />}>
                         <Route index element={<DocsHome />} />
                         <Route path=":category" element={<DocsPage />} />
                         <Route path=":category/:page" element={<DocsPage />} />
                     </Route>
-                    
+
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Suspense>

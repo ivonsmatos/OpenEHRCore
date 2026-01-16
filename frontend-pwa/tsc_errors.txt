@@ -1,0 +1,93 @@
+﻿src/components/clinical/AICopilot.tsx(1,27): error TS6133: 'useEffect' is declared but its value is never read.
+src/components/clinical/AICopilot.tsx(3,10): error TS6133: 'colors' is declared but its value is never read.
+src/components/clinical/CarePlanManager.tsx(211,32): error TS2339: Property 'warning' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/CarePlanManager.tsx(212,34): error TS2339: Property 'success' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/CarePlanManager.tsx(213,32): error TS2339: Property 'error' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/CarePlanManager.tsx(216,34): error TS2339: Property 'info' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/CarePlanManager.tsx(323,42): error TS2339: Property 'error' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/CarePlanManager.tsx(327,32): error TS2339: Property 'error' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/CarePlanManager.tsx(472,54): error TS2339: Property 'success' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/CarePlanManager.tsx(601,60): error TS2339: Property 'success' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/ClinicalModulesPanel.tsx(16,1): error TS6133: 'Button' is declared but its value is never read.
+src/components/clinical/ClinicalModulesPanel.tsx(26,5): error TS6133: 'AlertTriangle' is declared but its value is never read.
+src/components/clinical/ClinicalModulesPanel.tsx(27,5): error TS6133: 'Clock' is declared but its value is never read.
+src/components/clinical/ClinicalModulesPanel.tsx(39,67): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/components/clinical/ClinicalModulesPanel.tsx(208,59): error TS2339: Property 'conclusion' does not exist on type 'DiagnosticResult'.
+src/components/clinical/ClinicalModulesPanel.tsx(211,104): error TS2339: Property 'conclusion' does not exist on type 'DiagnosticResult'.
+src/components/clinical/CompositionEditor.tsx(25,5): error TS6133: 'Plus' is declared but its value is never read.
+src/components/clinical/CompositionEditor.tsx(26,5): error TS6133: 'Trash2' is declared but its value is never read.
+src/components/clinical/CompositionEditor.tsx(213,11): error TS6133: 'typeConfig' is declared but its value is never read.
+src/components/clinical/DocumentManager.tsx(19,3): error TS6133: 'Eye' is declared but its value is never read.
+src/components/clinical/DocumentManager.tsx(20,3): error TS6133: 'Trash2' is declared but its value is never read.
+src/components/clinical/DocumentManager.tsx(22,3): error TS6133: 'Calendar' is declared but its value is never read.
+src/components/clinical/DocumentManager.tsx(25,3): error TS6133: 'CheckCircle' is declared but its value is never read.
+src/components/clinical/DocumentManager.tsx(329,42): error TS2339: Property 'info' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/DocumentManager.tsx(361,42): error TS2339: Property 'error' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/DocumentManager.tsx(369,55): error TS2339: Property 'error' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/DocumentManager.tsx(370,47): error TS2339: Property 'error' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/DocumentManager.tsx(421,19): error TS2353: Object literal may only specify known properties, and '':hover'' does not exist in type 'Properties<string | number, string & {}>'.
+src/components/clinical/DocumentManager.tsx(465,60): error TS2339: Property 'warning' does not exist on type '{ readonly active: "#10B981"; readonly inactive: "#6B7280"; readonly pending: "#F59E0B"; readonly completed: "#3B82F6"; readonly cancelled: "#EF4444"; readonly draft: "#9CA3AF"; readonly inProgress: "#8B5CF6"; readonly onHold: "#F97316"; readonly proposed: "#06B6D4"; readonly accepted: "#10B981"; readonly rejected: ...'.
+src/components/clinical/DocumentManager.tsx(465,69): error TS2322: Type '{ size: number; color: any; title: string; }' is not assignable to type 'IntrinsicAttributes & Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>'.
+src/components/clinical/ImmunizationForm.tsx(64,42): error TS6133: 'hookLoading' is declared but its value is never read.
+src/components/clinical/ImmunizationForm.tsx(112,19): error TS6133: 'token' is declared but its value is never read.
+src/components/clinical/ImmunizationForm.tsx(114,19): error TS6133: 'payload' is declared but its value is never read.
+src/components/clinical/SOAPNote.tsx(72,84): error TS6133: 'currentText' is declared but its value is never read.
+src/components/communications/MessageInbox.tsx(29,5): error TS6133: 'CheckCircle' is declared but its value is never read.
+src/components/communications/MessageInbox.tsx(31,5): error TS6133: 'Filter' is declared but its value is never read.
+src/components/financial/FinancialDashboard.tsx(3,5): error TS6133: 'TrendingUp' is declared but its value is never read.
+src/components/financial/FinancialDashboard.tsx(3,17): error TS6133: 'TrendingDown' is declared but its value is never read.
+src/components/financial/FinancialDashboard.tsx(4,5): error TS6133: 'Calendar' is declared but its value is never read.
+src/components/financial/FinancialDashboard.tsx(4,15): error TS6133: 'Users' is declared but its value is never read.
+src/components/financial/FinancialDashboard.tsx(110,12): error TS6133: 'loading' is declared but its value is never read.
+src/components/financial/FinancialDashboard.tsx(110,21): error TS6133: 'setLoading' is declared but its value is never read.
+src/components/PatientDetail.tsx(13,20): error TS6133: 'ShieldCheck' is declared but its value is never read.
+src/components/PatientDetail.tsx(13,54): error TS6133: 'MoreVertical' is declared but its value is never read.
+src/components/PatientDetail.tsx(14,1): error TS6133: 'cn' is declared but its value is never read.
+src/components/PatientList.tsx(9,24): error TS6133: 'NoPatients' is declared but its value is never read.
+src/components/PatientList.tsx(9,36): error TS6133: 'NoResults' is declared but its value is never read.
+src/components/PatientList.tsx(9,47): error TS6133: 'Alert' is declared but its value is never read.
+src/components/practitioners/PractitionerForm.tsx(37,9): error TS2353: Object literal may only specify known properties, and 'conselho' does not exist in type 'PractitionerFormData | (() => PractitionerFormData)'.
+src/components/practitioners/PractitionerForm.tsx(49,12): error TS6133: 'cboLoading' is declared but its value is never read.
+src/components/regulatory/RNDSStatus.tsx(20,5): error TS6133: 'AlertTriangle' is declared but its value is never read.
+src/components/regulatory/TISSWorkspace.tsx(20,5): error TS6133: 'Clock' is declared but its value is never read.
+src/components/regulatory/TISSWorkspace.tsx(21,5): error TS6133: 'CheckCircle' is declared but its value is never read.
+src/components/regulatory/TISSWorkspace.tsx(22,5): error TS6133: 'AlertTriangle' is declared but its value is never read.
+src/components/regulatory/TISSWorkspace.tsx(24,5): error TS6133: 'Filter' is declared but its value is never read.
+src/components/regulatory/TISSWorkspace.tsx(30,5): error TS6133: 'DollarSign' is declared but its value is never read.
+src/components/scheduling/SchedulingWorkspace.tsx(27,32): error TS6133: 'createSchedule' is declared but its value is never read.
+src/components/scheduling/SchedulingWorkspace.tsx(27,48): error TS6133: 'createSlot' is declared but its value is never read.
+src/components/scheduling/SchedulingWorkspace.tsx(53,48): error TS2339: Property 'results' does not exist on type 'PractitionerListResponse'.
+src/components/scheduling/SchedulingWorkspace.tsx(90,21): error TS1345: An expression of type 'void' cannot be tested for truthiness.
+src/components/scheduling/SchedulingWorkspace.tsx(90,21): error TS1345: An expression of type 'void' cannot be tested for truthiness.
+src/components/scheduling/SchedulingWorkspace.tsx(90,42): error TS2339: Property 'results' does not exist on type 'never'.
+src/components/scheduling/SchedulingWorkspace.tsx(91,47): error TS2339: Property 'results' does not exist on type 'never'.
+src/components/ui/ThemeToggle.tsx(19,13): error TS6133: 'theme' is declared but its value is never read.
+src/components/ui/ThemeToggle.tsx(19,35): error TS6133: 'setTheme' is declared but its value is never read.
+src/components/workspaces/ChatWorkspace.tsx(66,11): error TS6133: 'navigate' is declared but its value is never read.
+src/components/workspaces/PractitionerWorkspace.tsx(35,39): error TS2339: Property 'results' does not exist on type 'PractitionerListResponse'.
+src/hooks/useClinicalData.ts(216,34): error TS2339: Property 'results' does not exist on type '{}'.
+src/hooks/useClinicalData.ts(216,59): error TS2339: Property 'observations' does not exist on type '{}'.
+src/hooks/useClinicalData.ts(264,52): error TS2339: Property 'map' does not exist on type '{}'.
+src/hooks/useClinicalData.ts(298,34): error TS2339: Property 'results' does not exist on type '{}'.
+src/hooks/useClinicalData.ts(298,59): error TS2339: Property 'medications' does not exist on type '{}'.
+src/hooks/useClinicalData.ts(335,50): error TS2339: Property 'map' does not exist on type '{}'.
+src/hooks/useClinicalData.ts(372,21): error TS2345: Argument of type '(prev: ClinicalData) => { conditions: {}; vitalSigns: VitalSign[]; latestVitals: Record<string, VitalSign>; immunizations: Immunization[]; ... 4 more ...; encounters: any[]; }' is not assignable to parameter of type 'SetStateAction<ClinicalData>'.
+  Type '(prev: ClinicalData) => { conditions: {}; vitalSigns: VitalSign[]; latestVitals: Record<string, VitalSign>; immunizations: Immunization[]; ... 4 more ...; encounters: any[]; }' is not assignable to type '(prevState: ClinicalData) => ClinicalData'.
+    Call signature return types '{ conditions: {}; vitalSigns: VitalSign[]; latestVitals: Record<string, VitalSign>; immunizations: Immunization[]; medications: Medication[]; diagnosticResults: DiagnosticResult[]; timeline: TimelineEvent[]; allergies: any[]; encounters: any[]; }' and 'ClinicalData' are incompatible.
+      The types of 'conditions' are incompatible between these types.
+        Type '{}' is missing the following properties from type 'any[]': length, pop, push, concat, and 28 more.
+src/hooks/useClinicalData.ts(392,21): error TS2345: Argument of type '(prev: ClinicalData) => { allergies: {}; vitalSigns: VitalSign[]; latestVitals: Record<string, VitalSign>; immunizations: Immunization[]; ... 4 more ...; encounters: any[]; }' is not assignable to parameter of type 'SetStateAction<ClinicalData>'.
+  Type '(prev: ClinicalData) => { allergies: {}; vitalSigns: VitalSign[]; latestVitals: Record<string, VitalSign>; immunizations: Immunization[]; ... 4 more ...; encounters: any[]; }' is not assignable to type '(prevState: ClinicalData) => ClinicalData'.
+    Call signature return types '{ allergies: {}; vitalSigns: VitalSign[]; latestVitals: Record<string, VitalSign>; immunizations: Immunization[]; medications: Medication[]; diagnosticResults: DiagnosticResult[]; timeline: TimelineEvent[]; conditions: any[]; encounters: any[]; }' and 'ClinicalData' are incompatible.
+      The types of 'allergies' are incompatible between these types.
+        Type '{}' is missing the following properties from type 'any[]': length, pop, push, concat, and 28 more.
+src/hooks/useClinicalData.ts(413,21): error TS2345: Argument of type '(prev: ClinicalData) => { encounters: {}; vitalSigns: VitalSign[]; latestVitals: Record<string, VitalSign>; immunizations: Immunization[]; ... 4 more ...; allergies: any[]; }' is not assignable to parameter of type 'SetStateAction<ClinicalData>'.
+  Type '(prev: ClinicalData) => { encounters: {}; vitalSigns: VitalSign[]; latestVitals: Record<string, VitalSign>; immunizations: Immunization[]; ... 4 more ...; allergies: any[]; }' is not assignable to type '(prevState: ClinicalData) => ClinicalData'.
+    Call signature return types '{ encounters: {}; vitalSigns: VitalSign[]; latestVitals: Record<string, VitalSign>; immunizations: Immunization[]; medications: Medication[]; diagnosticResults: DiagnosticResult[]; timeline: TimelineEvent[]; conditions: any[]; allergies: any[]; }' and 'ClinicalData' are incompatible.
+      The types of 'encounters' are incompatible between these types.
+        Type '{}' is missing the following properties from type 'any[]': length, pop, push, concat, and 28 more.
+src/hooks/useClinicalData.ts(419,24): error TS2339: Property 'forEach' does not exist on type '{}'.
+src/routes.tsx(112,49): error TS2307: Cannot find module './components/clinical/ReferralWorkspace' or its corresponding type declarations.
+src/routes.tsx(119,50): error TS2307: Cannot find module './components/regulatory/NotificationsPanel' or its corresponding type declarations.

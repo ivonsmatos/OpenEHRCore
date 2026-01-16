@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'fhir_api',
+    'transcription',
 ]
 
 MIDDLEWARE = [

@@ -11,6 +11,9 @@ from .views_media import MediaViewSet
 from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7, views_brazil, views_agent, views_validation
 from .metrics import metrics_view
 
+# Import transcription ViewSet
+from transcription.views import TranscriptionViewSet
+
 router = DefaultRouter()
 router.register(r'financial/coverage', CoverageViewSet, basename='coverage')
 router.register(r'financial/accounts', AccountViewSet, basename='account')
@@ -24,6 +27,8 @@ router.register(r'medication-administrations', MedicationAdministrationViewSet, 
 router.register(r'tasks', TaskViewSet, basename='task')
 router.register(r'goals', GoalViewSet, basename='goal')
 router.register(r'media', MediaViewSet, basename='media')
+# Transcription (MedASR)
+router.register(r'asr', TranscriptionViewSet, basename='transcription')
 
 urlpatterns = [
     # Health Check endpoints (robustos)

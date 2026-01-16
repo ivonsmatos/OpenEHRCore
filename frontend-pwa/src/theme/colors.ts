@@ -29,6 +29,26 @@ export const colors = {
     info: "#3B82F6",     // Info (Blue-500)
   },
 
+  // Status colors for badges and indicators
+  status: {
+    active: "#10B981",    // Verde para ativo
+    inactive: "#6B7280",  // Cinza para inativo
+    pending: "#F59E0B",   // Amarelo para pendente
+    completed: "#3B82F6", // Azul para completo
+    cancelled: "#EF4444", // Vermelho para cancelado
+    draft: "#9CA3AF",     // Cinza claro para rascunho
+    inProgress: "#8B5CF6", // Roxo para em progresso
+    onHold: "#F97316",    // Laranja para em espera
+    proposed: "#06B6D4",  // Ciano para proposto
+    accepted: "#10B981",  // Verde para aceito
+    rejected: "#EF4444",  // Vermelho para rejeitado
+    // Semantic status colors
+    success: "#10B981",   // Same as active
+    warning: "#F59E0B",   // Same as pending
+    error: "#EF4444",     // Same as cancelled
+    info: "#3B82F6",      // Same as completed
+  },
+
   // Background - Fundo geral (clean design)
   background: {
     surface: "#F2F2F2",  // Fundo geral - Cinza bem claro
@@ -38,10 +58,12 @@ export const colors = {
 
   // Neutral - Textos e elementos neutros
   neutral: {
-    light: "#EBEFF2",    // Fundo muito claro (praticamente branco)
+    lightest: "#F9FAFB", // Fundo mais claro
     lighter: "#C5D0D9",  // Cinza bem claro para bordas/dividers
+    light: "#EBEFF2",    // Fundo muito claro (praticamente branco)
     base: "#A3B2BF",     // Cinza médio para textos secundários
     dark: "#595959",     // Texto escuro padrão
+    darker: "#333333",   // Texto mais escuro
     darkest: "#0D0D0D",  // Texto muito escuro (quase preto)
   },
 

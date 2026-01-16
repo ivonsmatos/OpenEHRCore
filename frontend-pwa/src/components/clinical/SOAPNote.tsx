@@ -3,6 +3,7 @@ import { useEncounters } from '../../hooks/useEncounters';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import Button from '../base/Button';
 import { colors, spacing } from '../../theme/colors';
+import AudioRecorder from '../ui/AudioRecorder';
 
 interface SOAPNoteProps {
     patientId?: string;
@@ -68,6 +69,13 @@ ${plan || '-'}
         }
     };
 
+    const handleDictation = (setter: React.Dispatch<React.SetStateAction<string>>, currentText: string, newText: string) => {
+        setter(prev => {
+            const separator = prev.trim().length > 0 ? ' ' : '';
+            return `${prev}${separator}${newText}`;
+        });
+    };
+
     const textareaStyle = {
         width: '100%',
         padding: spacing.sm,
@@ -82,7 +90,9 @@ ${plan || '-'}
     };
 
     const labelStyle = {
-        display: 'block',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         marginBottom: spacing.xs,
         fontSize: isMobile ? '0.9rem' : '0.875rem',
         fontWeight: 600,
@@ -90,40 +100,43 @@ ${plan || '-'}
     };
 
     return (
-        <form onSubmit={handleSubmit} style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
+        <form onSubmit={handleSubmit} style={{
+            display: 'flex',
+            flexDirection: 'column',
             gap: spacing.lg,
             maxWidth: '100%',
             padding: isMobile ? spacing.sm : 0
         }}>
-            <div style={{ 
-                display: 'flex', 
+            <div style={{
+                display: 'flex',
                 flexDirection: isMobile ? 'column' : 'row',
-                justifyContent: 'space-between', 
+                justifyContent: 'space-between',
                 alignItems: isMobile ? 'flex-start' : 'center',
                 gap: spacing.xs
             }}>
-                <h3 style={{ 
-                    margin: 0, 
-                    color: colors.text.primary,
-                    fontSize: isMobile ? '1.1rem' : '1.25rem'
-                }}>
-                    Nota de Evolução (SOAP)
-                </h3>
-                <span style={{ 
-                    fontSize: '0.75rem', 
-                    color: colors.text.secondary 
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+                    <h3 style={{
+                        margin: 0,
+                        color: colors.text.primary,
+                        fontSize: isMobile ? '1.1rem' : '1.25rem'
+                    }}>
+                        Nota de Evolução (SOAP)
+                    </h3>
+                    {/* Global Dictation could go here if needed */}
+                </div>
+                <span style={{
+                    fontSize: '0.75rem',
+                    color: colors.text.secondary
                 }}>
                     {new Date().toLocaleDateString()}
                 </span>
             </div>
 
             {error && (
-                <div style={{ 
-                    padding: spacing.md, 
-                    backgroundColor: `${colors.alert.critical}20`, 
-                    color: colors.alert.critical, 
+                <div style={{
+                    padding: spacing.md,
+                    backgroundColor: `${colors.alert.critical}20`,
+                    color: colors.alert.critical,
                     borderRadius: '8px',
                     fontSize: isMobile ? '0.875rem' : '0.9rem'
                 }}>
@@ -132,10 +145,10 @@ ${plan || '-'}
             )}
 
             {successMessage && (
-                <div style={{ 
-                    padding: spacing.md, 
-                    backgroundColor: `${colors.alert.success}20`, 
-                    color: colors.alert.success, 
+                <div style={{
+                    padding: spacing.md,
+                    backgroundColor: `${colors.alert.success}20`,
+                    color: colors.alert.success,
                     borderRadius: '8px',
                     fontSize: isMobile ? '0.875rem' : '0.9rem'
                 }}>
@@ -144,14 +157,17 @@ ${plan || '-'}
             )}
 
             {/* Layout vertical: um campo embaixo do outro */}
-            <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: spacing.lg 
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: spacing.lg
             }}>
                 {/* Subjective */}
                 <div>
-                    <label style={labelStyle}>S - Subjetivo</label>
+                    <div style={labelStyle}>
+                        <span>S - Subjetivo</span>
+                        <AudioRecorder onTranscriptionComplete={(text) => handleDictation(setSubjective, subjective, text)} />
+                    </div>
                     <textarea
                         value={subjective}
                         onChange={(e) => setSubjective(e.target.value)}
@@ -162,7 +178,10 @@ ${plan || '-'}
 
                 {/* Objective */}
                 <div>
-                    <label style={labelStyle}>O - Objetivo</label>
+                    <div style={labelStyle}>
+                        <span>O - Objetivo</span>
+                        <AudioRecorder onTranscriptionComplete={(text) => handleDictation(setObjective, objective, text)} />
+                    </div>
                     <textarea
                         value={objective}
                         onChange={(e) => setObjective(e.target.value)}
@@ -173,7 +192,10 @@ ${plan || '-'}
 
                 {/* Assessment */}
                 <div>
-                    <label style={labelStyle}>A - Avaliação</label>
+                    <div style={labelStyle}>
+                        <span>A - Avaliação</span>
+                        <AudioRecorder onTranscriptionComplete={(text) => handleDictation(setAssessment, assessment, text)} />
+                    </div>
                     <textarea
                         value={assessment}
                         onChange={(e) => setAssessment(e.target.value)}
@@ -184,7 +206,10 @@ ${plan || '-'}
 
                 {/* Plan */}
                 <div>
-                    <label style={labelStyle}>P - Plano</label>
+                    <div style={labelStyle}>
+                        <span>P - Plano</span>
+                        <AudioRecorder onTranscriptionComplete={(text) => handleDictation(setPlan, plan, text)} />
+                    </div>
                     <textarea
                         value={plan}
                         onChange={(e) => setPlan(e.target.value)}
@@ -194,15 +219,15 @@ ${plan || '-'}
                 </div>
             </div>
 
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'flex-end', 
-                marginTop: spacing.md 
+            <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                marginTop: spacing.md
             }}>
-                <Button 
-                    type="submit" 
+                <Button
+                    type="submit"
                     disabled={loading}
-                    style={{ 
+                    style={{
                         width: isMobile ? '100%' : 'auto',
                         minWidth: isMobile ? '100%' : '150px'
                     }}
