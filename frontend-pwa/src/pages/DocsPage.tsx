@@ -87,6 +87,9 @@ const DocsPage: React.FC<DocsPageProps> = ({ markdownContent, filePath }) => {
 
         // Automações
         'automation/bots': '/docs/AUTOMATION_BOTS.md',
+
+        // Inteligência Artificial
+        'ai/multimodal': '/docs/MULTIMODAL_AI.md',
       };
 
       const routeKey = page ? `${category}/${page}` : category || 'intro';

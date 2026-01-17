@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { Menu, X, ChevronDown, ChevronRight, Home, Book, Shield, Users, FileText, HelpCircle, Bot } from 'lucide-react';
+import { Menu, X, ChevronDown, ChevronRight, Home, Book, Shield, Users, FileText, HelpCircle, Bot, Brain } from 'lucide-react';
 
 interface NavSection {
   title: string;
@@ -29,6 +29,13 @@ const navigationSections: NavSection[] = [
       { title: 'Introdução', path: '/docs/intro' },
       { title: 'Instalação Rápida', path: '/docs/setup', badge: 'Novo' },
       { title: 'Arquitetura', path: '/docs/architecture' },
+    ]
+  },
+  {
+    title: 'Inteligência Artificial',
+    icon: Brain,
+    items: [
+      { title: 'IA Multimodal (v2.2)', path: '/docs/ai/multimodal', badge: 'Novo' },
     ]
   },
   {
