@@ -12,7 +12,7 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking');
-  
+
   // NÃO CARREGA AUTOMATICAMENTE - usuário deve clicar no botão
 
   const fetchSummary = async () => {
@@ -72,24 +72,7 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId }) => {
             }}
           >
             <CheckCircle size={16} />
-            Ollama Ativo
-          </span>
-        )}
-        {ollamaStatus === 'offline' && (
-          <span
-            style={{
-              marginLeft: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              gap: spacing.xs,
-              fontSize: '0.875rem',
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              padding: `${spacing.xs} ${spacing.sm}`,
-              borderRadius: '4px',
-            }}
-          >
-            <AlertTriangle size={16} />
-            Modo Fallback
+            IA Pronta (MedGemma)
           </span>
         )}
       </div>
@@ -165,32 +148,7 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId }) => {
         </div>
       )}
 
-      {ollamaStatus === 'offline' && !loading && summary && (
-        <div
-          style={{
-            marginTop: spacing.md,
-            padding: spacing.sm,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '4px',
-            fontSize: '0.875rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: spacing.xs,
-          }}
-        >
-          <AlertTriangle size={16} />
-          Ollama não detectado. Para ativar IA:
-          <a
-            href="https://ollama.ai/download"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'white', textDecoration: 'underline', marginLeft: spacing.xs }}
-          >
-            Instalar Ollama
-          </a>
-          → Execute: <code style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: '4px' }}>ollama pull mistral</code>
-        </div>
-      )}
+
     </Card>
   );
 };

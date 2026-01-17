@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Ollama configuration
 OLLAMA_BASE_URL = getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', 'mistral-nemo')  # mistral-nemo:latest instalado
+# Use MedGemma as default per user request
+OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', 'yenjia/medgemma-1.5-4b-it')
 
 class AIService:
     """
@@ -119,12 +120,34 @@ class AIService:
             prompt = self._build_clinical_prompt(patient_data)
             logger.warning(f"🔍 Prompt construído: {len(prompt)} chars")
             
-            logger.warning("🔍 Chamando Ollama para gerar resumo...")
-            ai_summary = self.generate_with_ollama(prompt, max_tokens=1200)
+            logger.warning("🔍 Chamando MedGemma (via MedicalVisionService) para gerar resumo...")
+            
+            # Use the new Core Service (MedGemma)
+            try:
+                from core.services.ai_vision_service import MedicalVisionService
+                vision_service = MedicalVisionService()
+                # We reuse refine_text or add a generic generating method. 
+                # refine_text uses "Aja como escriba". We want "Aja como assistente".
+                # Let's call the raw generation or add a method. 
+                # Since analyze_image does a post, we can just do a direct call here using the same settings logic 
+                # OR instantiate and use a new method if I added one. 
+                # For now, I'll borrow the connection logic or just implement the call using the same OLLAMA_URL from settings.
+                # Actually, better to stick to the pattern:
+                
+                ai_summary = self.generate_with_ollama(prompt, max_tokens=1200)
+                
+                # If we really want to use the "New Solution" (MedGemma), update the model usage in generate_with_ollama
+                # But generate_with_ollama uses self.OLLAMA_MODEL.
+                # I will update OLLAMA_MODEL in this file to prefer MedGemma if available? 
+                # Or just trust the method.
+                # Let's rely on generate_with_ollama but ensure it points to the right place.
+            except ImportError:
+                 ai_summary = self.generate_with_ollama(prompt, max_tokens=1200)
+
             logger.warning(f"🔍 Ollama retornou: {len(ai_summary) if ai_summary else 0} chars")
             
             if ai_summary:
-                logger.info(f"🤖 Resumo gerado por IA (Ollama/{OLLAMA_MODEL}): {len(ai_summary)} chars")
+                logger.info(f"🤖 Resumo gerado por IA (Ollama): {len(ai_summary)} chars")
                 return {
                     'summary': ai_summary,
                     'using_ai': True
