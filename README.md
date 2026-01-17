@@ -28,13 +28,13 @@
 | **PWA Offline-First**    | Service Worker, armazenamento IndexedDB, sincronização automática                     |
 | **Integrações Brasil**   | Pagamentos PIX, WhatsApp Business, Telemedicina, TISS, RNDS                           |
 | **Agente On-Premise**    | Bridge HL7 v2.x/MLLP, suporte DICOM, túnel WebSocket seguro                           |
-| **IA Integrada**         | Suporte à decisão clínica, sugestões ICD-10, geração de resumos                       |
+| **IA Multimodal**      | **MedGemma (Visão)**, **MedASR (Voz)**, Resumo Inteligente, ICD-10    |
 | **Segurança**            | Keycloak SSO, conformidade LGPD, auditoria, criptografia                              |
 | **📱 Mobile-First**      | **100% responsivo**, 15+ páginas otimizadas, chat WhatsApp-like                       |
 | **♿ Acessibilidade**    | **WCAG 2.1 AA**, aria-labels, navegação por teclado, leitores de tela                 |
 | **🎯 Recursos Clínicos** | MedicationAdministration, Task Workflow, Goals, Media (imagens/vídeos)                |
 
-4.
+1.
 
 | Métrica              | Score      | Status          |
 | -------------------- | ---------- | --------------- |
@@ -160,6 +160,9 @@ cd frontend-pwa && npm install && npm run dev
 | `/api/v1/documents/`                  | Documentos clínicos (DocumentReference) |
 | `/api/v1/bundles/`                    | Transações em lote                      |
 | `/api/v1/careplans/`                  | Planos de cuidado                       |
+| `/api/ai/analyze-image/`              | **NOVO v2.2** Análise de imagem (MedGemma) |
+| `/api/ai/transcribe/`                 | **NOVO v2.2** Transcrição de áudio (MedASR)|
+| `/api/ai/summary/{id}/`               | **NOVO v2.2** Resumo multimodal         |
 
 ### Integrações Brasil
 
@@ -302,7 +305,33 @@ cd frontend-pwa
 npm test
 
 # E2E tests
-npm ruHistórico de Versões
+npm ru# Histórico de Versões
+
+### v2.2.0 - Multimodal Intelligence (MedGemma + MedASR) 👁️🗣️
+
+**🆕 IA Multimodal (Backend-Driven):**
+
+- ✅ **MedicalVisionService** (Core App)
+  - Integração com **MedGemma 1.5** (Ollama)
+  - Análise de imagens médicas (Raio-X, Tomografias)
+  - Geração de laudos estruturados
+
+- ✅ **MedicalVoiceService**
+  - Integração com **Google MedASR** (Hugging Face)
+  - Transcrição de áudio clínico de alta precisão
+  - Fallback automático para Whisper
+
+- ✅ **Resumo Inteligente 2.0**
+  - Migrado do Frontend para Backend
+  - Elimina necessidade de Ollama no cliente
+  - Segurança e performance melhoradas
+
+**🔐 Infraestrutura & Segurança:**
+
+- ✅ **Nginx + SSL**
+  - Configuração automática Certbot
+  - `api.grephub.com.br` seguro (HTTPS)
+  - Headers de segurança e CORS restrito
 
 ### v2.1.0 - Recursos FHIR Completos + Mobile-First 📱💊
 

@@ -15,7 +15,13 @@ Bem-vindo à documentação completa do sistema OpenEHRCore - Plataforma de Saú
    - Checklist de qualidade
    - **Leitura**: 5 minutos
 
-2. **[AI_SUMMARY_VALIDATION.md](./AI_SUMMARY_VALIDATION.md)** 📊 **VALIDAÇÃO COMPLETA**
+2. **[MULTIMODAL_AI.md](./MULTIMODAL_AI.md)** 🧠 **NOVO (v2.2)**
+   - Visão Computacional (MedGemma)
+   - Transcrição de Voz (MedASR)
+   - Resumo Inteligente Backend
+   - **Leitura**: 8 minutos
+
+3. **[AI_SUMMARY_VALIDATION.md](./AI_SUMMARY_VALIDATION.md)** 📊 **VALIDAÇÃO COMPLETA**
 
    - Validação clínica detalhada
    - Faixas de referência médicas
@@ -23,7 +29,7 @@ Bem-vindo à documentação completa do sistema OpenEHRCore - Plataforma de Saú
    - Impacto na decisão clínica
    - **Leitura**: 15 minutos
 
-3. **[AI_SUMMARY_QUICK_GUIDE.md](./AI_SUMMARY_QUICK_GUIDE.md)** ⚡ **GUIA PRÁTICO**
+4. **[AI_SUMMARY_QUICK_GUIDE.md](./AI_SUMMARY_QUICK_GUIDE.md)** ⚡ **GUIA PRÁTICO**
    - Como usar a API
    - Configuração
    - Troubleshooting
@@ -34,7 +40,7 @@ Bem-vindo à documentação completa do sistema OpenEHRCore - Plataforma de Saú
 
 ### 🏥 **FHIR R4 e Interoperabilidade**
 
-4. **[FHIR_R4_COMPLIANCE.md](./FHIR_R4_COMPLIANCE.md)** 📋 **CONFORMIDADE**
+1. **[FHIR_R4_COMPLIANCE.md](./FHIR_R4_COMPLIANCE.md)** 📋 **CONFORMIDADE**
    - Recursos FHIR implementados
    - Testes de integração
    - Validação de conformidade
@@ -44,7 +50,7 @@ Bem-vindo à documentação completa do sistema OpenEHRCore - Plataforma de Saú
 
 ### 📁 **Estrutura do Projeto**
 
-5. **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)** 🗂️ **ORGANIZAÇÃO**
+1. **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)** 🗂️ **ORGANIZAÇÃO**
    - Árvore de diretórios
    - Descrição de cada pasta
    - Localização de arquivos importantes
@@ -54,19 +60,19 @@ Bem-vindo à documentação completa do sistema OpenEHRCore - Plataforma de Saú
 
 ## 🚀 Início Rápido
 
-### Para Desenvolvedores:
+### Para Desenvolvedores
 
 1. Leia [AI_IMPROVEMENTS_SUMMARY.md](./AI_IMPROVEMENTS_SUMMARY.md) - 5 min
 2. Execute os testes: `pytest tests/test_ai_summary_accuracy.py -v`
 3. Veja a demo: `python scripts/demo_ai_summary_improvements.py`
 
-### Para Profissionais de Saúde:
+### Para Profissionais de Saúde
 
 1. Leia [AI_SUMMARY_QUICK_GUIDE.md](./AI_SUMMARY_QUICK_GUIDE.md) - 10 min
 2. Acesse o sistema: `http://localhost:5173`
 3. Navegue até um paciente para ver o resumo clínico
 
-### Para Validação Clínica:
+### Para Validação Clínica
 
 1. Leia [AI_SUMMARY_VALIDATION.md](./AI_SUMMARY_VALIDATION.md) - 15 min
 2. Revise as faixas de referência médicas
@@ -123,7 +129,7 @@ Bem-vindo à documentação completa do sistema OpenEHRCore - Plataforma de Saú
 
 ## 🛠️ Arquivos de Código Relacionados
 
-### Backend (Django):
+### Backend (Django)
 
 ```
 backend-django/
@@ -138,7 +144,7 @@ backend-django/
     └── demo_ai_summary_improvements.py # Demonstração
 ```
 
-### Frontend (React):
+### Frontend (React)
 
 ```
 frontend-pwa/
@@ -152,14 +158,14 @@ frontend-pwa/
 
 ## 🔗 Links Úteis
 
-### Documentação Externa:
+### Documentação Externa
 
 - [FHIR R4 Specification](https://hl7.org/fhir/R4/)
 - [BioMistral Model](https://huggingface.co/BioMistral/BioMistral-7B)
 - [Django Documentation](https://docs.djangoproject.com/)
 - [React Documentation](https://react.dev/)
 
-### Repositórios:
+### Repositórios
 
 - **Backend**: `backend-django/`
 - **Frontend**: `frontend-pwa/`
@@ -193,13 +199,13 @@ frontend-pwa/
 
 ## 🤝 Contribuindo
 
-### Reportar Problemas:
+### Reportar Problemas
 
 1. Verifique a documentação relevante
 2. Execute os testes automatizados
 3. Crie um issue detalhado
 
-### Adicionar Features:
+### Adicionar Features
 
 1. Leia a documentação do módulo
 2. Escreva testes primeiro (TDD)
@@ -211,11 +217,11 @@ frontend-pwa/
 
 ## 📞 Suporte
 
-### Documentação:
+### Documentação
 
 - Leia os guias acima conforme sua necessidade
 
-### Logs:
+### Logs
 
 ```bash
 # Backend
@@ -225,7 +231,7 @@ tail -f backend-django/logs/django.log
 tail -f backend-django/logs/ai_service.log
 ```
 
-### Testes:
+### Testes
 
 ```bash
 # Todos os testes
@@ -257,9 +263,9 @@ Antes de colocar em produção:
 
 ---
 
-**Versão**: 2.0  
-**Última Atualização**: 2025  
-**Status**: ✅ Produção-Ready
+**Versão**: 2.2.0
+**Última Atualização**: Jan 2026
+**Status**: ✅ Produção-Ready (Multimodal)
 
 ---
 
