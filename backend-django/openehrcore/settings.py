@@ -19,7 +19,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1'
+    default='localhost,127.0.0.1,api.grephub.com.br,app.grephub.com.br,grephub.com.br,farmedtech.com.br'
 ).split(',')
 
 # Application definition
