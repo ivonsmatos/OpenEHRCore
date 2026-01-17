@@ -34,7 +34,15 @@ INSTALLED_APPS = [
     'corsheaders',
     'fhir_api',
     'transcription',
+    'core',
 ]
+
+# =====================================================
+# AI Configuration (Ollama)
+# =====================================================
+OLLAMA_BASE_URL = config('OLLAMA_BASE_URL', default='http://localhost:11434')
+OLLAMA_MODEL = config('OLLAMA_MODEL', default='mistral-nemo')
+OLLAMA_URL = f"{OLLAMA_BASE_URL}/api/generate"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

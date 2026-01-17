@@ -39,4 +39,5 @@ urlpatterns = [
     path('favicon.ico', favicon_view, name='favicon'),
     path('admin/', admin.site.urls),
     path('api/v1/', include('fhir_api.urls')),
+    path('api/', include('core.urls')),
 ]

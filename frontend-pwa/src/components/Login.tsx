@@ -102,12 +102,7 @@ export const Login: React.FC = () => {
         </form>
 
         {/* Demo Info */}
-        <div className="login-demo">
-          <strong>Credenciais de Acesso:</strong>
-          Email: <code>contato@ivonmatos.com.br</code>
-          <br />
-          Senha: <code>Protonsysdba@1986</code>
-        </div>
+
 
         {/* Help Link */}
         <div className="login-help">
