@@ -15,10 +15,8 @@ export const SOAPNote: React.FC<SOAPNoteProps> = ({ patientId, encounterId, onSu
     const { createSOAPNote, loading } = useEncounters(patientId);
     const isMobile = useIsMobile();
 
-    const [subjective, setSubjective] = useState<string>('');
-    const [objective, setObjective] = useState<string>('');
-    const [assessment, setAssessment] = useState<string>('');
-    const [plan, setPlan] = useState<string>('');
+    // Single field for clinical notes
+    const [clinicalNote, setClinicalNote] = useState<string>('');
 
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -28,49 +26,32 @@ export const SOAPNote: React.FC<SOAPNoteProps> = ({ patientId, encounterId, onSu
         setError(null);
         setSuccessMessage(null);
 
-        if (!subjective && !objective && !assessment && !plan) {
-            setError("Preencha pelo menos um dos campos da nota.");
+        if (!clinicalNote.trim()) {
+            setError("Preencha a nota clínica.");
             return;
         }
 
-        const summary = `
-S (Subjetivo):
-${subjective || '-'}
-
-O (Objetivo):
-${objective || '-'}
-
-A (Avaliação):
-${assessment || '-'}
-
-P (Plano):
-${plan || '-'}
-        `.trim();
-
         try {
             const result = await createSOAPNote({
-                summary: summary,
+                summary: clinicalNote.trim(),
                 status: 'completed',
                 encounter_id: encounterId
             });
 
-            console.log('SOAP Note created successfully:', result);
+            console.log('Clinical Note created successfully:', result);
             setSuccessMessage("Nota de evolução salva com sucesso!");
-            setSubjective('');
-            setObjective('');
-            setAssessment('');
-            setPlan('');
+            setClinicalNote('');
             if (onSuccess) onSuccess();
 
         } catch (err: any) {
-            console.error('Error saving SOAP note:', err);
+            console.error('Error saving clinical note:', err);
             const errorMsg = err.message || "Erro ao salvar nota. Tente novamente.";
             setError(errorMsg);
         }
     };
 
-    const handleDictation = (setter: React.Dispatch<React.SetStateAction<string>>, currentText: string, newText: string) => {
-        setter(prev => {
+    const handleDictation = (newText: string) => {
+        setClinicalNote(prev => {
             const separator = prev.trim().length > 0 ? ' ' : '';
             return `${prev}${separator}${newText}`;
         });
@@ -78,25 +59,16 @@ ${plan || '-'}
 
     const textareaStyle = {
         width: '100%',
-        padding: spacing.sm,
+        padding: spacing.md,
         borderRadius: '8px',
         border: `1px solid ${colors.border.default}`,
-        minHeight: isMobile ? '100px' : '120px',
+        minHeight: isMobile ? '250px' : '300px',
         fontFamily: 'inherit',
-        fontSize: isMobile ? '16px' : '0.95rem', // 16px no mobile evita zoom automático no iOS
+        fontSize: isMobile ? '16px' : '1rem',
         resize: 'vertical' as const,
         transition: 'border-color 0.2s ease',
-        boxSizing: 'border-box' as const
-    };
-
-    const labelStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: spacing.xs,
-        fontSize: isMobile ? '0.9rem' : '0.875rem',
-        fontWeight: 600,
-        color: colors.text.primary
+        boxSizing: 'border-box' as const,
+        lineHeight: '1.6'
     };
 
     return (
@@ -120,9 +92,8 @@ ${plan || '-'}
                         color: colors.text.primary,
                         fontSize: isMobile ? '1.1rem' : '1.25rem'
                     }}>
-                        Nota de Evolução (SOAP)
+                        Nota de Evolução
                     </h3>
-                    {/* Global Dictation could go here if needed */}
                 </div>
                 <span style={{
                     fontSize: '0.75rem',
@@ -156,67 +127,36 @@ ${plan || '-'}
                 </div>
             )}
 
-            {/* Layout vertical: um campo embaixo do outro */}
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: spacing.lg
-            }}>
-                {/* Subjective */}
-                <div>
-                    <div style={labelStyle}>
-                        <span>S - Subjetivo</span>
-                        <AudioRecorder onTranscriptionComplete={(text) => handleDictation(setSubjective, subjective, text)} />
-                    </div>
-                    <textarea
-                        value={subjective}
-                        onChange={(e) => setSubjective(e.target.value)}
-                        style={textareaStyle}
-                        placeholder="Queixas do paciente, história da moléstia atual..."
-                    />
+            {/* Single clinical note field */}
+            <div>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: spacing.sm
+                }}>
+                    <span style={{
+                        fontSize: isMobile ? '0.9rem' : '0.875rem',
+                        fontWeight: 600,
+                        color: colors.text.primary
+                    }}>
+                        Evolução Clínica
+                    </span>
+                    <AudioRecorder onTranscriptionComplete={handleDictation} />
                 </div>
-
-                {/* Objective */}
-                <div>
-                    <div style={labelStyle}>
-                        <span>O - Objetivo</span>
-                        <AudioRecorder onTranscriptionComplete={(text) => handleDictation(setObjective, objective, text)} />
-                    </div>
-                    <textarea
-                        value={objective}
-                        onChange={(e) => setObjective(e.target.value)}
-                        style={textareaStyle}
-                        placeholder="Exame físico, resultados de exames..."
-                    />
-                </div>
-
-                {/* Assessment */}
-                <div>
-                    <div style={labelStyle}>
-                        <span>A - Avaliação</span>
-                        <AudioRecorder onTranscriptionComplete={(text) => handleDictation(setAssessment, assessment, text)} />
-                    </div>
-                    <textarea
-                        value={assessment}
-                        onChange={(e) => setAssessment(e.target.value)}
-                        style={textareaStyle}
-                        placeholder="Hipóteses diagnósticas, análise do caso..."
-                    />
-                </div>
-
-                {/* Plan */}
-                <div>
-                    <div style={labelStyle}>
-                        <span>P - Plano</span>
-                        <AudioRecorder onTranscriptionComplete={(text) => handleDictation(setPlan, plan, text)} />
-                    </div>
-                    <textarea
-                        value={plan}
-                        onChange={(e) => setPlan(e.target.value)}
-                        style={textareaStyle}
-                        placeholder="Conduta, prescrições, solicitações, orientações..."
-                    />
-                </div>
+                <textarea
+                    value={clinicalNote}
+                    onChange={(e) => setClinicalNote(e.target.value)}
+                    style={textareaStyle}
+                    placeholder="Descreva a evolução do paciente: queixas, exame físico, hipóteses diagnósticas, conduta, prescrições e orientações..."
+                />
+                <p style={{
+                    margin: `${spacing.xs} 0 0 0`,
+                    fontSize: '0.75rem',
+                    color: colors.text.secondary
+                }}>
+                    💡 Use o microfone para ditar sua nota ou digite livremente.
+                </p>
             </div>
 
             <div style={{
