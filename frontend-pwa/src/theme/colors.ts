@@ -14,6 +14,7 @@ export const colors = {
     dark: "#1E40AF",     // Menu/Header - Azul escuro mais suave (Blue-800)
     medium: "#3B82F6",   // Botões/Ações principais - Azul amigável (Blue-500)
     light: "#93C5FD",    // Destaques suaves (Blue-300)
+    main: "#3B82F6",     // Alias para compatibilidade (mesmo que medium)
   },
 
   // Secondary/Accent - Destaques e elementos secundários
@@ -54,6 +55,7 @@ export const colors = {
     surface: "#F2F2F2",  // Fundo geral - Cinza bem claro
     default: "#FFFFFF",  // Branco puro para cards
     muted: "#F9FAFB",    // Muito sutilmente cinza
+    paper: "#FFFFFF",    // Alias para compatibilidade (mesmo que default)
   },
 
   // Neutral - Textos e elementos neutros
