@@ -12,8 +12,8 @@ import "./Login.css";
  * Sprint 29: Refatorado para usar CSS classes ao invés de inline styles
  */
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState("contato@ivonmatos.com.br");
-  const [password, setPassword] = useState("Protonsysdba@1986");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +59,7 @@ export const Login: React.FC = () => {
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="contato@ivonmatos.com.br"
+              placeholder="seu.email@exemplo.com"
               className="login-input"
               autoComplete="username"
             />

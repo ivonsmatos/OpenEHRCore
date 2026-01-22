@@ -61,36 +61,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   // 2. Decodificar informações do token JWT
+  // SECURITY FIX: Tokens de bypass removidos
   const decodeTokenInfo = (token: string) => {
     try {
-      // BYPASS: Token de desenvolvimento
-      if (token === "dev-token-bypass") {
-        setUser({
-          id: "ivon-matos-id",
-          username: "contato@ivonmatos.com.br",
-          email: "contato@ivonmatos.com.br",
-          name: "Ivon Matos",
-          roles: ["medico", "admin", "enfermeiro"],
-          practitionerId: "114", // ID do Practitioner FHIR associado
-        });
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        return;
-      }
-
-      // BYPASS: Token de paciente (Sprint 5)
-      if (token === "patient-token-bypass") {
-        setUser({
-          id: "patient-1",
-          username: "paciente@teste.com",
-          email: "paciente@teste.com",
-          name: "Paciente Teste",
-          roles: ["paciente"],
-          practitionerId: undefined, // Pacientes não têm practitionerId
-        });
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        return;
-      }
-
       const parts = token.split(".");
       if (parts.length !== 3) return;
 
@@ -143,26 +116,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setError(null);
 
     try {
-      // BYPASS PROVISÓRIO: Login de desenvolvimento
-      if (username === "patient-demo") {
-        const bypassToken = "patient-token-bypass";
-        setToken(bypassToken);
-        localStorage.setItem("access_token", bypassToken);
-        decodeTokenInfo(bypassToken);
-        setIsLoading(false);
-        window.location.href = "/portal";
-        return;
-      }
-
-      if (username === "medico-demo") {
-        const bypassToken = "dev-token-bypass";
-        setToken(bypassToken);
-        localStorage.setItem("access_token", bypassToken);
-        decodeTokenInfo(bypassToken);
-        setIsLoading(false);
-        window.location.href = "/";
-        return;
-      }
+      // SECURITY FIX: Logins de bypass removidos
+      // Toda autenticação agora passa pela API real
 
       const response = await axios.post(`${VITE_API_URL}/auth/login/`, {
         username,
@@ -203,11 +158,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!token) return;
 
     const checkTokenExpiration = () => {
-      // BYPASS: Tokens de desenvolvimento nunca expiram
-      if (token === "dev-token-bypass" || token === "patient-token-bypass") {
-        return;
-      }
-
+      // SECURITY FIX: Verificação de bypass removida
       try {
         const parts = token.split(".");
         // Decodificar Base64Url para Base64

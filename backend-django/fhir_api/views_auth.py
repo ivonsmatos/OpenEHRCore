@@ -66,13 +66,8 @@ def login(request):
     username = request.data.get('username')
     password = request.data.get('password')
     
-    # BYPASS: Login de desenvolvimento
-    if username == 'contato@ivonmatos.com.br' and password == 'Protonsysdba@1986':
-        return Response({
-            'access_token': 'dev-token-bypass',
-            'refresh_token': 'dev-refresh-bypass',
-            'expires_in': 3600
-        })
+    # SECURITY FIX: Bypass de desenvolvimento removido
+    # Todas as autenticações agora passam pelo Keycloak
     
     if not username or not password:
         return Response({

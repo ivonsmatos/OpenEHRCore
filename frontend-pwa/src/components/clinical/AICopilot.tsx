@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Card from '../base/Card';
-import { colors, spacing } from '../../theme/colors';
+import { spacing } from '../../theme/colors';
 import { Bot, AlertTriangle, CheckCircle } from 'lucide-react';
 
 interface AICopilotProps {
@@ -22,9 +22,14 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId }) => {
     setError(null);
 
     try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('Não autenticado');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/summary/${patientId}/`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || 'dev-token-bypass'}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
