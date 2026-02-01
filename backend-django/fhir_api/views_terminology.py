@@ -450,3 +450,238 @@ def map_snomed_to_icd10(request, snomed_code):
     except Exception as e:
         logger.error(f"Error mapping SNOMED to ICD-10: {str(e)}")
         return Response({"error": "Erro ao mapear código"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ============================================================================
+# FHIR Standard Terminology Operations (Sprint 36)
+# ============================================================================
+
+from .operations import get_terminology_operations
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def valueset_expand(request):
+    """
+    ValueSet/$expand operation (FHIR R4)
+
+    Expands a ValueSet to list all codes.
+
+    GET /api/v1/terminology/ValueSet/$expand
+
+    Query Parameters:
+        - url: Canonical URL of the ValueSet
+        - filter: Text filter for concepts
+        - offset: Pagination offset (default: 0)
+        - count: Max results (default: 100)
+        - includeDesignations: Include designations (default: false)
+
+    Returns:
+        ValueSet resource with expansion
+    """
+    ops = get_terminology_operations()
+
+    if request.method == 'GET':
+        params = request.query_params
+    else:
+        params = _extract_fhir_parameters(request.data)
+
+    url = params.get('url')
+    filter_text = params.get('filter')
+    offset = int(params.get('offset', 0))
+    count = int(params.get('count', 100))
+
+    valueset = None
+    if request.method == 'POST' and request.data.get('resourceType') == 'ValueSet':
+        valueset = request.data
+
+    result = ops.expand(
+        url=url,
+        valueset=valueset,
+        filter=filter_text,
+        offset=offset,
+        count=count
+    )
+
+    if result.get('resourceType') == 'OperationOutcome':
+        return Response(result, status=status.HTTP_404_NOT_FOUND)
+
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def valueset_validate_code(request):
+    """
+    ValueSet/$validate-code operation (FHIR R4)
+
+    Validates if a code belongs to a ValueSet.
+
+    GET /api/v1/terminology/ValueSet/$validate-code
+
+    Query Parameters:
+        - url: ValueSet URL
+        - code: Code to validate
+        - system: Code system
+        - display: Display to validate
+
+    Returns:
+        Parameters resource with result (boolean)
+    """
+    ops = get_terminology_operations()
+
+    if request.method == 'GET':
+        params = request.query_params.dict()
+    else:
+        params = _extract_fhir_parameters(request.data)
+
+    result = ops.validate_code(
+        url=params.get('url'),
+        code=params.get('code'),
+        system=params.get('system'),
+        display=params.get('display'),
+        coding=params.get('coding'),
+        codeable_concept=params.get('codeableConcept')
+    )
+
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def codesystem_lookup(request):
+    """
+    CodeSystem/$lookup operation (FHIR R4)
+
+    Looks up information about a code in a CodeSystem.
+
+    GET /api/v1/terminology/CodeSystem/$lookup
+
+    Query Parameters:
+        - code: Code to lookup (REQUIRED)
+        - system: CodeSystem URI (REQUIRED)
+        - version: CodeSystem version
+        - displayLanguage: Preferred language
+
+    Returns:
+        Parameters resource with name, display, etc
+    """
+    ops = get_terminology_operations()
+
+    if request.method == 'GET':
+        params = request.query_params.dict()
+    else:
+        params = _extract_fhir_parameters(request.data)
+
+    code = params.get('code')
+    system = params.get('system')
+
+    if not code or not system:
+        return Response({
+            'resourceType': 'OperationOutcome',
+            'issue': [{
+                'severity': 'error',
+                'code': 'required',
+                'diagnostics': 'Both code and system are required'
+            }]
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    result = ops.lookup(
+        code=code,
+        system=system,
+        version=params.get('version'),
+        display_language=params.get('displayLanguage')
+    )
+
+    if result.get('resourceType') == 'OperationOutcome':
+        return Response(result, status=status.HTTP_404_NOT_FOUND)
+
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes([KeycloakAuthentication])
+@permission_classes([IsAuthenticated])
+def conceptmap_translate(request):
+    """
+    ConceptMap/$translate operation (FHIR R4)
+
+    Translates a code between terminology systems.
+
+    GET /api/v1/terminology/ConceptMap/$translate
+
+    Query Parameters:
+        - code: Code to translate (REQUIRED)
+        - system: Source system (REQUIRED)
+        - source: Source ValueSet
+        - target: Target ValueSet
+        - targetsystem: Target CodeSystem
+        - url: ConceptMap URL to use
+
+    Returns:
+        Parameters resource with matches
+    """
+    ops = get_terminology_operations()
+
+    if request.method == 'GET':
+        params = request.query_params.dict()
+    else:
+        params = _extract_fhir_parameters(request.data)
+
+    code = params.get('code')
+    system = params.get('system')
+
+    if not code or not system:
+        return Response({
+            'resourceType': 'OperationOutcome',
+            'issue': [{
+                'severity': 'error',
+                'code': 'required',
+                'diagnostics': 'Both code and system are required'
+            }]
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    result = ops.translate(
+        code=code,
+        system=system,
+        source=params.get('source'),
+        target=params.get('target'),
+        target_system=params.get('targetsystem'),
+        concept_map_url=params.get('url')
+    )
+
+    return Response(result, status=status.HTTP_200_OK)
+
+
+def _extract_fhir_parameters(data):
+    """
+    Extract parameters from FHIR Parameters resource format.
+
+    Converts:
+        {"resourceType": "Parameters", "parameter": [{"name": "x", "valueString": "y"}]}
+    To:
+        {"x": "y"}
+    """
+    if not isinstance(data, dict):
+        return {}
+
+    if data.get('resourceType') != 'Parameters':
+        return data
+
+    params = {}
+    for p in data.get('parameter', []):
+        name = p.get('name')
+        if not name:
+            continue
+
+        # Extract value based on type
+        for key in ['valueString', 'valueCode', 'valueUri', 'valueBoolean',
+                    'valueInteger', 'valueCoding', 'valueCodeableConcept']:
+            if key in p:
+                params[name] = p[key]
+                break
+
+    return params

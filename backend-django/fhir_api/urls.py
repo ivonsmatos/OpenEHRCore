@@ -8,6 +8,7 @@ from .views_medication_administration import MedicationAdministrationViewSet
 from .views_task import TaskViewSet
 from .views_goal import GoalViewSet
 from .views_media import MediaViewSet
+from .views_audit_provenance import AuditEventViewSet, ProvenanceViewSet
 from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7, views_brazil, views_agent, views_validation
 from .metrics import metrics_view
 
@@ -29,6 +30,10 @@ router.register(r'goals', GoalViewSet, basename='goal')
 router.register(r'media', MediaViewSet, basename='media')
 # Transcription (MedASR)
 router.register(r'asr', TranscriptionViewSet, basename='transcription')
+
+# Sprint 36: Audit Trail FHIR R4
+router.register(r'audit-events-v2', AuditEventViewSet, basename='audit-event-v2')
+router.register(r'provenances', ProvenanceViewSet, basename='provenance')
 
 urlpatterns = [
     # Health Check endpoints (robustos)
@@ -219,6 +224,12 @@ urlpatterns = [
     # Terminology Mapping (ICD-10 <-> SNOMED CT)
     path('terminology/map/icd10-to-snomed/<str:icd10_code>/', views_terminology.map_icd10_to_snomed, name='map_icd10_to_snomed'),
     path('terminology/map/snomed-to-icd10/<str:snomed_code>/', views_terminology.map_snomed_to_icd10, name='map_snomed_to_icd10'),
+
+    # Sprint 36: FHIR Terminology Operations ($expand, $validate-code, $lookup, $translate)
+    path('terminology/ValueSet/$expand', views_terminology.valueset_expand, name='valueset_expand'),
+    path('terminology/ValueSet/$validate-code', views_terminology.valueset_validate_code, name='valueset_validate_code'),
+    path('terminology/CodeSystem/$lookup', views_terminology.codesystem_lookup, name='codesystem_lookup'),
+    path('terminology/ConceptMap/$translate', views_terminology.conceptmap_translate, name='conceptmap_translate'),
     
     # Sprint 22: FHIR Bulk Data Export ($export)
     path('export/Patient/', views_bulk_data.export_patient, name='export_patient'),
