@@ -9,7 +9,7 @@ from .views_task import TaskViewSet
 from .views_goal import GoalViewSet
 from .views_media import MediaViewSet
 from .views_audit_provenance import AuditEventViewSet, ProvenanceViewSet
-from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7, views_brazil, views_agent, views_validation
+from . import views_auth, views_documents, views_analytics, views_clinical, views_export, views_audit, views_ai, views_visitors, views_chat, views_ipd, views_practitioners, views_consent, views_search, views_organization, views_procedure, views_medication, views_healthcare_service, views_diagnostic_report, views_consent_fhir, views_audit_event, views_terminology, views_bulk_data, views_lgpd, views_health, views_composition, views_tiss, views_rnds, views_integrations, views_referral, views_communication, views_notifications, views_cbo, views_automation, views_billing, views_prescription, views_smart, views_fhircast, views_compliance, views_questionnaire, views_hl7, views_brazil, views_agent, views_validation, views_crm_validation
 from .metrics import metrics_view
 
 # Import transcription ViewSet
@@ -539,6 +539,17 @@ urlpatterns = [
     path('fhir/quick-validate', views_validation.quick_validate, name='fhir_quick_validate'),
     path('fhir/check-reference', views_validation.check_reference, name='fhir_check_reference'),
     path('fhir/profiles/<str:resource_type>', views_validation.list_profiles, name='fhir_list_profiles'),
+
+    # ============================================================================
+    # Sprint 39: CRM Validation (Professional License Validation)
+    # ============================================================================
+
+    path('crm/info/', views_crm_validation.crm_validation_info, name='crm_validation_info'),
+    path('crm/validate/', views_crm_validation.validate_crm, name='crm_validate'),
+    path('crm/validate-batch/', views_crm_validation.validate_crm_batch, name='crm_validate_batch'),
+    path('crm/conselhos/', views_crm_validation.list_conselhos, name='crm_list_conselhos'),
+    path('crm/stats/', views_crm_validation.crm_validation_stats, name='crm_validation_stats'),
+    path('crm/invalidate-cache/', views_crm_validation.invalidate_crm_cache, name='crm_invalidate_cache'),
 ]
 
 

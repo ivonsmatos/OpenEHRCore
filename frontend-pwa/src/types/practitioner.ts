@@ -82,6 +82,28 @@ export interface PractitionerFormData {
     crm: string;
     qualification_code: string;
     qualification_display: string;
+    // CRM Validation fields (Sprint 39)
+    conselho?: string;        // CRM, COREN, CRO, etc.
+    numero_conselho?: string; // Registration number
+    uf_conselho?: string;     // State (UF)
+    codigo_cbo?: string;      // CBO occupation code
+    crm_validated?: boolean;  // Whether CRM was validated
+    crm_validation_result?: CRMValidationResult | null;
+}
+
+export interface CRMValidationResult {
+    status: 'valid' | 'invalid_format' | 'not_found' | 'suspended' | 'cancelled' | 'expired' | 'error' | 'pending';
+    conselho: string;
+    numero: string;
+    uf: string;
+    nome_profissional?: string;
+    especialidades?: string[];
+    situacao_registro?: string;
+    validation_id?: string;
+    validated_at?: string;
+    validation_source?: 'local' | 'api' | 'cache';
+    message?: string;
+    fhir_identifier?: Record<string, unknown>;
 }
 
 export interface PractitionerFilters {
