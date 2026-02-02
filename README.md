@@ -4,7 +4,7 @@
 
 **Plataforma de Interoperabilidade em Saude - FHIR R4 100% Nativo**
 
-[![Versao](https://img.shields.io/badge/versao-2.2.0-7c3aed.svg)](https://github.com/ivonsmatos/OpenEHRCore)
+[![Versao](https://img.shields.io/badge/versao-2.3.0-7c3aed.svg)](https://github.com/ivonsmatos/OpenEHRCore)
 [![FHIR](https://img.shields.io/badge/FHIR-R4_100%25-00d4ff.svg)](https://www.hl7.org/fhir/)
 [![Licenca](https://img.shields.io/badge/licenca-MIT-green.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue.svg)](https://www.typescriptlang.org/)
@@ -24,6 +24,7 @@
 | Categoria | Recursos |
 |-----------|----------|
 | **FHIR R4 100%** | Tipos de dados nativos, StructureDefinitions BR, Operacoes $expand/$validate-code/$lookup/$translate |
+| **Validacao CRM** | Validacao de registros profissionais (CRM, COREN, CRO) com integracao CFM API |
 | **Audit Trail Completo** | AuditEvent (ATNA), Provenance, conformidade LGPD/HIPAA |
 | **Terminologia** | ICD-10, SNOMED-CT, TUSS, CIAP-2, RxNorm com validacao |
 | **Perfis Brasileiros** | Patient-BR, Practitioner-BR, Organization-BR (RNDS) |
@@ -32,6 +33,97 @@
 | **Integracoes Brasil** | PIX, WhatsApp Business, Telemedicina, TISS, RNDS |
 | **IA Multimodal** | MedGemma (Visao), MedASR (Voz), Resumo Inteligente |
 | **Seguranca** | Keycloak SSO, RBAC, criptografia, auditoria completa |
+
+---
+
+## Novidades v2.3.0 - Sprint 39: Validacao de Registro Profissional (CRM)
+
+### Validacao CRM/COREN/CRO
+
+Sistema completo de validacao de registros em conselhos profissionais de saude, seguindo padroes **LGPD, FHIR R4 e GDPR**.
+
+#### Conselhos Suportados
+
+| Conselho | Descricao |
+|----------|-----------|
+| **CRM** | Conselho Regional de Medicina |
+| **COREN** | Conselho Regional de Enfermagem |
+| **CRO** | Conselho Regional de Odontologia |
+| **CRF** | Conselho Regional de Farmacia |
+| **CREFITO** | Conselho Regional de Fisioterapia |
+| **CRN** | Conselho Regional de Nutricao |
+| **CRFa** | Conselho Regional de Fonoaudiologia |
+| **CRP** | Conselho Regional de Psicologia |
+| **CRBM** | Conselho Regional de Biomedicina |
+| **CRESS** | Conselho Regional de Servico Social |
+
+#### Endpoints de Validacao
+
+| Endpoint | Metodo | Descricao |
+|----------|--------|-----------|
+| `/api/v1/crm/info/` | GET | Informacoes do servico |
+| `/api/v1/crm/validate/` | POST | Validar registro individual |
+| `/api/v1/crm/validate-batch/` | POST | Validar em lote (max 100) |
+| `/api/v1/crm/conselhos/` | GET | Listar conselhos suportados |
+| `/api/v1/crm/stats/` | GET | Estatisticas (admin) |
+
+#### Exemplo de Uso
+
+```python
+import requests
+
+# Validar CRM
+response = requests.post(
+    "http://localhost:8000/api/v1/crm/validate/",
+    json={
+        "conselho": "CRM",
+        "numero": "123456",
+        "uf": "SP",
+        "use_api": True  # Usar API do CFM se disponivel
+    },
+    headers={"Authorization": "Bearer <token>"}
+)
+
+# Resposta
+{
+    "status": "valid",
+    "conselho": "CRM",
+    "numero": "123456",
+    "uf": "SP",
+    "nome_profissional": "Dr. Joao da Silva",  # Se API disponivel
+    "especialidades": ["Cardiologia"],
+    "situacao_registro": "Regular",
+    "validation_id": "uuid",
+    "validated_at": "2024-01-01T12:00:00",
+    "validation_source": "api",
+    "fhir_identifier": { ... }  # FHIR Practitioner.identifier pronto
+}
+```
+
+#### Componente Frontend
+
+```tsx
+import { CRMValidation } from './components/practitioners';
+
+<CRMValidation
+    initialConselho="CRM"
+    initialUf="SP"
+    required={true}
+    onValidationChange={(result) => {
+        if (result?.status === 'valid') {
+            console.log('CRM validado:', result);
+        }
+    }}
+    showProfessionalInfo={true}
+    showStatusBadge={true}
+/>
+```
+
+#### Conformidade
+
+- **LGPD Art. 6, 7**: Minimizacao de dados, registro de auditoria
+- **FHIR R4**: Gera `Practitioner.identifier` valido
+- **GDPR Art. 5**: Transparencia, licitude do tratamento
 
 ---
 
@@ -186,7 +278,7 @@ is_valid = validator.validate_brazilian_cns("123456789012345")
 
 ```
 +---------------------------------------------------------------------+
-|                         HealthStack v2.2.0                          |
+|                         HealthStack v2.3.0                          |
 +---------------------------------------------------------------------+
 |                                                                      |
 |  +-------------+  +-------------+  +-------------+                  |
@@ -262,7 +354,7 @@ cd frontend-pwa && npm install && npm run dev
 
 ---
 
-## Endpoints da API (130+)
+## Endpoints da API (140+)
 
 ### Recursos FHIR Principais
 
@@ -297,6 +389,15 @@ cd frontend-pwa && npm install && npm run dev
 | `/api/v1/terminology/rxnorm/search/` | Buscar medicamentos |
 | `/api/v1/terminology/icd10/search/` | Buscar CID-10 |
 | `/api/v1/terminology/tuss/search/` | Buscar procedimentos TUSS |
+
+### Validacao de Registros Profissionais
+
+| Endpoint | Descricao |
+|----------|-----------|
+| `/api/v1/crm/info/` | **NOVO** Informacoes do servico de validacao |
+| `/api/v1/crm/validate/` | **NOVO** Validar CRM/COREN/CRO individual |
+| `/api/v1/crm/validate-batch/` | **NOVO** Validacao em lote |
+| `/api/v1/crm/conselhos/` | **NOVO** Listar conselhos suportados |
 
 ### Integracoes Brasil
 
@@ -336,10 +437,13 @@ HealthStack/
 |   +-- fhir_api/
 |   |   +-- fhir_types.py   # NOVO: Tipos FHIR R4 nativos
 |   |   +-- models_audit.py # NOVO: AuditEvent e Provenance
-|   |   +-- profiles/       # NOVO: StructureDefinitions BR
-|   |   +-- search/         # NOVO: FHIR Search Parameters
-|   |   +-- operations/     # NOVO: Operacoes de terminologia
-|   |   +-- validators/     # NOVO: Validacao de terminologia
+|   |   +-- profiles/       # StructureDefinitions BR
+|   |   +-- search/         # FHIR Search Parameters
+|   |   +-- operations/     # Operacoes de terminologia
+|   |   +-- validators/     # Validacao de terminologia
+|   |   +-- services/
+|   |   |   +-- crm_validation_service.py  # NOVO: Validacao CRM/COREN
+|   |   +-- views_crm_validation.py        # NOVO: API de validacao
 |   |   +-- views_*.py      # Views da API
 |   |   +-- models_*.py     # Models Django
 |
@@ -373,6 +477,22 @@ HealthStack/
 ---
 
 ## Historico de Versoes
+
+### v2.3.0 - Validacao de Registro Profissional (Sprint 39)
+
+**Novos Recursos:**
+- Validacao de CRM/COREN/CRO com integracao opcional a API do CFM
+- 10 conselhos profissionais suportados
+- Componente React `CRMValidation` com feedback visual
+- Geracao automatica de FHIR `Practitioner.identifier`
+- Cache de validacoes (TTL 24h)
+- Auditoria LGPD-compliant (apenas hashes, sem dados sensiveis)
+- Validacao em lote (ate 100 registros)
+
+**Conformidade:**
+- LGPD Art. 6, 7 (minimizacao de dados, audit trail)
+- FHIR R4 Practitioner.identifier
+- GDPR Art. 5 (licitude, transparencia)
 
 ### v2.2.0 - FHIR R4 100% Compliance (Sprint 36)
 
