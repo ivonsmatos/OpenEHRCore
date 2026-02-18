@@ -143,7 +143,7 @@ const ProtectedRoutes: React.FC = () => {
                     <Route path="/" element={<DashboardWorkspace />} />
                     <Route path="/patients" element={<PatientList />} />
                     <Route path="/patients/new" element={<PatientForm />} />
-                    <Route path="/patients/:id" element={<PatientDetail loading={false} error={undefined} />} />
+                    <Route path="/patients/:id" element={<PatientDetail />} />
                     <Route path="/patients/:id/encounter/new" element={<ClinicalWorkspace />} />
                     <Route path="/practitioners" element={<PractitionerWorkspace />} />
                     <Route path="/practitioners/:id" element={<PractitionerDetail />} />
@@ -167,7 +167,8 @@ const ProtectedRoutes: React.FC = () => {
                     {/* Clinical Routes */}
                     <Route path="/careplan" element={<CarePlanManager />} />
                     {/* ReferralWorkspace route removed */}
-                    <Route path="/composition" element={<CompositionEditor patientId="" patientName="" />} />
+                    <Route path="/composition" element={<CompositionEditor />} />
+                    <Route path="/patients/:id/composition" element={<CompositionEditor />} />
 
                     {/* Communications */}
                     <Route path="/messages" element={<MessageInbox />} />

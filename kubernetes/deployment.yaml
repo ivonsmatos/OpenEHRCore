@@ -29,16 +29,29 @@ data:
 # ==============================================================================
 # Secret - Sensitive Configuration
 # ==============================================================================
+# ==============================================================================
+# IMPORTANT: Do NOT store real secrets here. Create them with kubectl:
+#
+#   kubectl create secret generic openehrcore-secrets \
+#     --namespace=openehrcore \
+#     --from-literal=POSTGRES_PASSWORD='<strong-random-password>' \
+#     --from-literal=SECRET_KEY='<50-char-random-django-secret>' \
+#     --from-literal=KEYCLOAK_CLIENT_SECRET='<keycloak-client-secret>'
+#
+# Generate a Django SECRET_KEY:
+#   python -c "import secrets; print(secrets.token_urlsafe(50))"
+# ==============================================================================
 apiVersion: v1
 kind: Secret
 metadata:
   name: openehrcore-secrets
   namespace: openehrcore
 type: Opaque
+# stringData values below are PLACEHOLDERS ONLY — replace via kubectl (see above)
 stringData:
-  POSTGRES_PASSWORD: "your-secure-password"
-  SECRET_KEY: "your-django-secret-key"
-  KEYCLOAK_CLIENT_SECRET: "your-keycloak-secret"
+  POSTGRES_PASSWORD: "CHANGE_ME_USE_KUBECTL"
+  SECRET_KEY: "CHANGE_ME_USE_KUBECTL"
+  KEYCLOAK_CLIENT_SECRET: "CHANGE_ME_USE_KUBECTL"
 
 ---
 # ==============================================================================
@@ -150,6 +163,22 @@ spec:
           env:
             - name: hapi.fhir.fhir_version
               value: "R4"
+            # PostgreSQL persistence (prevents data loss on restart)
+            # Requires a PostgreSQL instance reachable at postgres-service:5432
+            # and a secret 'hapi-fhir-db-secret' with POSTGRES_PASSWORD
+            - name: spring.datasource.url
+              value: "jdbc:postgresql://postgres-service:5432/hapi"
+            - name: spring.datasource.username
+              value: "hapi"
+            - name: spring.datasource.password
+              valueFrom:
+                secretKeyRef:
+                  name: openehrcore-secrets
+                  key: POSTGRES_PASSWORD
+            - name: spring.datasource.driverClassName
+              value: "org.postgresql.Driver"
+            - name: spring.jpa.properties.hibernate.dialect
+              value: "ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgres94Dialect"
           resources:
             requests:
               memory: "1Gi"

@@ -153,16 +153,13 @@ const ClinicalDocumentWorkspace: React.FC = () => {
 
     const fetchDocuments = async () => {
         setLoading(true);
-        console.log("Fetching documents... Token:", !!token);
         try {
             const response = await axios.get(`${API_URL}/documents/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            console.log("Documents response:", response.data);
             if (Array.isArray(response.data)) {
                 setDocuments(response.data);
             } else {
-                console.error("Expected array but got:", response.data);
                 setDocuments([]);
             }
         } catch (error) {

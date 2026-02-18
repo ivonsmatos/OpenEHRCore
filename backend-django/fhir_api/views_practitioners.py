@@ -710,7 +710,9 @@ def get_or_update_practitioner(request, practitioner_id):
         fhir = FHIRService()
         existing = fhir.get_resource("Practitioner", practitioner_id)
         if not existing:
-            return Response({"error": "Practitioner not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Practitioner not found"}, status=status.HTTP_404_NOT_FOUND
+            )
         for field in ["family_name", "given_names"]:
             if field not in data:
                 return Response(
@@ -745,7 +747,9 @@ def get_or_update_practitioner(request, practitioner_id):
             telecom.append({"system": "email", "value": data["email"], "use": "work"})
         if telecom:
             practitioner_resource["telecom"] = telecom
-        result = fhir.update_resource("Practitioner", practitioner_id, practitioner_resource)
+        result = fhir.update_resource(
+            "Practitioner", practitioner_id, practitioner_resource
+        )
         return Response(result, status=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error updating practitioner: {e}")

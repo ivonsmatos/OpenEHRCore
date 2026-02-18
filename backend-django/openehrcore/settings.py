@@ -129,7 +129,7 @@ REST_FRAMEWORK = {
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:5173,http://localhost:3000,http://45.151.122.234,https://app.grephub.com.br,https://grephub.com.br",
+    default="http://localhost:5173,http://localhost:3000,https://api.grephub.com.br,https://app.grephub.com.br,https://grephub.com.br",
 ).split(",")
 CORS_ALLOW_CREDENTIALS = True
 
