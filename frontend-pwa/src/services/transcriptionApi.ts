@@ -23,6 +23,9 @@ export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     const response = await fetch(`${API_URL}/asr/transcribe/`, {
         method: 'POST',
         body: formData,
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
+        }
         // Do not set Content-Type header manually when using FormData
         // The browser sets it with the boundary
     });

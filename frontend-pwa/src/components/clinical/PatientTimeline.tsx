@@ -152,7 +152,7 @@ export function PatientTimeline({ patientId, patientName }: PatientTimelineProps
         setError(null);
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const headers = { Authorization: `Bearer ${token}` };
 
             // Buscar todos os tipos de recursos em paralelo

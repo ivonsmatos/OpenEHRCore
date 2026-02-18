@@ -139,14 +139,14 @@ const RNDSStatus: React.FC<RNDSStatusProps> = ({ patientId, patientCpf }) => {
         try {
             let endpoint = '';
             switch (type) {
-                case 'ips': endpoint = `/rnds/submit-ips/${patientId}/`; break;
-                case 'immunization': endpoint = `/rnds/submit-immunization/${patientId}/`; break;
-                case 'lab_result': endpoint = `/rnds/submit-lab-result/${patientId}/`; break;
+                case 'ips': endpoint = `/rnds/sumario/`; break;
+                case 'immunization': endpoint = `/rnds/imunizacao/`; break;
+                case 'lab_result': endpoint = `/rnds/exame/`; break;
             }
 
             const response = await axios.post(
                 `${API_URL}${endpoint}`,
-                {},
+                { patient_id: patientId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
