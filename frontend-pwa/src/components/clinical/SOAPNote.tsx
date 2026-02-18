@@ -70,8 +70,6 @@ export const SOAPNote: React.FC<SOAPNoteProps> = ({ patientId, encounterId, onSu
                 encounter_id: encounterId
             });
 
-            console.log('Clinical Note created successfully:', result);
-
             // Parse clinical note with AI to create FHIR resources
             await parseClinicalNote(clinicalNote.trim());
 
