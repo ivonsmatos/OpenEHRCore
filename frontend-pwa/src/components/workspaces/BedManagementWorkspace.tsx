@@ -7,7 +7,7 @@ import { useIsMobile } from '../../hooks/useMediaQuery';
 import BedDetailsModal from './BedDetailsModal';
 
 // API Base
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 interface LocationNode {
     id: string;
