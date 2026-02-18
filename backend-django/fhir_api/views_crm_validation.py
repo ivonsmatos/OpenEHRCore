@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from .services.crm_validation_service import (
     CRMValidationService,
     ConselhoTipo,
-    ValidationStatus
+    ValidationStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -27,13 +27,13 @@ logger = logging.getLogger(__name__)
 
 def get_client_ip(request) -> str:
     """Extrai IP do cliente de forma segura"""
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
-        return x_forwarded_for.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR', 'unknown')
+        return x_forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "unknown")
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def crm_validation_info(request):
     """
@@ -42,37 +42,39 @@ def crm_validation_info(request):
     Informações sobre o serviço de validação de CRM.
     Não requer autenticação.
     """
-    return Response({
-        "service": "CRM Validation Service",
-        "version": "1.0.0",
-        "description": "Validação de registros em conselhos profissionais de saúde",
-        "supported_councils": [c.value for c in ConselhoTipo],
-        "valid_ufs": CRMValidationService.UF_VALIDAS,
-        "validation_modes": {
-            "local": "Validação de formato (sempre disponível)",
-            "api": "Validação via API do conselho (quando disponível)"
-        },
-        "compliance": {
-            "lgpd": True,
-            "fhir_r4": True,
-            "gdpr": True
-        },
-        "api_status": {
-            "cfm": "configured" if CRMValidationService.CFM_API_URL else "not_configured",
-            "coren": "not_configured",
-            "cro": "not_configured"
-        },
-        "notes": [
-            "A validação local verifica apenas o formato do número.",
-            "A validação via API confirma o registro no conselho.",
-            "Apenas dados públicos são retornados (LGPD Art. 7, II).",
-            "Todas as validações são registradas em audit log."
-        ],
-        "documentation": "https://github.com/ivonsmatos/OpenEHRCore#crm-validation"
-    })
+    return Response(
+        {
+            "service": "CRM Validation Service",
+            "version": "1.0.0",
+            "description": "Validação de registros em conselhos profissionais de saúde",
+            "supported_councils": [c.value for c in ConselhoTipo],
+            "valid_ufs": CRMValidationService.UF_VALIDAS,
+            "validation_modes": {
+                "local": "Validação de formato (sempre disponível)",
+                "api": "Validação via API do conselho (quando disponível)",
+            },
+            "compliance": {"lgpd": True, "fhir_r4": True, "gdpr": True},
+            "api_status": {
+                "cfm": (
+                    "configured"
+                    if CRMValidationService.CFM_API_URL
+                    else "not_configured"
+                ),
+                "coren": "not_configured",
+                "cro": "not_configured",
+            },
+            "notes": [
+                "A validação local verifica apenas o formato do número.",
+                "A validação via API confirma o registro no conselho.",
+                "Apenas dados públicos são retornados (LGPD Art. 7, II).",
+                "Todas as validações são registradas em audit log.",
+            ],
+            "documentation": "https://github.com/ivonsmatos/OpenEHRCore#crm-validation",
+        }
+    )
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def validate_crm(request):
     """
@@ -105,25 +107,24 @@ def validate_crm(request):
     }
     """
     # Validar campos obrigatórios
-    conselho = request.data.get('conselho')
-    numero = request.data.get('numero')
-    uf = request.data.get('uf')
-    use_api = request.data.get('use_api', True)
+    conselho = request.data.get("conselho")
+    numero = request.data.get("numero")
+    uf = request.data.get("uf")
+    use_api = request.data.get("use_api", True)
 
     if not conselho:
         return Response(
             {"error": "Campo 'conselho' é obrigatório (ex: CRM, COREN, CRO)"},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
     if not numero:
         return Response(
             {"error": "Campo 'numero' é obrigatório"},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
     if not uf:
         return Response(
-            {"error": "Campo 'uf' é obrigatório"},
-            status=status.HTTP_400_BAD_REQUEST
+            {"error": "Campo 'uf' é obrigatório"}, status=status.HTTP_400_BAD_REQUEST
         )
 
     # Obter dados do usuário para auditoria
@@ -137,7 +138,7 @@ def validate_crm(request):
         uf=uf,
         use_api=use_api,
         user_id=user_id,
-        ip_address=ip_address
+        ip_address=ip_address,
     )
 
     # Preparar resposta
@@ -149,15 +150,21 @@ def validate_crm(request):
         return Response(response_data, status=status.HTTP_200_OK)
     elif result.status == ValidationStatus.INVALID_FORMAT:
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-    elif result.status in [ValidationStatus.SUSPENDED, ValidationStatus.CANCELLED, ValidationStatus.EXPIRED]:
-        return Response(response_data, status=status.HTTP_200_OK)  # Válido mas com status especial
+    elif result.status in [
+        ValidationStatus.SUSPENDED,
+        ValidationStatus.CANCELLED,
+        ValidationStatus.EXPIRED,
+    ]:
+        return Response(
+            response_data, status=status.HTTP_200_OK
+        )  # Válido mas com status especial
     elif result.status == ValidationStatus.NOT_FOUND:
         return Response(response_data, status=status.HTTP_404_NOT_FOUND)
     else:
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def validate_crm_batch(request):
     """
@@ -182,27 +189,25 @@ def validate_crm_batch(request):
         "results": [ ... ]
     }
     """
-    registros = request.data.get('registros', [])
-    use_api = request.data.get('use_api', True)
+    registros = request.data.get("registros", [])
+    use_api = request.data.get("use_api", True)
 
     if not registros:
         return Response(
             {"error": "Lista de 'registros' é obrigatória"},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     if len(registros) > 100:
         return Response(
             {"error": "Máximo de 100 registros por requisição"},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     user_id = str(request.user.id) if request.user.is_authenticated else None
 
     results = CRMValidationService.batch_validate(
-        registros=registros,
-        use_api=use_api,
-        user_id=user_id
+        registros=registros, use_api=use_api, user_id=user_id
     )
 
     response_results = []
@@ -214,15 +219,17 @@ def validate_crm_batch(request):
         if result.status == ValidationStatus.VALID:
             valid_count += 1
 
-    return Response({
-        "total": len(results),
-        "valid_count": valid_count,
-        "invalid_count": len(results) - valid_count,
-        "results": response_results
-    })
+    return Response(
+        {
+            "total": len(results),
+            "valid_count": valid_count,
+            "invalid_count": len(results) - valid_count,
+            "results": response_results,
+        }
+    )
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def crm_validation_stats(request):
     """
@@ -234,14 +241,14 @@ def crm_validation_stats(request):
     if not request.user.is_staff:
         return Response(
             {"error": "Apenas administradores podem acessar estatísticas"},
-            status=status.HTTP_403_FORBIDDEN
+            status=status.HTTP_403_FORBIDDEN,
         )
 
     stats = CRMValidationService.get_validation_stats()
     return Response(stats)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def invalidate_crm_cache(request):
     """
@@ -259,30 +266,32 @@ def invalidate_crm_cache(request):
     if not request.user.is_staff:
         return Response(
             {"error": "Apenas administradores podem invalidar cache"},
-            status=status.HTTP_403_FORBIDDEN
+            status=status.HTTP_403_FORBIDDEN,
         )
 
-    conselho = request.data.get('conselho')
-    numero = request.data.get('numero')
-    uf = request.data.get('uf')
+    conselho = request.data.get("conselho")
+    numero = request.data.get("numero")
+    uf = request.data.get("uf")
 
     if not all([conselho, numero, uf]):
         return Response(
             {"error": "Campos 'conselho', 'numero' e 'uf' são obrigatórios"},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     CRMValidationService.invalidate_cache(conselho, numero, uf)
 
-    return Response({
-        "message": "Cache invalidado com sucesso",
-        "conselho": conselho,
-        "numero": numero,
-        "uf": uf
-    })
+    return Response(
+        {
+            "message": "Cache invalidado com sucesso",
+            "conselho": conselho,
+            "numero": numero,
+            "uf": uf,
+        }
+    )
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_conselhos(request):
     """
@@ -301,18 +310,22 @@ def list_conselhos(request):
         "CRFa": "Conselho Regional de Fonoaudiologia",
         "CRP": "Conselho Regional de Psicologia",
         "CRBM": "Conselho Regional de Biomedicina",
-        "CRESS": "Conselho Regional de Serviço Social"
+        "CRESS": "Conselho Regional de Serviço Social",
     }
 
     for conselho in ConselhoTipo:
-        conselhos.append({
-            "codigo": conselho.value,
-            "descricao": descricoes.get(conselho.value, conselho.value),
-            "formato_numero": CRMValidationService.FORMATO_PATTERNS.get(conselho, ""),
-            "api_disponivel": conselho == ConselhoTipo.CRM and bool(CRMValidationService.CFM_API_URL)
-        })
+        conselhos.append(
+            {
+                "codigo": conselho.value,
+                "descricao": descricoes.get(conselho.value, conselho.value),
+                "formato_numero": CRMValidationService.FORMATO_PATTERNS.get(
+                    conselho, ""
+                ),
+                "api_disponivel": conselho == ConselhoTipo.CRM
+                and bool(CRMValidationService.CFM_API_URL),
+            }
+        )
 
-    return Response({
-        "conselhos": conselhos,
-        "ufs_validas": CRMValidationService.UF_VALIDAS
-    })
+    return Response(
+        {"conselhos": conselhos, "ufs_validas": CRMValidationService.UF_VALIDAS}
+    )
