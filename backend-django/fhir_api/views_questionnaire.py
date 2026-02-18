@@ -8,7 +8,7 @@ import logging
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 from .authentication import KeycloakAuthentication
 from .services.questionnaire_service import QuestionnaireService, get_questionnaire_service
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def list_questionnaires(request):
     """
     List available questionnaires.
@@ -36,7 +36,7 @@ def list_questionnaires(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def get_questionnaire(request, questionnaire_id):
     """
     Get a specific questionnaire.

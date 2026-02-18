@@ -61,7 +61,6 @@ export const useEncounters = (patientId?: string) => {
                 reason_code: data.reasonCode?.[0]?.text || 'Atendimento Clínico'
             };
 
-            console.log('Creating encounter with payload:', JSON.stringify(payload, null, 2));
             const response = await axios.post(`${API_URL}/encounters/`, payload);
             await fetchEncounters();
             return response.data;
@@ -91,9 +90,7 @@ export const useEncounters = (patientId?: string) => {
                 ...data,
                 patient_id: patientId
             };
-            console.log('Creating observation with payload:', JSON.stringify(payload, null, 2));
             const response = await axios.post(`${API_URL}/observations/`, payload);
-            console.log('Observation created successfully:', response.data);
             return response.data;
         } catch (err: any) {
             console.error('Error creating observation:', err.response?.data || err.message);
@@ -112,9 +109,7 @@ export const useEncounters = (patientId?: string) => {
                 ...data,
                 patient_id: patientId
             };
-            console.log('Creating condition with payload:', JSON.stringify(payload, null, 2));
             const response = await axios.post(`${API_URL}/conditions/`, payload);
-            console.log('Condition created successfully:', response.data);
             return response.data;
         } catch (err: any) {
             console.error('Error creating condition:', err.response?.data || err.message);
@@ -133,9 +128,7 @@ export const useEncounters = (patientId?: string) => {
                 ...data,
                 patient_id: patientId
             };
-            console.log('Creating allergy with payload:', JSON.stringify(payload, null, 2));
             const response = await axios.post(`${API_URL}/allergies/`, payload);
-            console.log('Allergy created successfully:', response.data);
             return response.data;
         } catch (err: any) {
             console.error('Error creating allergy:', err.response?.data || err.message);
@@ -188,9 +181,7 @@ export const useEncounters = (patientId?: string) => {
                 ...data,
                 patient_id: patientId
             };
-            console.log('Creating immunization with payload:', JSON.stringify(payload, null, 2));
             const response = await axios.post(`${API_URL}/immunizations/`, payload);
-            console.log('Immunization created successfully:', response.data);
             return response.data;
         } catch (err: any) {
             console.error('Error creating immunization:', err.response?.data || err.message);

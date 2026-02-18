@@ -8,8 +8,6 @@ import logging
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-
 from .services.fhir_core import FHIRService, FHIRServiceException
 from .utils.validators import validate_cpf, sanitize_cpf
 

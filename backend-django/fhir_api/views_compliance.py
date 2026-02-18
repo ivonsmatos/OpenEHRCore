@@ -11,7 +11,7 @@ import logging
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 from .authentication import KeycloakAuthentication
 from .services.bias_prevention_service import BiasPreventionService
@@ -137,7 +137,7 @@ def bias_audit_report(request):
 # ============================================================================
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def list_archetypes(request):
     """
     List available clinical archetypes.
@@ -156,7 +156,7 @@ def list_archetypes(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def get_archetype(request, archetype_name):
     """
     Get a specific archetype definition.
@@ -232,7 +232,7 @@ def map_to_fhir(request, archetype_name):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def get_terminology_codes(request):
     """
     Get terminology codes from a system.
@@ -260,7 +260,7 @@ def get_terminology_codes(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def compliance_status(request):
     """
     Get overall compliance status.

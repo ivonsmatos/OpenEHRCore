@@ -13,7 +13,7 @@ Endpoints:
 import logging
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .services.crm_validation_service import (
@@ -34,7 +34,7 @@ def get_client_ip(request) -> str:
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def crm_validation_info(request):
     """
     GET /api/v1/crm/info/
@@ -283,7 +283,7 @@ def invalidate_crm_cache(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def list_conselhos(request):
     """
     GET /api/v1/crm/conselhos/
