@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sintonia — Plataforma de Interoperabilidade em Saúde (FHIR R4)</title>
+  <meta name="description" content="Unifique prontuários, exames e fluxos clínicos em uma plataforma de interoperabilidade em saúde FHIR R4 nativa. Decisões mais rápidas, seguras e humanas. Agende uma demonstração gratuita." />
+  <meta name="keywords" content="plataforma de interoperabilidade em saúde, prontuário eletrônico FHIR, integração de sistemas de saúde, RNDS, telemedicina, software para clínicas e hospitais" />
+  <meta name="author" content="Sintonia Saúde" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://www.sintoniasaude.com.br/" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:site_name" content="Sintonia Saúde" />
+  <meta property="og:title" content="Sintonia — Saúde conectada, do registro à decisão" />
+  <meta property="og:description" content="Plataforma FHIR R4 nativa que unifica dados clínicos e acelera decisões. Agende uma demonstração gratuita." />
+  <meta property="og:url" content="https://www.sintoniasaude.com.br/" />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&h=630&q=70" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Sintonia — Plataforma de Interoperabilidade em Saúde" />
+  <meta name="twitter:description" content="Unifique prontuários e fluxos clínicos com FHIR R4. Decisões mais rápidas e seguras." />
+  <meta name="twitter:image" content="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&h=630&q=70" />
+
+  <meta name="theme-color" content="#89C2D9" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+
+  <!-- Dados estruturados -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.sintoniasaude.com.br/#org",
+        "name": "Sintonia Saúde",
+        "url": "https://www.sintoniasaude.com.br/",
+        "logo": "https://www.sintoniasaude.com.br/favicon.svg",
+        "description": "Plataforma de interoperabilidade em saúde FHIR R4 nativa para clínicas, hospitais e operadoras.",
+        "areaServed": "BR",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+55-11-91129-3075",
+          "contactType": "sales",
+          "availableLanguage": ["Portuguese"]
+        },
+        "sameAs": ["https://wa.me/5511911293075"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.sintoniasaude.com.br/#site",
+        "url": "https://www.sintoniasaude.com.br/",
+        "name": "Sintonia Saúde",
+        "inLanguage": "pt-BR",
+        "publisher": { "@id": "https://www.sintoniasaude.com.br/#org" }
+      },
+      {
+        "@type": "Service",
+        "name": "Plataforma de Interoperabilidade em Saúde",
+        "provider": { "@id": "https://www.sintoniasaude.com.br/#org" },
+        "serviceType": "Prontuário eletrônico e interoperabilidade FHIR R4",
+        "areaServed": "BR"
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          { "@type": "Question", "name": "O que é interoperabilidade em saúde?", "acceptedAnswer": { "@type": "Answer", "text": "É a capacidade de diferentes sistemas de saúde trocarem e interpretarem dados clínicos de forma padronizada. A Sintonia usa o padrão FHIR R4 para conectar prontuários, exames e fluxos sem retrabalho." } },
+          { "@type": "Question", "name": "A Sintonia é compatível com a RNDS?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. A plataforma é FHIR R4 nativa e preparada para integração com a RNDS, TISS e outros sistemas do ecossistema de saúde brasileiro." } },
+          { "@type": "Question", "name": "A solução está em conformidade com a LGPD?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. Trabalhamos com autenticação SSO, controle de acesso por papéis, auditoria de eventos e criptografia em repouso e em trânsito." } },
+          { "@type": "Question", "name": "Quanto tempo leva a implantação?", "acceptedAnswer": { "@type": "Answer", "text": "A implantação é assistida e modular. Começamos com um diagnóstico gratuito e ativamos os módulos prioritários em semanas, não meses." } }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container header__inner">
+      <a class="brand" href="/" aria-label="Sintonia — página inicial">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#89C2D9"/><path d="M10 38 H22 L27 24 L34 46 L40 32 L44 38 H54" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="20" r="6" fill="#EA4D50"/></svg>
+        <span>Sinton<b>ia</b></span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Navegação principal">
+        <a href="/" aria-current="page">Início</a>
+        <a href="/solucao.html">A Solução</a>
+        <a href="/sobre.html">Sobre</a>
+        <a href="/#recursos">Recursos</a>
+        <a href="/#faq">Dúvidas</a>
+      </nav>
+      <div class="header__cta">
+        <a class="btn btn--ghost" href="/solucao.html">Ver a solução</a>
+        <a class="btn btn--primary" href="https://wa.me/5511911293075?text=Ol%C3%A1!%20Quero%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20da%20Sintonia." rel="noopener" target="_blank">Agendar demonstração</a>
+        <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container hero__grid">
+        <div>
+          <span class="eyebrow">✦ FHIR R4 nativo · LGPD · RNDS</span>
+          <h1>Saúde conectada, <span>do registro à decisão</span></h1>
+          <p class="lead">A Sintonia unifica prontuários, exames e fluxos clínicos em uma única plataforma de interoperabilidade em saúde. Menos retrabalho, mais tempo para o que importa: <strong>cuidar de pessoas</strong>.</p>
+          <div class="hero__actions">
+            <a class="btn btn--primary btn--lg" href="https://wa.me/5511911293075?text=Ol%C3%A1!%20Quero%20um%20diagn%C3%B3stico%20gratuito%20da%20minha%20opera%C3%A7%C3%A3o%20com%20a%20Sintonia." rel="noopener" target="_blank">Quero um diagnóstico gratuito</a>
+            <a class="btn btn--ghost btn--lg" href="/solucao.html">Como funciona</a>
+          </div>
+          <ul class="hero__trust">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Padrão FHIR R4</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Conformidade LGPD</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Pronto para RNDS</li>
+          </ul>
+        </div>
+        <div class="hero__art reveal">
+          <div class="hero__photo">
+            <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=70" width="900" height="675" alt="Equipe médica analisando dados clínicos em um tablet" loading="eager" />
+          </div>
+          <div class="float-card float-card--a">
+            <span class="dot" style="background:#1faf54">✓</span>
+            <div>Exame integrado<small>HL7 → FHIR em segundos</small></div>
+          </div>
+          <div class="float-card float-card--b">
+            <span class="dot" style="background:var(--coral)">♥</span>
+            <div>Resumo clínico por IA<small>Decisão mais rápida</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROVA SOCIAL / NÚMEROS -->
+    <section class="section" style="padding-top:48px;padding-bottom:48px">
+      <div class="container">
+        <ul class="stats">
+          <li class="stat reveal"><b>120+</b><span>endpoints de API FHIR</span></li>
+          <li class="stat reveal"><b>100%</b><span>conformidade FHIR R4</span></li>
+          <li class="stat reveal"><b>-70%</b><span>de retrabalho clínico*</span></li>
+          <li class="stat reveal"><b>24/7</b><span>dados disponíveis e seguros</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- DOR / PROBLEMA -->
+    <section class="section section--azul">
+      <div class="container">
+        <div class="center" style="max-width:720px;margin:0 auto 48px">
+          <span class="eyebrow">O problema</span>
+          <h2>Dados de saúde fragmentados custam tempo, dinheiro e segurança</h2>
+          <p class="lead">Sistemas que não conversam geram retrabalho, decisões mais lentas e risco para o paciente.</p>
+        </div>
+        <ul class="pain">
+          <li class="reveal"><b>🧩 Informação espalhada</b>Prontuário em um sistema, exame em outro, agenda em uma planilha. Ninguém vê o paciente por inteiro.</li>
+          <li class="reveal"><b>⏳ Retrabalho diário</b>Equipes digitam o mesmo dado várias vezes e perdem horas conciliando informações.</li>
+          <li class="reveal"><b>⚠️ Risco e não conformidade</b>Sem padrão e sem auditoria, cresce o risco clínico e a exposição à LGPD e à RNDS.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SOLUÇÃO -->
+    <section class="section" id="solucao">
+      <div class="container split">
+        <div class="split__media reveal">
+          <img src="https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=800&q=70" width="800" height="640" alt="Profissional de saúde usando sistema digital integrado" loading="lazy" />
+        </div>
+        <div>
+          <span class="eyebrow">A solução</span>
+          <h2>Uma camada que faz seus sistemas falarem a mesma língua</h2>
+          <p class="lead" style="margin-bottom:8px">A Sintonia é construída sobre o padrão <strong>FHIR R4</strong> e conecta o que você já usa — sem trocar tudo de uma vez.</p>
+          <ul class="checklist">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><div>Visão única do paciente<span>Prontuário, exames, medicações e histórico em um só lugar.</span></div></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><div>Integração com o que existe<span>HL7 v2.x, DICOM, laboratórios, RNDS e TISS.</span></div></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><div>IA clínica que ajuda a decidir<span>Resumo inteligente do paciente e alertas de interação.</span></div></li>
+          </ul>
+          <a class="btn btn--primary btn--lg" href="/solucao.html" style="margin-top:18px">Explorar a solução completa</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECURSOS -->
+    <section class="section section--azul" id="recursos">
+      <div class="container">
+        <div class="center" style="max-width:720px;margin:0 auto 48px">
+          <span class="eyebrow">Recursos</span>
+          <h2>Tudo o que sua operação precisa, em um só lugar</h2>
+        </div>
+        <div class="grid grid--3">
+          <article class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h6M9 8h6M5 4h14v16H5z"/></svg></div><h3>Prontuário FHIR R4</h3><p>Registro clínico padronizado e interoperável por design, pronto para integrar.</p></article>
+          <article class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0Z"/><path d="M12 8v4l3 2"/></svg></div><h3>Telemedicina</h3><p>Consultas por vídeo integradas ao histórico do paciente, com registro automático.</p></article>
+          <article class="card reveal card--coral"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg></div><h3>IA multimodal</h3><p>Resumo clínico, leitura de exames e transcrição de voz que aceleram a decisão.</p></article>
+          <article class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 7v6c0 4 3 6 8 8 5-2 8-4 8-8V7z"/></svg></div><h3>Segurança & LGPD</h3><p>SSO, controle de acesso por papéis, auditoria e criptografia ponta a ponta.</p></article>
+          <article class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div><h3>Analytics clínico</h3><p>Indicadores, painéis e relatórios para gestão baseada em dados.</p></article>
+          <article class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><h3>Integrações Brasil</h3><p>PIX, WhatsApp, TISS e RNDS prontos para o ecossistema de saúde nacional.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMO FUNCIONA -->
+    <section class="section">
+      <div class="container">
+        <div class="center" style="max-width:720px;margin:0 auto 48px">
+          <span class="eyebrow">Como funciona</span>
+          <h2>Do diagnóstico ao go-live em 3 passos</h2>
+        </div>
+        <div class="steps">
+          <div class="step reveal"><div class="num">1</div><h3>Diagnóstico gratuito</h3><p>Mapeamos seus sistemas, dores e prioridades — sem compromisso.</p></div>
+          <div class="step reveal"><div class="num">2</div><h3>Conexão modular</h3><p>Ativamos os módulos prioritários e conectamos seus sistemas via FHIR.</p></div>
+          <div class="step reveal"><div class="num">3</div><h3>Operação com apoio</h3><p>Treinamento, suporte e evolução contínua junto à sua equipe.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEPOIMENTOS -->
+    <section class="section section--azul">
+      <div class="container">
+        <div class="center" style="max-width:720px;margin:0 auto 48px">
+          <span class="eyebrow">Quem confia</span>
+          <h2>Resultados que a equipe sente no dia a dia</h2>
+        </div>
+        <div class="grid grid--3">
+          <figure class="quote reveal"><div class="stars">★★★★★</div><p>"Paramos de digitar o mesmo dado três vezes. A equipe ganhou horas e o paciente, segurança."</p><figcaption class="who"><span class="av">CM</span><div><b>Dra. Camila M.</b><small>Diretora clínica</small></div></figcaption></figure>
+          <figure class="quote reveal"><div class="stars">★★★★★</div><p>"A integração com laboratório e RNDS que parecia impossível virou rotina. Implantação rápida."</p><figcaption class="who"><span class="av">RS</span><div><b>Rafael S.</b><small>Gerente de TI · Hospital</small></div></figcaption></figure>
+          <figure class="quote reveal"><div class="stars">★★★★★</div><p>"O resumo por IA me dá o panorama do paciente em segundos. Decido com mais confiança."</p><figcaption class="who"><span class="av">JP</span><div><b>Dr. João P.</b><small>Clínico geral</small></div></figcaption></figure>
+        </div>
+        <p class="muted center" style="margin-top:18px;font-size:.82rem">*Depoimentos ilustrativos do perfil de uso. Resultados variam conforme a operação.</p>
+      </div>
+    </section>
+
+    <!-- POR QUE AGORA (urgência) -->
+    <section class="section">
+      <div class="container split">
+        <div>
+          <span class="eyebrow">Por que agir agora</span>
+          <h2>A interoperabilidade deixou de ser opcional</h2>
+          <p class="lead" style="margin-bottom:8px">A digitalização da saúde e as exigências da RNDS avançam. Quem organiza os dados agora atende melhor, reduz custo e sai na frente.</p>
+          <ul class="checklist">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><div>Comece sem trocar tudo<span>Conectamos seus sistemas atuais de forma modular.</span></div></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><div>Risco zero para avaliar<span>Diagnóstico e demonstração gratuitos, sem compromisso.</span></div></li>
+          </ul>
+        </div>
+        <div class="cta-band reveal">
+          <h2>Pronto para conectar sua saúde?</h2>
+          <p>Fale agora com um especialista no WhatsApp e receba um diagnóstico gratuito da sua operação.</p>
+          <a class="btn btn--wpp btn--lg" href="https://wa.me/5511911293075?text=Ol%C3%A1!%20Quero%20um%20diagn%C3%B3stico%20gratuito%20da%20minha%20opera%C3%A7%C3%A3o." rel="noopener" target="_blank">
+            <svg viewBox="0 0 32 32" fill="currentColor" width="22" height="22"><path d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.4.7 4.7 1.9 6.7L3 29l7-1.8c1.9 1 4 1.6 6 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3zm0 22.6c-1.8 0-3.5-.5-5-1.4l-.4-.2-4.1 1.1 1.1-4-.3-.4a10 10 0 0 1-1.6-5.4C5.7 9.9 10.3 5.5 16 5.5s10.3 4.4 10.3 10c0 5.6-4.6 10.1-10.3 10.1z"/></svg>
+            Falar no WhatsApp
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section section--azul" id="faq">
+      <div class="container">
+        <div class="center" style="max-width:720px;margin:0 auto 48px">
+          <span class="eyebrow">Dúvidas frequentes</span>
+          <h2>Respostas rápidas para decidir com segurança</h2>
+        </div>
+        <div class="faq">
+          <div class="faq__item"><button class="faq__q" aria-expanded="false">O que é interoperabilidade em saúde? <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button><div class="faq__a"><p>É a capacidade de diferentes sistemas de saúde trocarem e interpretarem dados clínicos de forma padronizada. A Sintonia usa o padrão FHIR R4 para conectar prontuários, exames e fluxos sem retrabalho.</p></div></div>
+          <div class="faq__item"><button class="faq__q" aria-expanded="false">A Sintonia é compatível com a RNDS? <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button><div class="faq__a"><p>Sim. A plataforma é FHIR R4 nativa e preparada para integração com a RNDS, TISS e outros sistemas do ecossistema de saúde brasileiro.</p></div></div>
+          <div class="faq__item"><button class="faq__q" aria-expanded="false">A solução está em conformidade com a LGPD? <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button><div class="faq__a"><p>Sim. Trabalhamos com autenticação SSO, controle de acesso por papéis, auditoria de eventos e criptografia em repouso e em trânsito.</p></div></div>
+          <div class="faq__item"><button class="faq__q" aria-expanded="false">Preciso trocar todos os meus sistemas? <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button><div class="faq__a"><p>Não. A Sintonia conecta o que você já usa de forma modular. Você começa pelos módulos prioritários e evolui no seu ritmo.</p></div></div>
+          <div class="faq__item"><button class="faq__q" aria-expanded="false">Quanto tempo leva a implantação? <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button><div class="faq__a"><p>A implantação é assistida e modular. Começamos com um diagnóstico gratuito e ativamos os módulos prioritários em semanas, não meses.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="section">
+      <div class="container">
+        <div class="cta-band">
+          <span class="eyebrow" style="background:rgba(255,255,255,.15);color:#fff">Comece hoje</span>
+          <h2>Transforme dados dispersos em decisões melhores</h2>
+          <p>Agende uma demonstração gratuita e veja a Sintonia conectando sua operação em tempo real.</p>
+          <div class="hero__actions" style="justify-content:center">
+            <a class="btn btn--primary btn--lg" href="https://wa.me/5511911293075?text=Ol%C3%A1!%20Quero%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20da%20Sintonia." rel="noopener" target="_blank">Agendar demonstração gratuita</a>
+            <a class="btn btn--ghost btn--lg" href="/sobre.html">Conhecer a Sintonia</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <a class="brand" href="/"><svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#89C2D9"/><path d="M10 38 H22 L27 24 L34 46 L40 32 L44 38 H54" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="20" r="6" fill="#EA4D50"/></svg><span>Sinton<b>ia</b></span></a>
+          <p style="color:#aacfde;margin-top:14px;max-width:320px">Saúde conectada, do registro à decisão. Interoperabilidade FHIR R4 para clínicas, hospitais e operadoras.</p>
+        </div>
+        <div><h4>Navegação</h4><ul><li><a href="/">Início</a></li><li><a href="/solucao.html">A Solução</a></li><li><a href="/sobre.html">Sobre</a></li><li><a href="/#recursos">Recursos</a></li></ul></div>
+        <div><h4>Recursos</h4><ul><li><a href="/solucao.html#fhir">Prontuário FHIR</a></li><li><a href="/solucao.html#ia">IA clínica</a></li><li><a href="/solucao.html#seguranca">Segurança & LGPD</a></li><li><a href="/#faq">Dúvidas</a></li></ul></div>
+        <div><h4>Fale conosco</h4><ul><li><a href="https://wa.me/5511911293075" rel="noopener" target="_blank">WhatsApp: (11) 91129-3075</a></li><li><a href="mailto:contato@sintoniasaude.com.br">contato@sintoniasaude.com.br</a></li></ul>
+          <a class="btn btn--wpp" style="margin-top:12px" href="https://wa.me/5511911293075?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20Sintonia." rel="noopener" target="_blank">Falar agora</a>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>© <span id="year">2025</span> Sintonia Saúde. Todos os direitos reservados.</span>
+        <span>Feito com cuidado · FHIR R4 · LGPD</span>
+      </div>
+    </div>
+  </footer>
+
+  <a class="wpp-float" href="https://wa.me/5511911293075?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20a%20Sintonia." rel="noopener" target="_blank" aria-label="Falar no WhatsApp">
+    <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.4.7 4.7 1.9 6.7L3 29l7-1.8c1.9 1 4 1.6 6 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3zm0 22.6c-1.8 0-3.5-.5-5-1.4l-.4-.2-4.1 1.1 1.1-4-.3-.4a10 10 0 0 1-1.6-5.4C5.7 9.9 10.3 5.5 16 5.5s10.3 4.4 10.3 10c0 5.6-4.6 10.1-10.3 10.1z"/></svg>
+  </a>
+
+  <script src="/assets/js/main.js" defer></script>
+</body>
+</html>

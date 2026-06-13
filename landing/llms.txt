@@ -1,0 +1,20 @@
+# Sintonia Saúde
+
+> Plataforma de interoperabilidade em saúde FHIR R4 nativa para clínicas, hospitais e operadoras no Brasil. Unifica prontuários, exames e fluxos clínicos, com IA de apoio à decisão, telemedicina e conformidade LGPD/RNDS.
+
+## Páginas principais
+- [Início](https://www.sintoniasaude.com.br/): Visão geral, problema, solução, recursos e prova social.
+- [A Solução](https://www.sintoniasaude.com.br/solucao.html): Prontuário FHIR R4, IA clínica, telemedicina, segurança e arquitetura.
+- [Sobre](https://www.sintoniasaude.com.br/sobre.html): Missão, valores e diferenciais.
+
+## Fatos da marca
+- Nome: Sintonia Saúde
+- Categoria: Health tech / interoperabilidade em saúde (HealthIT)
+- Padrão técnico: HL7 FHIR R4
+- Conformidade: LGPD; preparada para RNDS e TISS
+- Recursos: prontuário eletrônico, telemedicina, IA multimodal (resumo clínico, leitura de exames, transcrição de voz), analytics clínico
+- Atendimento (WhatsApp): +55 11 91129-3075
+- Contato: contato@sintoniasaude.com.br
+
+## Contato
+- WhatsApp: https://wa.me/5511911293075

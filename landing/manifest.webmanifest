@@ -1,0 +1,13 @@
+{
+  "name": "Sintonia Saúde",
+  "short_name": "Sintonia",
+  "description": "Plataforma de interoperabilidade em saúde FHIR R4 nativa.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E7F9FF",
+  "theme_color": "#89C2D9",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

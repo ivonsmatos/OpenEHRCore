@@ -1,0 +1,21 @@
+# Sintonia Saúde — robots.txt
+# Permite todos os buscadores e crawlers de IA (GEO/LLM).
+
+User-agent: *
+Allow: /
+
+# Crawlers de IA / LLM explicitamente permitidos
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://www.sintoniasaude.com.br/sitemap.xml
