@@ -1,0 +1,9 @@
+# Normaliza fim de linha. Scripts shell DEVEM ser LF (senão quebram em
+# containers Linux: shebang "/bin/bash\r" → "required file not found").
+* text=auto eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.png binary
+*.jpg binary
+*.pdf binary

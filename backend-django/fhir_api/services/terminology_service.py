@@ -295,6 +295,10 @@ class ICD10Service:
         Returns:
             List of matching ICD-10 codes
         """
+        # Query vazia/em branco não retorna tudo — retorna lista vazia.
+        if not term or not term.strip():
+            return []
+
         term_lower = term.lower()
         results = []
         

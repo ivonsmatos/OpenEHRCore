@@ -19,8 +19,7 @@ from .services.analytics_service import AnalyticsService
 logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
-@authentication_classes([])
-@permission_classes([AllowAny])  # DEV: AllowAny para desenvolvimento
+@permission_classes([IsAuthenticated])
 def get_population_metrics(request):
     """
     GET /api/v1/analytics/population
@@ -36,8 +35,7 @@ def get_population_metrics(request):
         return JsonResponse({"error": "Failed to generate analytics", "detail": str(e)}, status=500)
 
 @api_view(['GET'])
-@authentication_classes([])
-@permission_classes([AllowAny])  # DEV: AllowAny para desenvolvimento
+@permission_classes([IsAuthenticated])
 def get_clinical_metrics(request):
     """
     GET /api/v1/analytics/clinical
@@ -53,8 +51,7 @@ def get_clinical_metrics(request):
         return JsonResponse({"error": "Failed to generate analytics", "detail": str(e)}, status=500)
 
 @api_view(['GET'])
-@authentication_classes([])
-@permission_classes([AllowAny])  # DEV: AllowAny para desenvolvimento
+@permission_classes([IsAuthenticated])
 def get_operational_metrics(request):
     """
     GET /api/v1/analytics/operational
@@ -70,8 +67,7 @@ def get_operational_metrics(request):
         return JsonResponse({"error": "Failed to generate analytics", "detail": str(e)}, status=500)
 
 @api_view(['GET'])
-@authentication_classes([])
-@permission_classes([AllowAny])  # DEV: AllowAny para desenvolvimento
+@permission_classes([IsAuthenticated])
 def get_kpi_metrics(request):
     """
     GET /api/v1/analytics/kpi/
@@ -87,8 +83,7 @@ def get_kpi_metrics(request):
         return JsonResponse({"error": "Failed to generate analytics", "detail": str(e)}, status=500)
 
 @api_view(['GET'])
-@authentication_classes([])
-@permission_classes([AllowAny])  # DEV: AllowAny para desenvolvimento
+@permission_classes([IsAuthenticated])
 def get_survey_metrics(request):
     """
     GET /api/v1/analytics/survey/
@@ -105,8 +100,7 @@ def get_survey_metrics(request):
 
 
 @api_view(['GET'])
-@authentication_classes([])
-@permission_classes([AllowAny])  # DEV: AllowAny para desenvolvimento
+@permission_classes([IsAuthenticated])
 def get_admissions_metrics(request):
     """
     GET /api/v1/analytics/admissions/
@@ -123,8 +117,7 @@ def get_admissions_metrics(request):
 
 
 @api_view(['GET'])
-@authentication_classes([])
-@permission_classes([AllowAny])  # DEV: AllowAny para desenvolvimento
+@permission_classes([IsAuthenticated])
 def generate_analytics_report(request):
     """
     GET /api/v1/analytics/report/

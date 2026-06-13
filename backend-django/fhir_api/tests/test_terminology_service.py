@@ -154,8 +154,9 @@ class TestTerminologyMappingService:
 class TestTerminologyServiceRxNorm:
     """Unit tests for RxNorm service (with mocked external API)."""
     
+    @patch('fhir_api.services.terminology_service.TerminologyService.get_rxnorm_details')
     @patch('fhir_api.services.terminology_service.requests.get')
-    def test_search_rxnorm_success(self, mock_get):
+    def test_search_rxnorm_success(self, mock_get, mock_details):
         """Test successful RxNorm search."""
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -167,12 +168,14 @@ class TestTerminologyServiceRxNorm:
             }
         }
         mock_get.return_value = mock_response
-        
+        # search_rxnorm busca detalhes (2ª chamada) por rxcui — mockamos também.
+        mock_details.return_value = {"name": "Aspirin", "tty": "IN", "synonym": ""}
+
         # Clear cache first
         TerminologyService.search_rxnorm.cache_clear()
-        
+
         results = TerminologyService.search_rxnorm("aspirin", max_results=10)
-        
+
         assert len(results) == 1
         assert results[0]["rxcui"] == "1191"
         assert results[0]["name"] == "Aspirin"

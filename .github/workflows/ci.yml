@@ -92,7 +92,13 @@ jobs:
         run: |
           pip install flake8 black isort mypy
 
-      - name: Run flake8
+      # Gate BLOQUEANTE: erros de sintaxe e nomes indefinidos quebram o build.
+      - name: Run flake8 (critical errors)
+        working-directory: ./backend-django
+        run: |
+          flake8 fhir_api/ --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=migrations,__pycache__
+
+      - name: Run flake8 (style, non-blocking)
         working-directory: ./backend-django
         run: |
           flake8 fhir_api/ --max-line-length=120 --exclude=migrations,__pycache__
@@ -139,8 +145,7 @@ jobs:
 
       - name: Run unit tests
         working-directory: ./frontend-pwa
-        run: npm test -- --coverage --watchAll=false
-        continue-on-error: true
+        run: npm run coverage
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4

@@ -14,6 +14,15 @@ export default defineConfig({
         environment: 'jsdom',
         setupFiles: './src/test/setup.ts',
         css: true,
+        // Apenas testes unitários de src/. Os testes Playwright em e2e/ rodam
+        // separadamente (npx playwright test) e não devem ser carregados aqui.
+        include: ['src/**/*.{test,spec}.{ts,tsx}'],
+        exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+        coverage: {
+            provider: 'v8',
+            reporter: ['text', 'lcov'],
+            reportsDirectory: './coverage',
+        },
         alias: {
             '@': path.resolve(__dirname, './src'),
         },

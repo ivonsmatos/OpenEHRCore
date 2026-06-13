@@ -158,11 +158,8 @@ class FHIRValidationTests(TestCase):
     def setUp(self):
         self.client = Client()
     
-    @patch('fhir_api.services.fhir_validation_service.FHIRValidationService.validate_resource')
-    def test_validate_patient(self, mock_validate):
+    def test_validate_patient(self):
         """Test validating a Patient resource."""
-        mock_validate.return_value = {'valid': True, 'issues': []}
-        
         patient = {
             'resourceType': 'Patient',
             'name': [{'family': 'Test', 'given': ['User']}]

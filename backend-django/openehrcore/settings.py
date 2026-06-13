@@ -39,11 +39,15 @@ INSTALLED_APPS = [
 ]
 
 # =====================================================
-# AI Configuration (Ollama)
+# AI Configuration (open-source / self-hosted, API compatível com OpenAI)
+# Os dados permanecem no seu ambiente (sem transferência internacional — LGPD).
+# Produção: vLLM (GPU no Brasil/on-prem). Dev: Ollama. Config em core/services/llm_client.py
 # =====================================================
-OLLAMA_BASE_URL = config('OLLAMA_BASE_URL', default='http://localhost:11434')
-OLLAMA_MODEL = config('OLLAMA_MODEL', default='mistral-nemo')
-OLLAMA_URL = f"{OLLAMA_BASE_URL}/api/generate"
+LLM_BASE_URL = config('LLM_BASE_URL', default='http://localhost:11434/v1')
+LLM_MODEL = config('LLM_MODEL', default='qwen2.5:7b-instruct')
+LLM_VISION_MODEL = config('LLM_VISION_MODEL', default='qwen2.5vl:7b')
+ASR_BASE_URL = config('ASR_BASE_URL', default='http://localhost:8001/v1')
+ASR_MODEL = config('ASR_MODEL', default='Systran/faster-whisper-large-v3')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -78,12 +82,33 @@ TEMPLATES = [
 WSGI_APPLICATION = 'openehrcore.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Produção: defina DATABASE_URL (postgres://...) ou as variáveis DB_*.
+# Desenvolvimento/local: cai para SQLite quando nada é configurado.
+DATABASE_URL = config('DATABASE_URL', default='')
+if DATABASE_URL:
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
+elif config('DB_NAME', default=''):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+            'CONN_MAX_AGE': 600,
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -125,6 +150,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    # Throttling: protege contra brute-force/abuso (Sprint QA)
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': config('THROTTLE_ANON', default='30/minute'),
+        'user': config('THROTTLE_USER', default='1000/hour'),
+    },
 }
 
 # CORS Configuration
@@ -143,6 +177,14 @@ KEYCLOAK_URL = config('KEYCLOAK_URL', default='http://localhost:8180')
 KEYCLOAK_REALM = config('KEYCLOAK_REALM', default='master')
 KEYCLOAK_CLIENT_ID = config('KEYCLOAK_CLIENT_ID', default='openehrcore')
 KEYCLOAK_CLIENT_SECRET = config('KEYCLOAK_CLIENT_SECRET', default='')
+
+# Validação adicional de tokens JWT (hardening — habilite em produção).
+# Audience: por padrão o access token do Keycloak usa aud=account, por isso
+# a verificação fica desligada até que KEYCLOAK_AUDIENCE seja definido.
+KEYCLOAK_AUDIENCE = config('KEYCLOAK_AUDIENCE', default='')
+# Issuer: habilite quando a KEYCLOAK_URL do backend == issuer do token.
+KEYCLOAK_VERIFY_ISSUER = config('KEYCLOAK_VERIFY_ISSUER', default=False, cast=bool)
+KEYCLOAK_ISSUER = config('KEYCLOAK_ISSUER', default='')
 
 # Logging - JSON Estruturado para Produção
 LOG_DIR = BASE_DIR / 'logs'
@@ -240,8 +282,20 @@ LOGGING = {
 RATE_LIMIT_ENABLED = config('RATE_LIMIT_ENABLED', default=True, cast=bool)
 
 # =====================================================
-# AI Configuration (Ollama)
+# Security Hardening (produção — aplicado quando DEBUG=False)
 # =====================================================
-OLLAMA_BASE_URL = config('OLLAMA_BASE_URL', default='http://localhost:11434')
-OLLAMA_MODEL = config('OLLAMA_MODEL', default='mistral-nemo')  # Mistral Nemo 12B
+if not DEBUG:
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    X_FRAME_OPTIONS = 'DENY'
+    CSRF_TRUSTED_ORIGINS = config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='https://app.grephub.com.br,https://grephub.com.br,https://api.grephub.com.br'
+    ).split(',')
 

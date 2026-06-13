@@ -14,15 +14,15 @@ class TestPractitionerAPI:
     
     def test_list_practitioners_empty(self, auth_client, mock_fhir_service):
         """Testa listagem de profissionais quando não há resultados."""
-        # Mock do retorno do FHIRService
-        mock_fhir_service.search_resource.return_value = {"resourceType": "Bundle", "total": 0, "entry": []}
-        
+        # A view usa search_resources (plural) e retorna uma lista de recursos.
+        mock_fhir_service.search_resources.return_value = []
+
         response = auth_client.get('/api/v1/practitioners/list/')
-        
+
         assert response.status_code == 200
-        assert response.data['count'] == 0
-        assert response.data['practitioners'] == []
-        mock_fhir_service.search_resource.assert_called_with('Practitioner', {})
+        assert response.data['total'] == 0
+        assert response.data['results'] == []
+        mock_fhir_service.search_resources.assert_called_with('Practitioner', {'_count': '20'})
 
     def test_create_practitioner_success(self, auth_client, mock_fhir_service):
         """Testa criação bem sucedida de um profissional."""
@@ -58,7 +58,8 @@ class TestPractitionerAPI:
         
         assert resource_type == 'Practitioner'
         assert resource_body['name'][0]['family'] == 'Silva'
-        assert resource_body['identifier'][0]['value'] == 'CRM-SP-123456'
+        # O backend acrescenta o UF do conselho ao identificador (CRM + '/UF').
+        assert resource_body['identifier'][0]['value'] == 'CRM-SP-123456/SP'
 
     def test_create_practitioner_validation_error(self, auth_client):
         """Testa validação de campos obrigatórios."""

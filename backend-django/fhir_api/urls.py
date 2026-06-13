@@ -92,8 +92,9 @@ urlpatterns = [
     path('slots/', views_auth.create_slot, name='create_slot'),
     path('slots/search/', views_auth.get_slots, name='get_slots'),
     
-    # Questionnaire endpoints
-    path('questionnaires/', views_auth.create_questionnaire_view, name='create_questionnaire'),
+    # Questionnaire endpoints (legado)
+    # NOTA: 'questionnaires/' (listagem/criação) é servido por views_questionnaire
+    # mais abaixo. Não registrar aqui para não sombrear o GET de listagem (dava 405).
     path('questionnaires/response/', views_auth.create_response_view, name='create_response'),
 
     # Sprint 5: Portal do Paciente
@@ -123,6 +124,7 @@ urlpatterns = [
     # Sprint 12: AI
     path('ai/summary/<str:patient_id>/', views_ai.get_patient_summary, name='ai_summary'),
     path('ai/interactions/', views_ai.check_interactions, name='ai_interactions'),
+    path('ai/assistant/', views_ai.clinical_assistant, name='ai_assistant'),
 
     # Sprint 13: Analytics
     path('analytics/population/', views_analytics.get_population_metrics),

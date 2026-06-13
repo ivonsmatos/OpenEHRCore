@@ -4,7 +4,7 @@
 
 **Plataforma de Interoperabilidade em Saúde - FHIR R4 Nativo**
 
-[![Versão](https://img.shields.io/badge/versão-2.1.0-7c3aed.svg)](https://github.com/ivonsmatos/OpenEHRCore)
+[![Versão](https://img.shields.io/badge/versão-2.2.0-7c3aed.svg)](https://github.com/ivonsmatos/OpenEHRCore)
 [![FHIR](https://img.shields.io/badge/FHIR-R4-00d4ff.svg)](https://www.hl7.org/fhir/)
 [![Licença](https://img.shields.io/badge/licença-MIT-green.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue.svg)](https://www.typescriptlang.org/)
@@ -451,47 +451,23 @@ npm ru# Histórico de Versões
 
 ---
 
-## 📄 Licença
-
-Licença MIT - Veja [LICENSE](LICENSE) para detalhes.
-
----
-
-<div align="center">
-
-**Desenvolvido com ❤️ para transformar a saúde digital no Brasil**
-
-[Website](https://healthstack.com.br) • [Documentação](./docs) • [Issues](https://github.com/ivonsmatos/OpenEHRCore/issues)
-
-[![Star History](https://img.shields.io/github/stars/ivonsmatos/OpenEHRCore?style=social)](https://github.com/ivonsmatos/OpenEHRCore/stargazer
-- **Componentes Base:** `frontend-pwa/src/components/base/`
-
----
-
 ## 🤝 Contribuindo
 
-Contribuições são bem-vindas! Por favor:
+Contribuições são bem-vindas! Leia o [Guia de Contribuição](CONTRIBUTING.md) para
+detalhes sobre fluxo de trabalho, padrões de código e testes.
 
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+Resumo:
 
-### Padrões de Código
-
-- ✅ Use hooks customizados para responsividade (useIsMobile)
-- ✅ Sempre adicione aria-labels em componentes interativos
-- ✅ Input font-size 16px em mobile
-- ✅ Use variáveis do Design System (colors._, spacing._)
-- ✅ Teste em mobile, tablet e desktop
-- ✅ Siga WCAG 2.1 AA
+1. Faça um fork do projeto.
+2. Crie uma branch (`git checkout -b feat/MinhaFuncionalidade`).
+3. Commit seguindo Conventional Commits (`git commit -m 'feat: nova funcionalidade'`).
+4. Push para a branch e abra um Pull Request.
 
 ---
 
-## 📄 License
+## 📄 Licença
 
-MIT License - See [LICENSE](LICENSE) for details.
+Licença MIT — veja [LICENSE](LICENSE) para detalhes.
 
 ---
 
@@ -499,21 +475,6 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 **Desenvolvido com ❤️ para transformar a saúde digital no Brasil**
 
-[Website](https://healthstack.com.br) • [Documentação](./docs) • [Issues](https://github.com/ivonsmatos/OpenEHRCore/issues)
+[Documentação](./docs) • [Issues](https://github.com/ivonsmatos/OpenEHRCore/issues)
 
 </div>
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
-
----
-
-<div align="center">
-
-**Built with ❤️ for Healthcare Interoperability**
-
-[Documentation](docs/) · [Report Bug](issues) · [Request Feature](issues)
-
-</div>
-````

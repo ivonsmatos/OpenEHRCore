@@ -214,8 +214,7 @@ def manage_patients(request):
 
 
 @api_view(['GET'])
-@authentication_classes([])
-@permission_classes([AllowAny])  # DEV: Temporariamente AllowAny para desenvolvimento
+@permission_classes([IsAuthenticated])
 def search_patients_advanced(request):
     """
     Advanced patient search with FHIR R4 compliant parameters.

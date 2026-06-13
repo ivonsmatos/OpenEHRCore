@@ -1,205 +1,91 @@
 """
-Serviço de IA para resumos clínicos usando Ollama.
+Serviço de IA para resumos clínicos via servidor compatível com OpenAI
+(open-source / self-hosted — vLLM em produção, Ollama em dev).
 
-INSTALAÇÃO:
-1. Baixar Ollama: https://ollama.ai/download (Windows/Mac/Linux)
-2. Instalar modelos:
-   - ollama pull mistral      (Modelo geral, 4GB)
-   - ollama pull medllama2    (Modelo médico, 3.8GB) - RECOMENDADO
-3. Verificar: ollama list
-
-COMPATIBILIDADE:
-- HL7 FHIR R4: Sim (gera resumos de recursos FHIR)
-- LGPD: Sim (100% local, sem envio de dados externos)
-- Segurança: Dados nunca saem do servidor
+Princípios:
+- APOIO À DECISÃO: a IA organiza e resume; o médico decide (exigência do CFM).
+- LGPD by design: PII é redigida antes do envio; o modelo roda no seu ambiente.
+- Fallback determinístico (resumo estruturado) quando a IA não está disponível.
 """
 
 import logging
-import requests
-from django.conf import settings
+from core.services import llm_client
 
 logger = logging.getLogger(__name__)
 
-# Ollama configuration
-OLLAMA_BASE_URL = getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434')
-# Use MedGemma as default per user request
-OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', 'yenjia/medgemma-1.5-4b-it')
 
 class AIService:
-    """
-    Serviço centralizado para Inteligência Artificial.
-    Usa Ollama + Mistral/Medllama2 rodando localmente.
-    """
+    """Apoio à decisão clínica usando LLM open-source self-hosted."""
 
     def __init__(self, user=None):
         self.user = user
 
-    def check_ollama_health(self):
-        """Verifica se Ollama está rodando e modelos disponíveis."""
-        try:
-            print(f"🔍 Testando conexão Ollama em: {OLLAMA_BASE_URL}")
-            response = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=2)
-            print(f"🔍 Response status: {response.status_code}")
-            
-            if response.status_code == 200:
-                models = response.json().get('models', [])
-                model_names = [m['name'] for m in models]
-                print(f"🔍 Modelos encontrados: {model_names}")
-                
-                # Check if preferred model exists (permite variações como mistral-nemo, mistral, etc)
-                model_found = any(
-                    OLLAMA_MODEL in name or name.startswith(OLLAMA_MODEL)
-                    for name in model_names
-                )
-                
-                if model_found:
-                    logger.info(f"✅ Ollama OK | Modelo: {OLLAMA_MODEL} | Disponíveis: {model_names}")
-                    print(f"✅ Modelo {OLLAMA_MODEL} ENCONTRADO!")
-                    return True
-                else:
-                    logger.warning(f"⚠️ Modelo '{OLLAMA_MODEL}' não encontrado. Disponíveis: {model_names}")
-                    logger.warning(f"💡 Execute: ollama pull {OLLAMA_MODEL}")
-                    print(f"❌ Modelo {OLLAMA_MODEL} NÃO encontrado. Disponíveis: {model_names}")
-                    return False
-        except Exception as e:
-            logger.warning(f"❌ Ollama não conectou: {e}")
-            logger.warning("💡 Verifique se Ollama está rodando")
-            logger.warning("💡 Windows: Abra o aplicativo Ollama")
-            logger.warning("💡 Linux/Mac: ollama serve")
-            print(f"❌ ERRO ao conectar Ollama: {e}")
-        return False
-
-    def generate_with_ollama(self, prompt, max_tokens=1000):
-        """Gera texto usando Ollama API."""
-        try:
-            response = requests.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
-                json={
-                    "model": OLLAMA_MODEL,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "num_predict": max_tokens,
-                        "temperature": 0.7,
-                        "top_p": 0.9
-                    }
-                },
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return result.get('response', '')
-            else:
-                logger.error(f"Ollama error: {response.status_code} - {response.text}")
-                return None
-        except Exception as e:
-            logger.error(f"Erro ao chamar Ollama: {e}")
-            return None
+    def _generate(self, prompt, max_tokens=1000, json_mode=False):
+        """Redige PII e chama o LLM com o system prompt de apoio à decisão."""
+        safe_prompt = llm_client.redact_pii(prompt)
+        return llm_client.chat(
+            [
+                {"role": "system", "content": llm_client.DEFAULT_CLINICAL_SYSTEM},
+                {"role": "user", "content": safe_prompt},
+            ],
+            max_tokens=max_tokens,
+            json_mode=json_mode,
+        )
 
     def generate_patient_summary(self, patient_data):
         """
-        Gera resumo clínico do paciente.
-        Tenta Ollama primeiro, fallback para resumo estruturado.
-        
+        Gera resumo clínico do paciente (apoio à decisão).
+
         Returns:
             dict: {'summary': str, 'using_ai': bool}
         """
-        name = patient_data.get('name', 'Paciente')
-        age = patient_data.get('age', 'N/A')
-        
-        logger.warning(f"🔍 generate_patient_summary chamado para: {name}")
-        
-        # Try Ollama first
-        logger.warning("🔍 Verificando saúde do Ollama...")
-        ollama_ok = self.check_ollama_health()
-        logger.warning(f"🔍 Ollama status: {ollama_ok}")
-        
-        if ollama_ok:
-            logger.warning("🔍 Construindo prompt clínico...")
-            prompt = self._build_clinical_prompt(patient_data)
-            logger.warning(f"🔍 Prompt construído: {len(prompt)} chars")
-            
-            logger.warning("🔍 Chamando MedGemma (via MedicalVisionService) para gerar resumo...")
-            
-            # Use the new Core Service (MedGemma)
-            try:
-                from core.services.ai_vision_service import MedicalVisionService
-                vision_service = MedicalVisionService()
-                # We reuse refine_text or add a generic generating method. 
-                # refine_text uses "Aja como escriba". We want "Aja como assistente".
-                # Let's call the raw generation or add a method. 
-                # Since analyze_image does a post, we can just do a direct call here using the same settings logic 
-                # OR instantiate and use a new method if I added one. 
-                # For now, I'll borrow the connection logic or just implement the call using the same OLLAMA_URL from settings.
-                # Actually, better to stick to the pattern:
-                
-                ai_summary = self.generate_with_ollama(prompt, max_tokens=1200)
-                
-                # If we really want to use the "New Solution" (MedGemma), update the model usage in generate_with_ollama
-                # But generate_with_ollama uses self.OLLAMA_MODEL.
-                # I will update OLLAMA_MODEL in this file to prefer MedGemma if available? 
-                # Or just trust the method.
-                # Let's rely on generate_with_ollama but ensure it points to the right place.
-            except ImportError:
-                 ai_summary = self.generate_with_ollama(prompt, max_tokens=1200)
+        name = patient_data.get("name", "Paciente")
 
-            logger.warning(f"🔍 Ollama retornou: {len(ai_summary) if ai_summary else 0} chars")
-            
-            if ai_summary:
-                logger.info(f"🤖 Resumo gerado por IA (Ollama): {len(ai_summary)} chars")
-                return {
-                    'summary': ai_summary,
-                    'using_ai': True
-                }
-        
-        # Fallback: structured summary
-        logger.info(f"📋 Usando resumo estruturado (fallback) para {name}")
-        return {
-            'summary': self._generate_structured_summary(patient_data),
-            'using_ai': False
-        }
+        if llm_client.available():
+            summary = self._generate(self._build_clinical_prompt(patient_data), max_tokens=1200)
+            if summary:
+                logger.info(f"Resumo gerado por IA (self-hosted): {len(summary)} chars")
+                return {"summary": summary, "using_ai": True}
+
+        logger.info(f"Usando resumo estruturado (fallback) para {name}")
+        return {"summary": self._generate_structured_summary(patient_data), "using_ai": False}
 
     def _build_clinical_prompt(self, patient_data):
         """Constrói prompt médico para a IA."""
-        name = patient_data.get('name', 'Paciente')
-        age = patient_data.get('age', 'N/A')
-        gender = patient_data.get('gender', 'N/A')
-        
-        conditions = patient_data.get('conditions', [])
-        medications = patient_data.get('medications', [])
-        vital_signs = patient_data.get('vital_signs', [])
-        
-        # Format conditions
+        name = patient_data.get("name", "Paciente")
+        age = patient_data.get("age", "N/A")
+        gender = patient_data.get("gender", "N/A")
+
+        conditions = patient_data.get("conditions", [])
+        medications = patient_data.get("medications", [])
+        vital_signs = patient_data.get("vital_signs", [])
+
         cond_list = []
         for c in conditions[:5]:
-            display = c.get('display') or c.get('code', {}).get('text', 'N/A')
+            display = c.get("display") or c.get("code", {}).get("text", "N/A")
             cond_list.append(f"- {display}")
-        cond_text = '\n'.join(cond_list) if cond_list else "Nenhum problema registrado"
-        
-        # Format medications
+        cond_text = "\n".join(cond_list) if cond_list else "Nenhum problema registrado"
+
         med_list = []
         for m in medications[:5]:
-            med_code = m.get('medicationCodeableConcept', {})
-            display = med_code.get('text') or med_code.get('coding', [{}])[0].get('display', 'N/A')
+            med_code = m.get("medicationCodeableConcept", {})
+            display = med_code.get("text") or med_code.get("coding", [{}])[0].get("display", "N/A")
             med_list.append(f"- {display}")
-        med_text = '\n'.join(med_list) if med_list else "Nenhuma medicação registrada"
-        
-        # Format vital signs
+        med_text = "\n".join(med_list) if med_list else "Nenhuma medicação registrada"
+
         vs_list = []
         for v in vital_signs[:5]:
-            code = v.get('code', {})
-            display = code.get('text') or code.get('coding', [{}])[0].get('display', 'Sinal vital')
-            value_qty = v.get('valueQuantity', {})
-            value = value_qty.get('value', 'N/A')
-            unit = value_qty.get('unit', '')
+            code = v.get("code", {})
+            display = code.get("text") or code.get("coding", [{}])[0].get("display", "Sinal vital")
+            value_qty = v.get("valueQuantity", {})
+            value = value_qty.get("value", "N/A")
+            unit = value_qty.get("unit", "")
             vs_list.append(f"- {display}: {value} {unit}")
-        vs_text = '\n'.join(vs_list) if vs_list else "Não disponíveis"
-        
-        prompt = f"""Você é um assistente médico especializado. Gere um resumo clínico profissional deste paciente.
+        vs_text = "\n".join(vs_list) if vs_list else "Não disponíveis"
+
+        return f"""Gere um resumo clínico profissional (apoio à decisão) deste paciente.
 
 **DADOS DO PACIENTE:**
-Nome: {name}
 Idade: {age} anos
 Sexo: {gender}
 
@@ -213,146 +99,108 @@ Sexo: {gender}
 {vs_text}
 
 **INSTRUÇÕES:**
-1. Gere um resumo clínico em português (PT-BR)
-2. Use linguagem médica profissional mas clara
-3. Destaque riscos clínicos importantes (ex: polifarmácia, comorbidades complexas)
-4. Sugira 2-3 pontos de atenção para próxima consulta
-5. Formato: parágrafos corridos (não use markdown ou listas)
-6. Máximo 600 caracteres
-7. Foco: resumo executivo para tomada de decisão clínica
+1. Resumo clínico em português (PT-BR), linguagem médica clara.
+2. Destaque riscos relevantes (ex.: polifarmácia, comorbidades).
+3. Sugira 2-3 pontos de atenção para a próxima consulta.
+4. Parágrafos corridos, máximo 600 caracteres.
+5. Lembre que esta é uma ferramenta de apoio; a decisão é do profissional.
 
 Resumo clínico:"""
-        
-        return prompt
 
     def _generate_structured_summary(self, patient_data):
-        """Gera resumo estruturado sem IA (fallback)."""
-        name = patient_data.get('name', 'Paciente')
-        age = patient_data.get('age', 'N/A')
-        gender = patient_data.get('gender', 'N/A')
-        
-        conditions = patient_data.get('conditions', [])
-        medications = patient_data.get('medications', [])
-        vital_signs = patient_data.get('vital_signs', [])
-        immunizations = patient_data.get('immunizations', [])
-        diagnostic_reports = patient_data.get('diagnostic_reports', [])
-        
-        # Build markdown summary
+        """Gera resumo estruturado sem IA (fallback determinístico)."""
+        name = patient_data.get("name", "Paciente")
+        age = patient_data.get("age", "N/A")
+        gender = patient_data.get("gender", "N/A")
+
+        conditions = patient_data.get("conditions", [])
+        medications = patient_data.get("medications", [])
+        vital_signs = patient_data.get("vital_signs", [])
+
         summary = []
-        
-        # Header
-        summary.append(f"# 🎯 Resumo Clínico: {name}\n\n")
+        summary.append(f"# Resumo Clínico: {name}\n\n")
         summary.append(f"**Idade:** {age} anos | **Sexo:** {gender}\n\n")
-        
-        # Conditions
+
         if conditions:
-            summary.append("## 🔴 Problemas Ativos\n\n")
+            summary.append("## Problemas Ativos\n\n")
             for c in conditions[:5]:
-                display = c.get('display') or c.get('code', {}).get('text', 'Condição')
-                status = c.get('clinicalStatus', {}).get('coding', [{}])[0].get('code', 'active')
+                display = c.get("display") or c.get("code", {}).get("text", "Condição")
+                status = c.get("clinicalStatus", {}).get("coding", [{}])[0].get("code", "active")
                 summary.append(f"- {display} ({status})\n")
-            summary.append("\n")  # Espaço extra após seção
-        
-        # Medications
+            summary.append("\n")
+
         if medications:
-            summary.append("## 💊 Medicações\n\n")
+            summary.append("## Medicações\n\n")
             for m in medications[:5]:
-                med_code = m.get('medicationCodeableConcept', {})
-                display = med_code.get('text') or med_code.get('coding', [{}])[0].get('display', 'Medicamento')
+                med_code = m.get("medicationCodeableConcept", {})
+                display = med_code.get("text") or med_code.get("coding", [{}])[0].get("display", "Medicamento")
                 summary.append(f"- {display}\n")
-            
             if len(medications) >= 5:
-                summary.append("\n⚠️ **Polifarmácia:** Revisar interações medicamentosas\n")
-            summary.append("\n")  # Espaço extra após seção
-        
-        # Vital Signs
+                summary.append("\n**Polifarmácia:** revisar interações medicamentosas\n")
+            summary.append("\n")
+
         if vital_signs:
-            summary.append("## 🩺 Sinais Vitais Recentes\n\n")
+            summary.append("## Sinais Vitais Recentes\n\n")
             for v in vital_signs[:6]:
-                code = v.get('code', {})
-                display = code.get('text') or code.get('coding', [{}])[0].get('display', 'Sinal')
-                value_qty = v.get('valueQuantity', {})
-                value = value_qty.get('value', 'N/A')
-                unit = value_qty.get('unit', '')
-                date = v.get('effectiveDateTime', '')[:10]
+                code = v.get("code", {})
+                display = code.get("text") or code.get("coding", [{}])[0].get("display", "Sinal")
+                value_qty = v.get("valueQuantity", {})
+                value = value_qty.get("value", "N/A")
+                unit = value_qty.get("unit", "")
+                date = v.get("effectiveDateTime", "")[:10]
                 summary.append(f"- **{display}:** {value} {unit} ({date})\n")
-            summary.append("\n")  # Espaço extra após seção
-        
-        # Clinical Analysis
-        summary.append("## 📊 Análise Clínica\n\n")
-        
+            summary.append("\n")
+
+        summary.append("## Análise\n\n")
         risk_level = "BAIXO"
         if len(conditions) > 3:
             risk_level = "MODERADO"
         if len(conditions) > 5:
             risk_level = "ALTO"
-        
         summary.append(f"**Nível de Complexidade:** {risk_level}\n\n")
         summary.append(f"**Problemas ativos:** {len(conditions)}\n\n")
         summary.append(f"**Medicações:** {len(medications)}\n\n")
-        
-        # Recommendations
-        summary.append("## 💡 Recomendações\n\n")
+
+        summary.append("## Recomendações\n\n")
         if not vital_signs:
             summary.append("- Coletar sinais vitais na próxima consulta\n")
         if len(medications) > 5:
             summary.append("- Revisar esquema terapêutico (polifarmácia)\n")
         if not conditions and not medications:
             summary.append("- Completar anamnese e histórico clínico\n")
-        
-        summary.append("\n---\n\n")
-        summary.append("*Resumo estruturado automático (HL7 FHIR R4)*\n")
-        
-        return ''.join(summary)
+
+        summary.append("\n---\n\n*Resumo estruturado automático (HL7 FHIR R4)*\n")
+        return "".join(summary)
 
     def check_medication_interactions(self, medication_codes):
         """
-        Verifica interações medicamentosas usando IA.
-        Fallback: retorna análise básica.
+        Verifica interações medicamentosas (apoio à decisão).
+        Fallback: análise básica quando a IA não está disponível.
         """
         if not medication_codes or len(medication_codes) < 2:
-            return {
-                "has_interactions": False,
-                "severity": "none",
-                "interactions": [],
-                "recommendations": []
-            }
-        
-        if self.check_ollama_health():
-            prompt = f"""Você é um farmacêutico clínico. Analise possíveis interações medicamentosas entre:
+            return {"has_interactions": False, "severity": "none", "interactions": [], "recommendations": []}
 
-{chr(10).join([f"- {code}" for code in medication_codes])}
-
-Responda em JSON simples:
-{{
-    "has_interactions": true/false,
-    "severity": "low/moderate/high",
-    "interactions": ["descrição da interação"],
-    "recommendations": ["recomendação clínica"]
-}}
-
-Análise JSON:"""
-            
-            result = self.generate_with_ollama(prompt, max_tokens=400)
+        if llm_client.available():
+            prompt = (
+                "Analise possíveis interações medicamentosas entre os itens a seguir. "
+                "Responda em JSON com as chaves has_interactions (bool), severity "
+                "(low/moderate/high), interactions (lista), recommendations (lista):\n"
+                + "\n".join([f"- {code}" for code in medication_codes])
+            )
+            result = self._generate(prompt, max_tokens=500, json_mode=True)
             if result:
                 try:
                     import json
-                    # Extract JSON from response
-                    json_start = result.find('{')
-                    json_end = result.rfind('}') + 1
-                    if json_start >= 0 and json_end > json_start:
-                        json_str = result[json_start:json_end]
-                        return json.loads(json_str)
+                    return json.loads(result)
                 except Exception as e:
                     logger.warning(f"Erro ao parsear JSON de interações: {e}")
-        
-        # Fallback
+
         return {
             "has_interactions": False,
             "severity": "unknown",
             "interactions": ["Análise de IA indisponível."],
             "recommendations": [
                 "Consultar base de dados de interações medicamentosas",
-                "Revisar com farmacêutico clínico se > 5 medicações"
-            ]
+                "Revisar com farmacêutico clínico se > 5 medicações",
+            ],
         }
