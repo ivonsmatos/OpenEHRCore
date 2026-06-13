@@ -33,6 +33,9 @@ RAG_DOCS_DIR = config("RAG_DOCS_DIR", default="data/clinical_docs")
 RAG_INDEX_PATH = config("RAG_INDEX_PATH", default="data/knowledge_index.json")
 RAG_TOP_K = config("RAG_TOP_K", default=5, cast=int)
 RAG_MIN_SCORE = config("RAG_MIN_SCORE", default=0.30, cast=float)
+# 'generate' = LLM redige a resposta citando a fonte;
+# 'retrieval' = sem LLM (custo zero): devolve os trechos do manual + fonte.
+RAG_MODE = config("RAG_MODE", default="generate")
 
 _index_cache = None
 
@@ -190,6 +193,15 @@ def answer(query, k=None):
         ref = f"{c['source']} ({c.get('section', '')})".strip()
         context_blocks.append(f"[Fonte {i}: {ref}]\n{c['text']}")
         sources.append({"index": i, "source": c["source"], "section": c.get("section"), "score": round(score, 3)})
+
+    # Modo retrieval-only: sem LLM (custo zero) — devolve os trechos + fonte.
+    if RAG_MODE == "retrieval":
+        return {
+            "answer": "\n\n".join(context_blocks),
+            "sources": sources,
+            "grounded": True,
+            "mode": "retrieval",
+        }
 
     prompt = (
         "Responda à pergunta do profissional de saúde usando SOMENTE os trechos "

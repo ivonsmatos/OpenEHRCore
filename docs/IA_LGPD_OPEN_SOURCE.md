@@ -62,6 +62,59 @@
 - [ ] Se a IA influenciar diagnóstico/terapêutica → avaliar enquadramento ANVISA (SaMD, RDC 657/2022)
 - [ ] Transparência/base legal (Art. 7º/11) para o paciente
 
+## vLLM em produção (Brasil / GPU)
+
+**Princípio LGPD:** a GPU/instância deve ficar **no Brasil** (ou on-prem no hospital)
+para o dado não sair do ambiente controlado.
+
+### Onde hospedar (região BR)
+- **AWS** `sa-east-1` (São Paulo): G5/G6 (A10G/L4 24 GB), p4d/p5 (A100/H100)
+- **Azure** *Brazil South*: séries NC (T4/A100)
+- **On-prem** no datacenter do hospital
+- Provedores nacionais (ex.: Magalu Cloud)
+
+### GPU por modelo (estimativa)
+| Modelo | Quantização | GPU mínima |
+|--------|-------------|------------|
+| Qwen2.5-7B / 14B (dev/leve) | — / AWQ | 1× L4/A10G 24 GB |
+| **Qwen2.5-32B-Instruct** | AWQ 4-bit | 1× A100 40 GB (ou 2× L4) |
+| **Llama 3.3 70B** | AWQ 4-bit | 1× A100 80 GB / 1× H100 |
+
+### Subir o vLLM (OpenAI-compatible)
+```bash
+docker run --gpus all -p 8000:8000 \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  --ipc=host vllm/vllm-openai:latest \
+  --model Qwen/Qwen2.5-32B-Instruct-AWQ \
+  --quantization awq --max-model-len 8192 \
+  --served-model-name qwen2.5-32b \
+  --api-key SUA_CHAVE_INTERNA
+```
+
+### Embeddings (RAG) e ASR (voz)
+```bash
+# embeddings (bge-m3)
+docker run --gpus all -p 8001:8000 vllm/vllm-openai:latest \
+  --model BAAI/bge-m3 --served-model-name bge-m3 --task embed
+# transcrição de voz
+docker run --gpus all -p 8002:8000 fedirz/faster-whisper-server:latest-cuda
+```
+
+### .env de produção (backend aponta para o vLLM)
+```env
+LLM_BASE_URL=http://<ip-gpu>:8000/v1
+LLM_MODEL=qwen2.5-32b
+LLM_API_KEY=SUA_CHAVE_INTERNA
+EMBEDDINGS_MODEL=bge-m3
+ASR_BASE_URL=http://<ip-asr>:8002/v1
+RAG_ENABLED=True
+```
+
+### Segurança
+- vLLM em **rede privada/VPC**, nunca exposto publicamente; TLS via nginx.
+- Proteja com `--api-key` (igual em `LLM_API_KEY`).
+- Licenças: **Qwen = Apache 2.0** (mais limpa); Llama = community license.
+
 ## Variáveis de ambiente
 
 ```env
