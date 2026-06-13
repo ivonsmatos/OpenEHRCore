@@ -32,6 +32,24 @@
 > *"research only / not for clinical use"*. Em produção clínica, prefira um **modelo geral forte +
 > RAG nos seus manuais validados** + decisão do profissional.
 
+## Sem GPU (CPU / VPS barata) — recomendado para começar
+
+Não precisa de GPU. Em uma VPS de CPU (ex.: 12 vCPU / 48 GB), rode tudo self-hosted:
+
+- **Modelo padrão de CPU: `qwen2.5:7b-instruct`** — licença **Apache 2.0** (limpa para
+  produto comercial) e forte em PT-BR. `ollama pull qwen2.5:7b-instruct`
+- Mais leve/rápido em CPU fraca: `llama3.2` (3B) ou `gemma3:4b` (atenção: Gemma usa
+  licença própria com restrições de uso — verifique antes de uso comercial).
+- **Embeddings**: `nomic-embed-text` (leve, roda bem em CPU).
+- **Custo zero de LLM**: `RAG_MODE=retrieval` devolve os trechos do manual + fonte,
+  **sem gerar texto** (instantâneo, sem alucinação).
+
+Velocidade aproximada em CPU (Q4): 3–4B ≈ 8–15 tok/s · **7–8B ≈ 4–8 tok/s** · 12–14B ≈ 2–4 tok/s ·
+27B+ ≈ inviável. Ou seja, **fique na faixa 4–8B** em CPU; modelos grandes só com GPU/vLLM.
+
+> ⚠️ Numa única VPS, o LLM disputa CPU com HAPI FHIR/Keycloak/Postgres — ok para
+> piloto/MVP; em produção separe o LLM ou use `RAG_MODE=retrieval`.
+
 ## Como o código está organizado
 
 - **`core/services/llm_client.py`** — cliente único compatível com OpenAI:
