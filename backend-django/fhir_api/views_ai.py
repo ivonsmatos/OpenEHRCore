@@ -6,6 +6,7 @@ from .services.fhir_core import FHIRService, FHIRServiceException
 from .services.ai_service import AIService
 from .utils.validators import validate_patient_id, calculate_age
 from .utils.logging_utils import sanitize_for_log
+from .audit_logging import log_ai_inference
 import logging
 from datetime import datetime
 import requests
@@ -100,7 +101,8 @@ def get_patient_summary(request, patient_id):
         using_ai = result['using_ai']
         
         logger.info(f"✅ Resumo gerado: {len(summary)} chars | AI={using_ai}")
-        
+        log_ai_inference(request.user, 'patient_summary', patient_id=patient_id, grounded=using_ai)
+
         return Response({
             "summary": summary,
             "using_ai": using_ai,
@@ -141,7 +143,8 @@ def check_interactions(request):
         
         ai_service = AIService(request.user)
         alerts = ai_service.check_drug_interactions(new_medication, current_medications)
-        
+
+        log_ai_inference(request.user, 'drug_interactions', patient_id=patient_id)
         return Response({"alerts": alerts}, status=status.HTTP_200_OK)
         
     except Exception as e:
@@ -165,6 +168,7 @@ def clinical_assistant(request):
     from .services import rag_service
     try:
         result = rag_service.answer(question)
+        log_ai_inference(request.user, 'clinical_assistant', grounded=result.get('grounded'))
         return Response(result, status=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Erro no assistente clínico: {e}")

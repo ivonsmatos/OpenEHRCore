@@ -260,7 +260,7 @@ def get_terminology_codes(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def compliance_status(request):
     """
     Get overall compliance status.

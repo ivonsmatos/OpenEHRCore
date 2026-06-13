@@ -28,7 +28,7 @@
 | **PWA Offline-First**    | Service Worker, armazenamento IndexedDB, sincronização automática                     |
 | **Integrações Brasil**   | Pagamentos PIX, WhatsApp Business, Telemedicina, TISS, RNDS                           |
 | **Agente On-Premise**    | Bridge HL7 v2.x/MLLP, suporte DICOM, túnel WebSocket seguro                           |
-| **IA Multimodal**      | **MedGemma (Visão)**, **MedASR (Voz)**, Resumo Inteligente, ICD-10    |
+| **IA (apoio à decisão)** | **LLM open-source self-hosted** (vLLM/Ollama), **RAG** de manuais clínicos, visão e voz — dados não saem do ambiente (LGPD) |
 | **Segurança**            | Keycloak SSO, conformidade LGPD, auditoria, criptografia                              |
 | **📱 Mobile-First**      | **100% responsivo**, 15+ páginas otimizadas, chat WhatsApp-like                       |
 | **♿ Acessibilidade**    | **WCAG 2.1 AA**, aria-labels, navegação por teclado, leitores de tela                 |
@@ -160,9 +160,10 @@ cd frontend-pwa && npm install && npm run dev
 | `/api/v1/documents/`                  | Documentos clínicos (DocumentReference) |
 | `/api/v1/bundles/`                    | Transações em lote                      |
 | `/api/v1/careplans/`                  | Planos de cuidado                       |
-| `/api/ai/analyze-image/`              | **NOVO v2.2** Análise de imagem (MedGemma) |
-| `/api/ai/transcribe/`                 | **NOVO v2.2** Transcrição de áudio (MedASR)|
-| `/api/ai/summary/{id}/`               | **NOVO v2.2** Resumo multimodal         |
+| `/api/ai/analyze-image/`              | Análise de imagem (LLM multimodal self-hosted) |
+| `/api/ai/transcribe/`                 | Transcrição de áudio (Whisper self-hosted) |
+| `/api/v1/ai/summary/{id}/`            | Resumo clínico (apoio à decisão)        |
+| `/api/v1/ai/assistant/`               | Assistente clínico com RAG dos manuais  |
 
 ### Integrações Brasil
 
