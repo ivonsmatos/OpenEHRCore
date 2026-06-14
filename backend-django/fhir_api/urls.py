@@ -18,6 +18,7 @@ from . import (
     views_export,
     views_audit,
     views_ai,
+    views_me,
     views_visitors,
     views_chat,
     views_ipd,
@@ -99,6 +100,7 @@ urlpatterns = [
     path("docs/redoc/", redoc, name="redoc"),
     # Autenticação
     path("auth/login/", views_auth.login, name="login"),
+    path("me/profile/", views_me.me_profile, name="me_profile"),
     # Patient endpoints
     path("patients/", views_auth.manage_patients, name="manage_patients"),
     path(

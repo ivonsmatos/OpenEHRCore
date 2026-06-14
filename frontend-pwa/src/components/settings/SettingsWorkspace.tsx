@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,6 +16,8 @@ import {
 import Button from '../base/Button';
 import Card from '../base/Card';
 import './SettingsWorkspace.css';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 /**
  * Workspace de Configurações do Usuário
@@ -37,6 +40,26 @@ export const SettingsWorkspace: React.FC<{ section?: string }> = ({ section = 'p
     const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.photo || null);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+    // Carrega o perfil salvo (FHIR Practitioner) ao abrir.
+    useEffect(() => {
+        let active = true;
+        axios.get(`${API_URL}/me/profile/`).then(res => {
+            if (!active) return;
+            const d = res.data || {};
+            setFormData(prev => ({
+                ...prev,
+                name: d.name ?? prev.name,
+                email: d.email ?? prev.email,
+                phone: d.phone ?? '',
+                address: d.address ?? '',
+                specialty: d.specialty ?? '',
+                crm: d.crm ?? '',
+            }));
+            if (d.photo) setAvatarPreview(d.photo);
+        }).catch(() => { /* perfil ainda não salvo / offline */ });
+        return () => { active = false; };
+    }, []);
 
     const handleInputChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -82,20 +105,17 @@ export const SettingsWorkspace: React.FC<{ section?: string }> = ({ section = 'p
 
     const handleSave = async () => {
         setSaveStatus('saving');
-
-        // Se tem arquivo de avatar, fazer upload (simulado)
-        if (avatarFile) {
-            console.log('Uploading avatar:', avatarFile.name);
-            // TODO: Implementar upload real para backend
-            // const formData = new FormData();
-            // formData.append('photo', avatarFile);
-            // await axios.post('/api/v1/users/photo/', formData);
+        try {
+            // Salva como FHIR Practitioner (nome, contato, especialidade, CRM e foto).
+            // avatarPreview é um data URL (base64) ou null (= remover a foto).
+            await axios.put(`${API_URL}/me/profile/`, { ...formData, photo: avatarPreview });
+            setSaveStatus('saved');
+            setTimeout(() => setSaveStatus('idle'), 2000);
+        } catch (err) {
+            console.error('Falha ao salvar perfil:', err);
+            setSaveStatus('error');
+            setTimeout(() => setSaveStatus('idle'), 3000);
         }
-
-        // Simulando save
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 2000);
     };
 
     const renderProfileSection = () => (
@@ -460,7 +480,8 @@ export const SettingsWorkspace: React.FC<{ section?: string }> = ({ section = 'p
                         >
                             <Save size={16} />
                             {saveStatus === 'saving' ? 'Salvando...' :
-                                saveStatus === 'saved' ? 'Salvo!' : 'Salvar Alterações'}
+                                saveStatus === 'saved' ? 'Salvo!' :
+                                    saveStatus === 'error' ? 'Erro — tentar de novo' : 'Salvar Alterações'}
                         </Button>
                     </div>
                 </main>
