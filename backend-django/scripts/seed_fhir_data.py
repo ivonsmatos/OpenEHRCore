@@ -588,24 +588,65 @@ def seed_conditions(patient_ids):
         print("  ⚠ No patients to create conditions for")
         return
     
-    conditions = [
-        {"code": "38341003", "display": "Hipertensão arterial"},
-        {"code": "73211009", "display": "Diabetes mellitus tipo 2"},
-        {"code": "195967001", "display": "Asma"},
-        {"code": "49436004", "display": "Fibrilação atrial"},
-        {"code": "13644009", "display": "Hipotireoidismo"},
-        {"code": "230690007", "display": "Acidente vascular cerebral"},
-        {"code": "22298006", "display": "Infarto do miocárdio"},
-        {"code": "56265001", "display": "Insuficiência cardíaca"},
-        {"code": "75570004", "display": "Pneumonia"},
-        {"code": "44054006", "display": "Diabetes tipo 1"}
-    ]
-    
+    # Condições por faixa etária — coerência clínica (uma criança NÃO recebe
+    # AVC/infarto). A idade vem do birthDate do Patient no FHIR.
+    pools = {
+        "child": [  # 0-12
+            {"code": "195967001", "display": "Asma"},
+            {"code": "3110003", "display": "Otite média aguda"},
+            {"code": "4120002", "display": "Bronquiolite"},
+            {"code": "24079001", "display": "Dermatite atópica"},
+            {"code": "363746003", "display": "Faringite aguda"},
+        ],
+        "young": [  # 13-39
+            {"code": "195967001", "display": "Asma"},
+            {"code": "48694002", "display": "Transtorno de ansiedade"},
+            {"code": "37796009", "display": "Enxaqueca"},
+            {"code": "44054006", "display": "Diabetes mellitus tipo 1"},
+            {"code": "13644009", "display": "Hipotireoidismo"},
+        ],
+        "adult": [  # 40-64
+            {"code": "38341003", "display": "Hipertensão arterial"},
+            {"code": "73211009", "display": "Diabetes mellitus tipo 2"},
+            {"code": "13644009", "display": "Hipotireoidismo"},
+            {"code": "195967001", "display": "Asma"},
+            {"code": "48694002", "display": "Transtorno de ansiedade"},
+        ],
+        "elderly": [  # 65+
+            {"code": "38341003", "display": "Hipertensão arterial"},
+            {"code": "73211009", "display": "Diabetes mellitus tipo 2"},
+            {"code": "56265001", "display": "Insuficiência cardíaca"},
+            {"code": "230690007", "display": "Acidente vascular cerebral"},
+            {"code": "22298006", "display": "Infarto do miocárdio"},
+            {"code": "49436004", "display": "Fibrilação atrial"},
+            {"code": "13645005", "display": "DPOC"},
+        ],
+    }
+
+    def _age(pid):
+        try:
+            r = requests.get(f"{FHIR_URL}/Patient/{pid}", timeout=10)
+            bd = r.json().get("birthDate") if r.status_code == 200 else None
+            return (datetime.now().year - int(bd[:4])) if bd else None
+        except Exception:
+            return None
+
+    def _pool(age):
+        if age is None:
+            return pools["adult"]
+        if age < 13:
+            return pools["child"]
+        if age < 40:
+            return pools["young"]
+        if age < 65:
+            return pools["adult"]
+        return pools["elderly"]
+
     count = 0
     for patient_id in patient_ids:
-        # Each patient gets 1-3 conditions
-        num_conditions = random.randint(1, 3)
-        patient_conditions = random.sample(conditions, num_conditions)
+        pool = _pool(_age(patient_id))
+        num_conditions = random.randint(1, min(3, len(pool)))
+        patient_conditions = random.sample(pool, num_conditions)
         
         for cond in patient_conditions:
             condition = {
