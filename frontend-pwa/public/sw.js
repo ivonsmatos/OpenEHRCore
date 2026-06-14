@@ -1,4 +1,4 @@
-const CACHE_NAME = 'healthstack-v2.1.0';
+const CACHE_NAME = 'healthstack-v2.2.0';
 const OFFLINE_URL = '/offline.html';
 
 // Static assets to cache - only files that exist
@@ -83,7 +83,16 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Static assets - Cache first, network fallback
+    // Navegação (index.html) - NETWORK FIRST. Após um deploy, o index novo
+    // referencia chunks com hash novo. Cache-first aqui servia um index antigo
+    // e causava 404 do chunk antigo (ex.: PatientList-*.js). Network-first
+    // garante o index atual; cai para cache/offline só sem rede.
+    if (request.mode === 'navigate') {
+        event.respondWith(navigationStrategy(request));
+        return;
+    }
+
+    // Assets estáticos (com hash, imutáveis) - Cache first
     event.respondWith(cacheFirstStrategy(request));
 });
 
@@ -155,6 +164,22 @@ async function cacheFirstStrategy(request) {
         }
         
         throw error;
+    }
+}
+
+// Navigation strategy (index.html) - network first, fallback cache/offline
+async function navigationStrategy(request) {
+    try {
+        const response = await fetch(request);
+        if (response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put('/', response.clone());
+        }
+        return response;
+    } catch (error) {
+        return (await caches.match(request))
+            || (await caches.match('/'))
+            || (await caches.match(OFFLINE_URL));
     }
 }
 
