@@ -22,7 +22,8 @@ jobs:
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 15
+
     services:
       postgres:
         image: postgres:15
@@ -78,6 +79,7 @@ jobs:
   backend-lint:
     name: Backend Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -122,6 +124,7 @@ jobs:
   frontend-tests:
     name: Frontend Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 12
 
     steps:
       - name: Checkout code
@@ -162,6 +165,7 @@ jobs:
   frontend-lint:
     name: Frontend Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -194,6 +198,7 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [frontend-tests, backend-tests]
 
     steps:
@@ -234,6 +239,7 @@ jobs:
   build-docker:
     name: Build Docker Images
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     needs: [backend-tests, frontend-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -283,6 +289,7 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 12
 
     steps:
       - name: Checkout code
@@ -309,6 +316,7 @@ jobs:
   notify:
     name: Notify
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [backend-tests, frontend-tests, e2e-tests]
     if: always()
 
