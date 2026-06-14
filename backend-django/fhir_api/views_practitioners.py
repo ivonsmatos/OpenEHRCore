@@ -117,6 +117,32 @@ def create_practitioner(request):
                 }
             ]
 
+            # Persiste o status de validação do conselho como extensão FHIR no
+            # identifier. Sem API de conselho configurada (CFM_API_URL), o status
+            # fica "pending" = registrado como NÃO verificado no conselho.
+            try:
+                from .services.crm_validation_service import CRMValidationService
+
+                _vr = CRMValidationService.validate(
+                    conselho=conselho or "CRM",
+                    numero=numero_conselho,
+                    uf=uf_conselho,
+                    use_api=True,
+                    user_id=str(getattr(request.user, "id", "") or ""),
+                )
+                practitioner["identifier"][0]["extension"] = [
+                    {
+                        "url": "http://openehrcore.com.br/fhir/StructureDefinition/validation-status",
+                        "valueCode": _vr.status.value,
+                    },
+                    {
+                        "url": "http://openehrcore.com.br/fhir/StructureDefinition/validation-date",
+                        "valueDateTime": _vr.validated_at,
+                    },
+                ]
+            except Exception as _e:  # noqa: BLE001
+                logger.warning("Falha ao validar registro do conselho na criação: %s", _e)
+
             # Add CPF if provided
             if data.get("cpf"):
                 practitioner["identifier"].append(

@@ -22,18 +22,33 @@ if not settings.configured:
     # Só precisamos da camada de serviço (decouple lê o .env); não subimos apps/DB.
     settings.configure(DEBUG=False)
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import FastAPI, Header, HTTPException, Depends  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 from fhir_api.services import rag_service  # noqa: E402
 
+# /docs e /openapi.json desabilitados: endpoint público não deve expor o schema.
 app = FastAPI(
     title="OpenEHRCore — Assistente Clínico (RAG)",
     description="Apoio à decisão fundamentado em manuais clínicos. A IA não "
     "diagnostica nem prescreve de forma autônoma: o profissional decide.",
     version="1.0.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
+
+# Proteção: /assistant exige header X-API-Key. A chave vem da env do serviço
+# (ASSISTANT_API_KEY); /assistant chama o Gemini (pago), então não pode ser anônimo.
+ASSISTANT_API_KEY = os.environ.get("ASSISTANT_API_KEY", "")
+
+
+def require_api_key(x_api_key: str = Header(default="")):
+    if not ASSISTANT_API_KEY:
+        raise HTTPException(status_code=503, detail="Servidor sem ASSISTANT_API_KEY configurada.")
+    if x_api_key != ASSISTANT_API_KEY:
+        raise HTTPException(status_code=401, detail="X-API-Key ausente ou inválida.")
 
 # O site institucional pode consumir esta API.
 app.add_middleware(
@@ -64,7 +79,7 @@ def health():
     }
 
 
-@app.post("/assistant")
+@app.post("/assistant", dependencies=[Depends(require_api_key)])
 def assistant(q: AssistantQuery):
     """Responde fundamentado nos manuais, citando a fonte. Apoio à decisão."""
     return rag_service.answer(q.query, k=q.k)
