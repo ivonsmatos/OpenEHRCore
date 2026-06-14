@@ -41,6 +41,11 @@ ASR_MODEL = config("ASR_MODEL", default="Systran/faster-whisper-large-v3")
 ASR_API_KEY = config("ASR_API_KEY", default="")
 
 EMBEDDINGS_MODEL = config("EMBEDDINGS_MODEL", default="bge-m3")
+# Embeddings podem usar um endpoint SEPARADO do chat — ex.: chat no Gemini
+# (nuvem) e embeddings locais no Ollama, para casar com o índice já gerado.
+# Default: mesmo endpoint/chave do chat.
+EMBEDDINGS_BASE_URL = config("EMBEDDINGS_BASE_URL", default=LLM_BASE_URL).rstrip("/")
+EMBEDDINGS_API_KEY = config("EMBEDDINGS_API_KEY", default=LLM_API_KEY)
 
 # Prompt de sistema padrão: a IA é APOIO À DECISÃO (exigência do CFM).
 DEFAULT_CLINICAL_SYSTEM = (
@@ -124,8 +129,8 @@ def embed(texts, model=None, timeout=None):
     inputs = [texts] if single else list(texts)
     try:
         resp = requests.post(
-            f"{LLM_BASE_URL}/embeddings",
-            headers=_auth_headers(LLM_API_KEY),
+            f"{EMBEDDINGS_BASE_URL}/embeddings",
+            headers=_auth_headers(EMBEDDINGS_API_KEY),
             json={"model": model or EMBEDDINGS_MODEL, "input": inputs},
             timeout=timeout or LLM_TIMEOUT,
         )

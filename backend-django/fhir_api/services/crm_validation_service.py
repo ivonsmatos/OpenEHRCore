@@ -248,14 +248,17 @@ class CRMValidationService:
                 cache.set(cache_key, asdict(api_result), cls.CACHE_TTL)
                 return api_result
 
-        # 4. Se API não disponível, retornar validação de formato como sucesso
+        # 4. API não disponível: o formato é válido, mas NÃO houve verificação no
+        # conselho. NÃO marcar como VALID (seria enganoso) — marcar PENDING para que
+        # o registro fique explicitamente "não verificado no conselho".
         result = CRMValidationResult(
-            status=ValidationStatus.VALID,
+            status=ValidationStatus.PENDING,
             conselho=conselho,
             numero=numero,
             uf=uf,
             validation_source="local",
-            message="Formato válido. Validação de registro pendente (API não disponível)."
+            message="Formato válido, mas o registro NÃO foi verificado no conselho. "
+                    "Confirme no órgão oficial antes de liberar o profissional."
         )
 
         # Cachear resultado local

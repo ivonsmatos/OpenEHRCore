@@ -77,7 +77,7 @@ const AICopilot: React.FC<AICopilotProps> = ({ patientId }) => {
             }}
           >
             <CheckCircle size={16} />
-            IA Pronta (MedGemma)
+            IA Pronta
           </span>
         )}
       </div>

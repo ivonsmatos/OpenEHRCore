@@ -1,7 +1,10 @@
-# Cloudflare Workers (Static Assets) — publica o site institucional.
-# Para publicar o frontend PWA em vez do site, troque o "directory" para
-# "./frontend-pwa/dist" e adicione o build command (ver README do landing).
-name = "actahub-site"
+# Cloudflare Workers (Static Assets) — publica o site institucional (landing/).
+# IMPORTANTE: "name" deve casar com o Worker que tem o domínio actahub.com.br.
+# O build da dashboard roda `npx wrangler deploy` a partir da raiz (Caminho "/"),
+# então este arquivo PRECISA estar na main.
+# Para publicar o frontend PWA, troque "directory" para "./frontend-pwa/dist"
+# e adicione o build command (ver README do landing).
+name = "interophealth"
 compatibility_date = "2025-06-01"
 
 [assets]

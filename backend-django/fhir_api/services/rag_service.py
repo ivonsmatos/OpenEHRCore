@@ -88,7 +88,7 @@ def chunk_text(text, max_chars=1200, overlap=150):
     return chunks
 
 
-def build_index(docs_dir=None, index_path=None, batch_size=32):
+def build_index(docs_dir=None, index_path=None, batch_size=16):
     """Lê os documentos, gera embeddings e grava o índice JSON. Retorna stats."""
     docs_dir = docs_dir or RAG_DOCS_DIR
     index_path = index_path or RAG_INDEX_PATH
@@ -105,20 +105,33 @@ def build_index(docs_dir=None, index_path=None, batch_size=32):
         source = os.path.relpath(path, docs_dir)
         text = _read_file(path)
         for i, chunk in enumerate(chunk_text(text)):
-            records.append({"source": source, "section": f"parte {i + 1}", "text": chunk})
+            # Ignora trechos vazios/curtos (ex.: páginas de PDF sem texto) —
+            # eles fazem o provedor de embeddings rejeitar o lote inteiro.
+            if chunk and len(chunk.strip()) >= 3:
+                records.append({"source": source, "section": f"parte {i + 1}", "text": chunk.strip()})
 
-    # Embeddings em lotes
-    texts = [r["text"] for r in records]
-    embeddings = []
-    for start in range(0, len(texts), batch_size):
-        batch = texts[start:start + batch_size]
-        vecs = llm_client.embed(batch)
-        if not vecs:
-            raise RuntimeError("Falha ao gerar embeddings — verifique LLM_BASE_URL/EMBEDDINGS_MODEL.")
-        embeddings.extend(vecs)
+    # Embeddings em lotes, de forma RESILIENTE: se um lote falha, tenta item a
+    # item e pula apenas o(s) trecho(s) problemático(s) (não aborta tudo).
+    good = []
+    for start in range(0, len(records), batch_size):
+        batch_recs = records[start:start + batch_size]
+        vecs = llm_client.embed([r["text"] for r in batch_recs], timeout=600)
+        if vecs and len(vecs) == len(batch_recs):
+            for r, v in zip(batch_recs, vecs):
+                r["embedding"] = v
+                good.append(r)
+        else:
+            for r in batch_recs:
+                v = llm_client.embed(r["text"], timeout=120)
+                if v:
+                    r["embedding"] = v
+                    good.append(r)
+                else:
+                    logger.warning("Trecho ignorado (embedding falhou) em %s/%s", r["source"], r.get("section"))
 
-    for r, v in zip(records, embeddings):
-        r["embedding"] = v
+    if not good:
+        raise RuntimeError("Falha ao gerar embeddings — verifique LLM_BASE_URL/EMBEDDINGS_MODEL.")
+    records = good
 
     os.makedirs(os.path.dirname(index_path) or ".", exist_ok=True)
     payload = {
