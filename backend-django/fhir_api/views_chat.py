@@ -223,14 +223,29 @@ def send_message(request):
             "payload": payload
         }
         
-        # Check validity of sender_id
-        if sender_id and sender_id != 'undefined':
-             # Try to ensure it's a valid reference format or just ID
-             # If just ID, prepend Practitioner/
-             ref = sender_id if '/' in sender_id else f"Practitioner/{sender_id}"
-             resource['sender'] = {"reference": ref}
+        # Remetente = usuário AUTENTICADO (não confiar no client). Essencial para
+        # AUDITORIA: registra QUEM enviou. Usa o Practitioner do usuário (mapeado
+        # pelo sub do Keycloak); na falta, registra o nome do token.
+        sub = request.user.get("sub") if hasattr(request.user, "get") else None
+        sender_name = "Usuário"
+        if hasattr(request.user, "get"):
+            sender_name = request.user.get("name") or request.user.get("preferred_username") or "Usuário"
+        sender_practitioner = None
+        if sub:
+            try:
+                found = fhir.search_resources(
+                    "Practitioner",
+                    {"identifier": f"http://interophealth.com.br/fhir/NamingSystem/keycloak-sub|{sub}"},
+                    use_cache=False,
+                )
+                if found:
+                    sender_practitioner = found[0].get("id")
+            except Exception:  # noqa: BLE001
+                pass
+        if sender_practitioner:
+            resource['sender'] = {"reference": f"Practitioner/{sender_practitioner}", "display": sender_name}
         else:
-             resource['sender'] = {"display": "Anonymous User"}
+            resource['sender'] = {"display": sender_name}
         
         # CATEGORY LOGIC
         # Store the channel_id as the category code. Use a generic system.
