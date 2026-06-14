@@ -29,7 +29,7 @@ CONSELHO_SYSTEM = "http://interophealth.com.br/fhir/NamingSystem/conselho"
 def _find_practitioner(svc, sub):
     try:
         results = svc.search_resources(
-            "Practitioner", {"identifier": f"{KC_SUB_SYSTEM}|{sub}"}, use_cache=False
+            "Practitioner", {"identifier": f"{KC_SUB_SYSTEM}|{sub}"}
         )
         return results[0] if results else None
     except Exception as e:  # noqa: BLE001

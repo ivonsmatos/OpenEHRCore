@@ -236,7 +236,6 @@ def send_message(request):
                 found = fhir.search_resources(
                     "Practitioner",
                     {"identifier": f"http://interophealth.com.br/fhir/NamingSystem/keycloak-sub|{sub}"},
-                    use_cache=False,
                 )
                 if found:
                     sender_practitioner = found[0].get("id")
