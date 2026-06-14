@@ -30,6 +30,18 @@ def _bypass_authenticate_credentials(self, key):
 
 KeycloakAuthentication.authenticate_credentials = _bypass_authenticate_credentials
 
+@pytest.fixture(autouse=True)
+def _mock_external_health_checks(monkeypatch):
+    """HAPI FHIR e Keycloak não rodam no ambiente de teste/CI. O endpoint
+    /api/v1/health/ faz checagem real de conectividade e retornaria 503
+    (CONNECTION_REFUSED), quebrando os testes que esperam 200. Mockamos as duas
+    checagens externas como 'healthy' para os testes do endpoint serem
+    herméticos. NÃO afeta produção (só vale ao carregar a conftest de testes)."""
+    import fhir_api.views_health as vh
+    monkeypatch.setattr(vh, "check_fhir_server", lambda: {"status": "healthy", "message": "mock (test)"})
+    monkeypatch.setattr(vh, "check_keycloak", lambda: {"status": "healthy", "message": "mock (test)"})
+
+
 @pytest.fixture
 def api_client():
     return APIClient()
