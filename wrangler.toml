@@ -1,0 +1,10 @@
+# Cloudflare Workers (Static Assets) — publica o site institucional.
+# Para publicar o frontend PWA em vez do site, troque o "directory" para
+# "./frontend-pwa/dist" e adicione o build command (ver README do landing).
+name = "actahub-site"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "./landing"
+# Site multipágina com 404.html dedicado:
+not_found_handling = "404-page"
