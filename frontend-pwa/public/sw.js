@@ -1,4 +1,4 @@
-const CACHE_NAME = 'healthstack-v2.2.0';
+const CACHE_NAME = 'healthstack-v2.3.0';
 const OFFLINE_URL = '/offline.html';
 
 // Static assets to cache - only files that exist
@@ -65,6 +65,12 @@ self.addEventListener('fetch', (event) => {
 
     // Skip non-http(s) requests (like chrome-extension://)
     if (!url.protocol.startsWith('http')) {
+        return;
+    }
+
+    // Não interceptar requisições cross-origin (beacon da Cloudflare, Google
+    // Analytics, etc.) — deixa o browser tratar e evita erros de CORS no SW.
+    if (url.origin !== self.location.origin) {
         return;
     }
 

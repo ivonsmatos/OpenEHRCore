@@ -80,7 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobile = fal
                 {(isOpen || isMobile) && (
                     <div style={{ fontWeight: 'bold', fontSize: '1.25rem', color: colors.primary.dark, display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Activity size={24} color={colors.primary.medium} />
-                        <span>OpenEHR</span>
+                        <span>Interop Health</span>
                     </div>
                 )}
                 {!isMobile && (

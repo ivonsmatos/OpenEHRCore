@@ -43,12 +43,8 @@ export const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ compac
                 navigate('/profile');
                 break;
             case 'practitioner':
-                // Navega para o Practitioner FHIR do usuário logado
-                if (user?.practitionerId) {
-                    navigate(`/practitioners/${user.practitionerId}`);
-                } else {
-                    navigate('/practitioners');
-                }
+                // Perfil do próprio usuário (Configurações → carrega o Practitioner FHIR).
+                navigate('/profile');
                 break;
             case 'preferences':
                 navigate('/settings/preferences');

@@ -19,6 +19,33 @@ import './SettingsWorkspace.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
+// Comprime a foto de perfil (máx 400x400, JPEG) para não enviar megabytes ao
+// salvar — fotos grandes faziam o PUT falhar e a foto "não ia".
+function compressAvatar(file: File, max = 400, quality = 0.85): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let { width, height } = img;
+                if (width > max || height > max) {
+                    if (width > height) { height = (height / width) * max; width = max; }
+                    else { width = (width / height) * max; height = max; }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d')?.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+            img.src = e.target?.result as string;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
 /**
  * Workspace de Configurações do Usuário
  * Permite editar perfil, segurança, notificações e preferências
@@ -87,12 +114,14 @@ export const SettingsWorkspace: React.FC<{ section?: string }> = ({ section = 'p
 
         setAvatarFile(file);
 
-        // Criar preview
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setAvatarPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
+        // Comprime antes de exibir/salvar (evita PUT gigante que falhava).
+        compressAvatar(file)
+            .then(setAvatarPreview)
+            .catch(() => {
+                const reader = new FileReader();
+                reader.onloadend = () => setAvatarPreview(reader.result as string);
+                reader.readAsDataURL(file);
+            });
     };
 
     const handleRemoveAvatar = () => {

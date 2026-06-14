@@ -90,7 +90,7 @@ const DocsHome: React.FC = () => {
 
         <h1 className="text-5xl font-bold text-gray-900 leading-tight">
           Documentação
-          <span className="block text-[#0468BF]">OpenEHR Core</span>
+          <span className="block text-[#0468BF]">Interop Health</span>
         </h1>
 
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">

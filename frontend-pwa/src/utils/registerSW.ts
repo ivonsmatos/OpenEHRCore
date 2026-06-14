@@ -45,7 +45,7 @@ export function registerSW() {
  */
 function showUpdateNotification() {
     if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('OpenEHRCore Atualizado', {
+        new Notification('Interop Health Atualizado', {
             body: 'Nova versão disponível. Recarregue a página.',
             icon: '/favicon.ico'
         });

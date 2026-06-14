@@ -117,7 +117,7 @@ const DocsLayout: React.FC = () => {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <Book className="w-5 h-5" />
-            <h1 className="text-lg font-semibold">OpenEHR Docs</h1>
+            <h1 className="text-lg font-semibold">Interop Health Docs</h1>
           </div>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -147,7 +147,7 @@ const DocsLayout: React.FC = () => {
                 <Book className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[#0339A6]">OpenEHR</h1>
+                <h1 className="text-xl font-bold text-[#0339A6]">Interop Health</h1>
                 <p className="text-xs text-gray-600">Documentação</p>
               </div>
             </Link>
