@@ -1,6 +1,5 @@
-# Cloudflare Pages — redirects
-# Docs: https://developers.cloudflare.com/pages/configuration/redirects/
-/home      /            301
-/index     /            301
-/solucao   /solucao.html 301
-/sobre     /sobre.html   301
+# Cloudflare Workers Static Assets ja serve URLs limpas (/sobre, /solucao) e
+# redireciona automaticamente .html -> URL limpa (307).
+# NAO mapear /sobre -> /sobre.html aqui: causa loop de redirecionamento.
+/home    /   301
+/index   /   301
