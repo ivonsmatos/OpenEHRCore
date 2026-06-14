@@ -23,7 +23,6 @@ const InvoiceList: React.FC = () => {
         const fetchInvoices = async () => {
             try {
                 const response = await axios.get(`${API_URL}/financial/invoices/`);
-                console.log("Invoice API Response:", response.data);
 
                 if (Array.isArray(response.data)) {
                     setInvoices(response.data);

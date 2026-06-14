@@ -13,6 +13,27 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="HealthStack" />
   <title>HealthStack - Healthcare Interoperability Platform</title>
+  <script>
+    // Força desregistro do Service Worker antigo e limpa caches obsoletos
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        registrations.forEach(function(reg) {
+          // Se o SW ativo não for a versão atual, desregistra
+          if (reg.active && !reg.active.scriptURL.includes('/sw.js')) {
+            reg.unregister();
+          }
+        });
+      });
+      caches.keys().then(function(names) {
+        names.forEach(function(name) {
+          // Remove caches de versões antigas (não v2.1.0)
+          if (name !== 'healthstack-v2.1.0') {
+            caches.delete(name);
+          }
+        });
+      });
+    }
+  </script>
 </head>
 
 <body>

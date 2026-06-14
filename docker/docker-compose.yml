@@ -65,8 +65,8 @@ services:
     image: quay.io/keycloak/keycloak:26.0.0
     container_name: openehr_keycloak
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD in .env}
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: ${POSTGRES_USER}
@@ -96,8 +96,8 @@ services:
       dockerfile: Dockerfile
     container_name: openehr_django
     environment:
-      DEBUG: "False"
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-please-change-this-in-production}
+      DEBUG: ${DEBUG:-False}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-dev-only-change-in-production}
       ALLOWED_HOSTS: localhost,127.0.0.1,django
       # TLS é terminado pelo nginx na borda; não force redirect dentro da rede docker.
       SECURE_SSL_REDIRECT: "False"

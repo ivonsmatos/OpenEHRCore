@@ -26,7 +26,7 @@ const AuditLogWorkspace: React.FC<AuditLogWorkspaceProps> = ({ patientId }) => {
         const fetchLogs = async () => {
             setLoading(true);
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('access_token');
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/audit/logs/?target=Patient/${patientId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`

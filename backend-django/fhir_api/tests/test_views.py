@@ -98,24 +98,28 @@ class FHIRResourceValidationTestCase(TestCase):
 
 class CBOServiceTestCase(TestCase):
     """Tests for CBO (Ocupações) service."""
-    
+
+    def setUp(self):
+        # Endpoints CBO exigem autenticação (token de bypass de teste).
+        self.headers = {'HTTP_AUTHORIZATION': 'Bearer dev-token-bypass'}
+
     def test_cbo_families_endpoint(self):
         """Test CBO families endpoint returns data."""
-        response = self.client.get('/api/v1/cbo/families/')
+        response = self.client.get('/api/v1/cbo/families/', **self.headers)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn('results', data)
-    
+
     def test_cbo_search(self):
         """Test CBO search functionality."""
-        response = self.client.get('/api/v1/cbo/search/?q=medico')
+        response = self.client.get('/api/v1/cbo/search/?q=medico', **self.headers)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn('results', data)
-    
+
     def test_cbo_doctors(self):
         """Test CBO doctors endpoint."""
-        response = self.client.get('/api/v1/cbo/doctors/')
+        response = self.client.get('/api/v1/cbo/doctors/', **self.headers)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         # Resposta atual: {familia, familia_nome, count, especialidades: [...]}

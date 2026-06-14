@@ -41,7 +41,7 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({ encounterId,
             setCheckingInteractions(true);
             setInteractionAlerts([]); // Clear previous
 
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/interactions/`, {
                 method: 'POST',
                 headers: {

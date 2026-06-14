@@ -249,11 +249,18 @@ export const setupAxiosInterceptors = () => {
   axios.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.response?.status === 401) {
-        console.warn("401 Unauthorized detectado pelo interceptor. Redirecionando para login.");
-        // Token expirado ou inválido
+      // Não redirecionar para login se o erro veio do próprio endpoint de login
+      // Isso evita o loop: login falha → 401 → redireciona para /login → loop
+      const isLoginRequest = error.config?.url?.includes('/auth/login/');
+      if (error.response?.status === 401 && !isLoginRequest) {
+        console.warn("401 Unauthorized detectado pelo interceptor. Token expirado. Redirecionando para login.");
+        // Token expirado ou inválido — limpar sessão
         localStorage.removeItem("access_token");
-        window.location.href = "/login";
+        delete axios.defaults.headers.common["Authorization"];
+        // Só redirecionar se não estiver já na página de login
+        if (window.location.pathname !== "/login" && window.location.pathname !== "/") {
+          window.location.href = "/login";
+        }
       }
       return Promise.reject(error);
     }

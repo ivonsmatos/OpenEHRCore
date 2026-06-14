@@ -1,4 +1,4 @@
-const CACHE_NAME = 'healthstack-v2.0.2';
+const CACHE_NAME = 'healthstack-v2.1.0';
 const OFFLINE_URL = '/offline.html';
 
 // Static assets to cache - only files that exist

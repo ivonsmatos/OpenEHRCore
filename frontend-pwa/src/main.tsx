@@ -6,8 +6,7 @@ import './index.css'
 import './styles/global.css'
 
 // Register Service Worker for offline support
-// 🔥 TEMPORARIAMENTE DESATIVADO - estava causando problemas com hard reload
-if (false && 'serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {

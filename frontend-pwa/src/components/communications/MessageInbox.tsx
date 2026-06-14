@@ -144,7 +144,7 @@ const MessageInbox: React.FC = () => {
         e.preventDefault();
         try {
             await axios.post(
-                `${API_URL}/communications/send/`,
+                `${API_URL}/communications/`,
                 composeData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { Practitioner, PractitionerFormData, PractitionerFilters, PractitionerListResponse, PractitionerRole } from '../types/practitioner';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 export const usePractitioners = () => {
     const { token } = useAuth();

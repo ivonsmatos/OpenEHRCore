@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../base/Card';
 import Button from '../base/Button';
@@ -34,8 +35,8 @@ import {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 interface CompositionEditorProps {
-    patientId: string;
-    patientName: string;
+    patientId?: string;
+    patientName?: string;
     encounterId?: string;
     onSave?: (composition: any) => void;
     initialType?: CompositionType;
@@ -130,12 +131,15 @@ const COMPOSITION_TYPES: Record<CompositionType, { label: string; icon: string; 
 };
 
 const CompositionEditor: React.FC<CompositionEditorProps> = ({
-    patientId,
-    patientName,
+    patientId: patientIdProp,
+    patientName: patientNameProp,
     encounterId,
     onSave,
     initialType = 'consultation-note'
 }) => {
+    const { id: urlPatientId } = useParams<{ id: string }>();
+    const patientId = patientIdProp ?? urlPatientId ?? '';
+    const patientName = patientNameProp ?? '';
     const { token, user } = useAuth();
     const [compositionType, setCompositionType] = useState<CompositionType>(initialType);
     const [sections, setSections] = useState<Section[]>([]);

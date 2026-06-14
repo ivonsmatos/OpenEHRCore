@@ -60,6 +60,7 @@ interface CarePlanManagerProps {
 }
 
 const CarePlanManager: React.FC<CarePlanManagerProps> = ({ patientId }) => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
   const isMobile = useIsMobile();
   const [carePlans, setCarePlans] = useState<CarePlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<CarePlan | null>(null);
@@ -82,8 +83,8 @@ const CarePlanManager: React.FC<CarePlanManagerProps> = ({ patientId }) => {
     try {
       setLoading(true);
       const url = patientId
-        ? `/api/v1/careplans/patient/${patientId}/?status=${statusFilter}`
-        : `/api/v1/careplans/?status=${statusFilter}`;
+        ? `${API_URL}/careplans/patient/${patientId}/?status=${statusFilter}`
+        : `${API_URL}/careplans/?status=${statusFilter}`;
 
       const response = await fetch(url, {
         headers: {
@@ -106,7 +107,7 @@ const CarePlanManager: React.FC<CarePlanManagerProps> = ({ patientId }) => {
 
   const loadActivities = async (planId: string) => {
     try {
-      const response = await fetch(`/api/v1/careplans/${planId}/activities/`, {
+      const response = await fetch(`${API_URL}/careplans/${planId}/activities/`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -123,7 +124,7 @@ const CarePlanManager: React.FC<CarePlanManagerProps> = ({ patientId }) => {
 
   const activatePlan = async (planId: string) => {
     try {
-      const response = await fetch(`/api/v1/careplans/${planId}/activate/`, {
+      const response = await fetch(`${API_URL}/careplans/${planId}/activate/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -145,7 +146,7 @@ const CarePlanManager: React.FC<CarePlanManagerProps> = ({ patientId }) => {
 
   const completePlan = async (planId: string) => {
     try {
-      const response = await fetch(`/api/v1/careplans/${planId}/complete/`, {
+      const response = await fetch(`${API_URL}/careplans/${planId}/complete/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -167,7 +168,7 @@ const CarePlanManager: React.FC<CarePlanManagerProps> = ({ patientId }) => {
 
   const startActivity = async (activityId: string) => {
     try {
-      const response = await fetch(`/api/v1/careplan-activities/${activityId}/start/`, {
+      const response = await fetch(`${API_URL}/careplan-activities/${activityId}/start/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -186,7 +187,7 @@ const CarePlanManager: React.FC<CarePlanManagerProps> = ({ patientId }) => {
 
   const completeActivity = async (activityId: string) => {
     try {
-      const response = await fetch(`/api/v1/careplan-activities/${activityId}/complete/`, {
+      const response = await fetch(`${API_URL}/careplan-activities/${activityId}/complete/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

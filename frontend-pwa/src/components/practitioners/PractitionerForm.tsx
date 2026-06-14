@@ -3,6 +3,7 @@ import axios from 'axios';
 import { colors, spacing, borderRadius } from '../../theme/colors';
 import { PractitionerFormData } from '../../types/practitioner';
 import Button from '../base/Button';
+import CRMValidation from './CRMValidation';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -49,6 +50,10 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({ onSubmit, onCancel,
     const [cboLoading, setCboLoading] = useState(false);
     const [showCboDropdown, setShowCboDropdown] = useState(false);
     const [selectedCbo, setSelectedCbo] = useState<CBOOcupacao | null>(null);
+
+    // CRM Validation state
+    const [crmValidated, setCrmValidated] = useState(false);
+    const [crmValidationResult, setCrmValidationResult] = useState<Record<string, unknown> | null>(null);
 
     // Load CBO if editing
     useEffect(() => {
@@ -228,45 +233,41 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({ onSubmit, onCancel,
                 {errors.family_name && <div style={errorStyle}>{errors.family_name}</div>}
             </div>
 
-            {/* Conselho Profissional */}
+            {/* Conselho Profissional - CRM Validation Component */}
             <div style={{ marginBottom: spacing.md }}>
-                <label style={labelStyle}>Conselho Profissional *</label>
-                <div style={{ display: 'flex', gap: spacing.sm }}>
-                    <select
-                        value={(formData as any).conselho || 'CRM'}
-                        onChange={(e) => setFormData({ ...formData, conselho: e.target.value } as any)}
-                        style={{ ...inputStyle, flex: '0 0 120px' }}
-                        aria-label="Tipo de conselho profissional"
-                    >
-                        <option value="CRM">CRM</option>
-                        <option value="COREN">COREN</option>
-                        <option value="CRO">CRO</option>
-                        <option value="CRF">CRF</option>
-                        <option value="CREFITO">CREFITO</option>
-                        <option value="CRN">CRN</option>
-                        <option value="CRFa">CRFa</option>
-                        <option value="CRP">CRP</option>
-                        <option value="CRBM">CRBM</option>
-                        <option value="CRESS">CRESS</option>
-                    </select>
-                    <input
-                        type="text"
-                        value={(formData as any).numero_conselho || ''}
-                        onChange={(e) => setFormData({ ...formData, numero_conselho: e.target.value } as any)}
-                        style={{ ...inputStyle, flex: 1 }}
-                        placeholder="Número (ex: 123456)"
-                    />
-                    <select
-                        value={(formData as any).uf_conselho || 'SP'}
-                        onChange={(e) => setFormData({ ...formData, uf_conselho: e.target.value } as any)}
-                        style={{ ...inputStyle, flex: '0 0 80px' }}
-                        aria-label="UF do conselho"
-                    >
-                        {UF_OPTIONS.map(uf => (
-                            <option key={uf} value={uf}>{uf}</option>
-                        ))}
-                    </select>
-                </div>
+                <CRMValidation
+                    initialConselho={(formData as any).conselho || 'CRM'}
+                    initialNumero={(formData as any).numero_conselho || ''}
+                    initialUf={(formData as any).uf_conselho || 'SP'}
+                    required={true}
+                    onChange={(values) => {
+                        setFormData({
+                            ...formData,
+                            conselho: values.conselho,
+                            numero_conselho: values.numero,
+                            uf_conselho: values.uf,
+                        } as any);
+                    }}
+                    onValidationChange={(result) => {
+                        if (result && result.status === 'valid') {
+                            setCrmValidated(true);
+                            setCrmValidationResult(result as unknown as Record<string, unknown>);
+                            // Clear the error if validation succeeded
+                            if (errors.numero_conselho) {
+                                setErrors(prev => {
+                                    const { numero_conselho, ...rest } = prev;
+                                    return rest;
+                                });
+                            }
+                        } else {
+                            setCrmValidated(false);
+                            setCrmValidationResult(null);
+                        }
+                    }}
+                    autoValidate={false}
+                    showStatusBadge={true}
+                    showProfessionalInfo={true}
+                />
                 {errors.numero_conselho && <div style={errorStyle}>{errors.numero_conselho}</div>}
             </div>
 

@@ -5,7 +5,7 @@ import { colors, spacing, borderRadius } from '../../theme/colors';
 import { User, Activity, Calendar, HeartPulse, Clock } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 interface BedDetailsModalProps {
     locationId: string;

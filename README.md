@@ -1,481 +1,572 @@
-# 🏥 HealthStack
+# HealthStack
 
 <div align="center">
 
-**Plataforma de Interoperabilidade em Saúde - FHIR R4 Nativo**
+**Plataforma de Interoperabilidade em Saude - FHIR R4 100% Nativo**
 
-[![Versão](https://img.shields.io/badge/versão-2.2.0-7c3aed.svg)](https://github.com/ivonsmatos/OpenEHRCore)
-[![FHIR](https://img.shields.io/badge/FHIR-R4-00d4ff.svg)](https://www.hl7.org/fhir/)
-[![Licença](https://img.shields.io/badge/licença-MIT-green.svg)](LICENSE)
+[![Versao](https://img.shields.io/badge/versao-2.3.0-7c3aed.svg)](https://github.com/ivonsmatos/OpenEHRCore)
+[![FHIR](https://img.shields.io/badge/FHIR-R4_100%25-00d4ff.svg)](https://www.hl7.org/fhir/)
+[![Licenca](https://img.shields.io/badge/licenca-MIT-green.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue.svg)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.11-yellow.svg)](https://www.python.org/)
-[![Mobile](https://img.shields.io/badge/Mobile-First-green.svg)](https://developer.mozilla.org/pt-BR/docs/Web/Progressive_web_apps)
-[![WCAG](https://img.shields.io/badge/WCAG-2.1_AA-blue.svg)](https://www.w3.org/WAI/WCAG21/quickref/)
+[![RNDS](https://img.shields.io/badge/RNDS-Compliant-brightgreen.svg)](https://rnds.saude.gov.br/)
 
 </div>
 
 ---
 
-## 📋 Visão Geral
+## Visao Geral
 
-**HealthStack** é uma plataforma completa de interoperabilidade em saúde construída sobre o padrão FHIR R4. Fornece solução completa para gestão de dados clínicos, incluindo funcionalidades de prontuário eletrônico, fluxos clínicos e integração com sistemas de saúde brasileiros.
+**HealthStack** e uma plataforma completa de interoperabilidade em saude construida sobre o padrao FHIR R4 com **conformidade 100%**. Fornece solucao completa para gestao de dados clinicos, incluindo funcionalidades de prontuario eletronico, fluxos clinicos e integracao com sistemas de saude brasileiros (RNDS, TISS).
 
-### 🌟 Características Principais
+### Caracteristicas Principais
 
-| Categoria                | Recursos                                                                              |
-| ------------------------ | ------------------------------------------------------------------------------------- |
-| **FHIR R4 Nativo**       | Todos os dados armazenados no HAPI FHIR, integração com $validate, 120+ endpoints API |
-| **PWA Offline-First**    | Service Worker, armazenamento IndexedDB, sincronização automática                     |
-| **Integrações Brasil**   | Pagamentos PIX, WhatsApp Business, Telemedicina, TISS, RNDS                           |
-| **Agente On-Premise**    | Bridge HL7 v2.x/MLLP, suporte DICOM, túnel WebSocket seguro                           |
-| **IA (apoio à decisão)** | **LLM open-source self-hosted** (vLLM/Ollama), **RAG** de manuais clínicos, visão e voz — dados não saem do ambiente (LGPD) |
-| **Segurança**            | Keycloak SSO, conformidade LGPD, auditoria, criptografia                              |
-| **📱 Mobile-First**      | **100% responsivo**, 15+ páginas otimizadas, chat WhatsApp-like                       |
-| **♿ Acessibilidade**    | **WCAG 2.1 AA**, aria-labels, navegação por teclado, leitores de tela                 |
-| **🎯 Recursos Clínicos** | MedicationAdministration, Task Workflow, Goals, Media (imagens/vídeos)                |
-
-1.
-
-| Métrica              | Score      | Status          |
-| -------------------- | ---------- | --------------- |
-| **Design System**    | 9/10       | ✅              |
-| **UX Mobile**        | 10/10      | ✅              |
-| **Acessibilidade**   | 9.5/10     | ✅              |
-| **Qualidade Código** | 9/10       | ✅              |
-| **Recursos FHIR**    | 100%       | ✅ 9/9 recursos |
-| **Code Quality**     | 9/10       | ✅              |
-| **Geral**            | **9.5/10** | 🎯 **Produção** |
+| Categoria | Recursos |
+|-----------|----------|
+| **FHIR R4 100%** | Tipos de dados nativos, StructureDefinitions BR, Operacoes $expand/$validate-code/$lookup/$translate |
+| **Validacao CRM** | Validacao de registros profissionais (CRM, COREN, CRO) com integracao CFM API |
+| **Audit Trail Completo** | AuditEvent (ATNA), Provenance, conformidade LGPD/HIPAA |
+| **Terminologia** | ICD-10, SNOMED-CT, TUSS, CIAP-2, RxNorm com validacao |
+| **Perfis Brasileiros** | Patient-BR, Practitioner-BR, Organization-BR (RNDS) |
+| **Search Parameters** | _include, _revinclude, modifiers (:exact, :contains, :missing) |
+| **PWA Offline-First** | Service Worker, IndexedDB, sincronizacao automatica |
+| **Integracoes Brasil** | PIX, WhatsApp Business, Telemedicina, TISS, RNDS |
+| **IA Multimodal** | MedGemma (Visao), MedASR (Voz), Resumo Inteligente |
+| **Seguranca** | Keycloak SSO, RBAC, criptografia, auditoria completa |
 
 ---
 
-Capturas de Tela
+## Novidades v2.3.0 - Sprint 39: Validacao de Registro Profissional (CRM)
 
-### Painel de Controle
+### Validacao CRM/COREN/CRO
 
-![Painel](docs/screenshots/dashboard.png)
+Sistema completo de validacao de registros em conselhos profissionais de saude, seguindo padroes **LGPD, FHIR R4 e GDPR**.
 
-### Gestão de Pacientes
+#### Conselhos Suportados
 
-![Pacientes](docs/screenshots/patients.png)
+| Conselho | Descricao |
+|----------|-----------|
+| **CRM** | Conselho Regional de Medicina |
+| **COREN** | Conselho Regional de Enfermagem |
+| **CRO** | Conselho Regional de Odontologia |
+| **CRF** | Conselho Regional de Farmacia |
+| **CREFITO** | Conselho Regional de Fisioterapia |
+| **CRN** | Conselho Regional de Nutricao |
+| **CRFa** | Conselho Regional de Fonoaudiologia |
+| **CRP** | Conselho Regional de Psicologia |
+| **CRBM** | Conselho Regional de Biomedicina |
+| **CRESS** | Conselho Regional de Servico Social |
 
-### Agenda de Consultas
+#### Endpoints de Validacao
 
-![Consulta
-![Appointments](docs/screenshots/appointments.png)
+| Endpoint | Metodo | Descricao |
+|----------|--------|-----------|
+| `/api/v1/crm/info/` | GET | Informacoes do servico |
+| `/api/v1/crm/validate/` | POST | Validar registro individual |
+| `/api/v1/crm/validate-batch/` | POST | Validar em lote (max 100) |
+| `/api/v1/crm/conselhos/` | GET | Listar conselhos suportados |
+| `/api/v1/crm/stats/` | GET | Estatisticas (admin) |
 
-## 🏗️ Arquitetura
+#### Exemplo de Uso
 
+```python
+import requests
+
+# Validar CRM
+response = requests.post(
+    "http://localhost:8000/api/v1/crm/validate/",
+    json={
+        "conselho": "CRM",
+        "numero": "123456",
+        "uf": "SP",
+        "use_api": True  # Usar API do CFM se disponivel
+    },
+    headers={"Authorization": "Bearer <token>"}
+)
+
+# Resposta
+{
+    "status": "valid",
+    "conselho": "CRM",
+    "numero": "123456",
+    "uf": "SP",
+    "nome_profissional": "Dr. Joao da Silva",  # Se API disponivel
+    "especialidades": ["Cardiologia"],
+    "situacao_registro": "Regular",
+    "validation_id": "uuid",
+    "validated_at": "2024-01-01T12:00:00",
+    "validation_source": "api",
+    "fhir_identifier": { ... }  # FHIR Practitioner.identifier pronto
+}
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         HealthStack v2.1.0                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
-│  │  Frontend    │  │   Backend    │  │  HAPI FHIR   │               │
-│  │  React PWA   │◄─┤   Django     │◄─┤   Server     │               │
-│  │  TypeScript  │  │   Python     │  │   R4         │               │
-│  └──────────────┘  └──────────────┘  └──────────────┘               │
-│         │                 │                 │                        │
-│         └─────────────────┼─────────────────┘                        │
-│                           │                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
-│  │  Keycloak    │  │  PostgreSQL  │  │   Redis      │               │
-│  │  Auth/SSO    │  │  Banco Dados │  │   Cache      │               │
-│  └──────────────┘  └──────────────┘  └──────────────┘               │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────┐
-│  Agente On-Premise (Hospital)                                       │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐                            │
-│  │ Lab      │ │ ECG      │ │ PACS     │                            │
-│  │ Analyzer │ │ Machine  │ │ DICOM    │                            │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘                            │
-│       │HL7/MLLP    │HL7        │DICOM                              │
-│       └────────────┴────────────┘                                   │
-│                    │                                                 │
-│            ┌───────┴───────┐                                        │
-│            │ HealthStack   │────────HTTPS────────► Servidor Cloud  │
-│            │    Agent      │                                        │
-│            └───────────────┘                                        │
-└─────────────────────────────────────────────────────────────────────┘
+#### Componente Frontend
+
+```tsx
+import { CRMValidation } from './components/practitioners';
+
+<CRMValidation
+    initialConselho="CRM"
+    initialUf="SP"
+    required={true}
+    onValidationChange={(result) => {
+        if (result?.status === 'valid') {
+            console.log('CRM validado:', result);
+        }
+    }}
+    showProfessionalInfo={true}
+    showStatusBadge={true}
+/>
+```
+
+#### Conformidade
+
+- **LGPD Art. 6, 7**: Minimizacao de dados, registro de auditoria
+- **FHIR R4**: Gera `Practitioner.identifier` valido
+- **GDPR Art. 5**: Transparencia, licitude do tratamento
+
+---
+
+## Novidades v2.2.0 - Sprint 36: FHIR R4 100% Compliance
+
+### Tipos de Dados FHIR Nativos
+
+Implementacao completa dos tipos de dados FHIR R4 em `fhir_types.py`:
+
+```python
+from fhir_api.fhir_types import (
+    Identifier, CodeableConcept, Reference, Period,
+    Quantity, HumanName, ContactPoint, Address,
+    BrazilianIdentifiers, IdentifierList
+)
+
+# Criar identificador CPF
+cpf = BrazilianIdentifiers.cpf_identifier("123.456.789-00")
+
+# Criar identificador CRM
+crm = BrazilianIdentifiers.crm_identifier("12345", "SP")
+
+# CodeableConcept com terminologia
+diagnosis = CodeableConcept.simple(
+    code="J06.9",
+    system="http://hl7.org/fhir/sid/icd-10",
+    display="Acute upper respiratory infection"
+)
+```
+
+### Perfis Brasileiros (RNDS)
+
+StructureDefinitions para conformidade RNDS:
+
+- **Patient-BR**: CPF/CNS obrigatorios, Raca/Cor, Nacionalidade
+- **Practitioner-BR**: CRM, COREN, CRO, CRF, CRP com 58 especialidades CBO
+- **Organization-BR**: CNES/CNPJ, tipos de estabelecimento
+
+```python
+from fhir_api.profiles import (
+    PATIENT_BR_PROFILE,
+    PRACTITIONER_BR_PROFILE,
+    ORGANIZATION_BR_PROFILE
+)
+```
+
+### Operacoes de Terminologia FHIR
+
+Endpoints completos para operacoes de terminologia:
+
+| Endpoint | Operacao | Descricao |
+|----------|----------|-----------|
+| `GET /terminology/ValueSet/$expand` | $expand | Expande ValueSet listando codigos |
+| `GET /terminology/ValueSet/$validate-code` | $validate-code | Valida codigo em ValueSet |
+| `GET /terminology/CodeSystem/$lookup` | $lookup | Busca detalhes de codigo |
+| `GET /terminology/ConceptMap/$translate` | $translate | Traduz entre sistemas |
+
+### AuditEvent e Provenance (LGPD/HIPAA)
+
+Audit trail completo para conformidade regulatoria:
+
+```python
+from fhir_api.models_audit import AuditEvent, Provenance
+
+# Registrar operacao REST
+AuditEvent.log_rest_operation(
+    action='R',  # Read
+    resource_type='Patient',
+    resource_id='123',
+    user=request.user,
+    request=request,
+    outcome='0'  # Success
+)
+
+# Registrar proveniencia
+Provenance.record_creation(
+    target_references=[{'reference': 'Patient/123'}],
+    agent_id='Practitioner/456',
+    agent_name='Dr. Silva'
+)
+```
+
+**Endpoints de Audit:**
+
+| Endpoint | Descricao |
+|----------|-----------|
+| `GET /audit-events-v2/` | Lista eventos de auditoria |
+| `GET /audit-events-v2/stats/` | Estatisticas de auditoria |
+| `GET /audit-events-v2/by-patient/{id}/` | Eventos por paciente |
+| `GET /audit-events-v2/security-report/` | Relatorio de seguranca |
+| `GET /provenances/` | Lista proveniencias |
+| `GET /provenances/by-target/` | Proveniencia por recurso |
+
+### FHIR Search Parameters
+
+Suporte completo a parametros de busca FHIR:
+
+```python
+from fhir_api.search import FHIRSearchMixin, SearchParameter, SearchParamType
+
+class PatientViewSet(FHIRSearchMixin, viewsets.ModelViewSet):
+    search_parameters = {
+        'name': SearchParameter(
+            name='name',
+            type=SearchParamType.STRING,
+            path='name',
+            django_field='name'
+        ),
+        'birthdate': SearchParameter(
+            name='birthdate',
+            type=SearchParamType.DATE,
+            path='birthDate',
+            django_field='birth_date'
+        ),
+    }
+```
+
+**Recursos suportados:**
+- `_include`: Inclui recursos referenciados
+- `_revinclude`: Inclui recursos que referenciam
+- Modifiers: `:exact`, `:contains`, `:missing`
+- Prefixos: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
+- Paginacao: `_count`, `_offset`
+
+### Validacao de Terminologia
+
+```python
+from fhir_api.validators import (
+    TerminologyValidator,
+    validate_code,
+    BindingStrength
+)
+
+validator = TerminologyValidator()
+
+# Validar codigo ICD-10
+result = validator.validate_code(
+    code="J06.9",
+    system="http://hl7.org/fhir/sid/icd-10"
+)
+
+# Validar CPF brasileiro
+is_valid = validator.validate_brazilian_cpf("123.456.789-00")
+
+# Validar CNS
+is_valid = validator.validate_brazilian_cns("123456789012345")
 ```
 
 ---
 
-## 🚀 Início Rápido
+## Arquitetura
 
-### Pré-requisitos
+```
++---------------------------------------------------------------------+
+|                         HealthStack v2.3.0                          |
++---------------------------------------------------------------------+
+|                                                                      |
+|  +-------------+  +-------------+  +-------------+                  |
+|  |  Frontend   |  |   Backend   |  |  HAPI FHIR  |                  |
+|  |  React PWA  |<-|   Django    |<-|   Server    |                  |
+|  |  TypeScript |  |   Python    |  |   R4        |                  |
+|  +-------------+  +-------------+  +-------------+                  |
+|         |                |                |                          |
+|         +----------------+----------------+                          |
+|                          |                                           |
+|  +-------------+  +-------------+  +-------------+                  |
+|  |  Keycloak   |  |  PostgreSQL |  |   Redis     |                  |
+|  |  Auth/SSO   |  |  Database   |  |   Cache     |                  |
+|  +-------------+  +-------------+  +-------------+                  |
+|                                                                      |
++---------------------------------------------------------------------+
+
++---------------------------------------------------------------------+
+|  Agente On-Premise (Hospital)                                       |
+|  +----------+ +----------+ +----------+                             |
+|  | Lab      | | ECG      | | PACS     |                             |
+|  | Analyzer | | Machine  | | DICOM    |                             |
+|  +----+-----+ +----+-----+ +----+-----+                             |
+|       | HL7/MLLP   | HL7       | DICOM                              |
+|       +------------+-----------+                                    |
+|                    |                                                 |
+|            +-------+-------+                                        |
+|            | HealthStack   |--------HTTPS--------> Servidor Cloud   |
+|            |    Agent      |                                        |
+|            +---------------+                                        |
++---------------------------------------------------------------------+
+```
+
+---
+
+## Inicio Rapido
+
+### Pre-requisitos
 
 - Docker & Docker Compose
 - Node.js 18+
 - Python 3.11+
 
-### Instalação
+### Instalacao
 
 ```bash
-# Clonar repositório
+# Clonar repositorio
 git clone https://github.com/ivonsmatos/OpenEHRCore.git
 cd OpenEHRCore
 
-# Iniciar todos os serviços
+# Iniciar servicos
 cd docker && docker-compose up -d
+
+# Rodar migrations
+docker-compose exec django python manage.py migrate
 
 # Popular dados de exemplo
 python scripts/seed/seed_fhir_direct.py
 
-# Iniciar servidor de desenvolvimento frontend
+# Iniciar frontend
 cd frontend-pwa && npm install && npm run dev
 ```
 
 ### Acesso
 
-| Serviço         | URL                            |
-| --------------- | ------------------------------ |
-| **Frontend**    | <http://localhost:5173>        |
-| **API Backend** | <http://localhost:8000/api/v1> |
-| **HAPI FHIR**   | <http://localhost:8080/fhir>   |
-| **Keycloak**    | <http://localhost:8180>        |
+| Servico | URL |
+|---------|-----|
+| **Frontend** | http://localhost:5173 |
+| **API Backend** | http://localhost:8000/api/v1 |
+| **HAPI FHIR** | http://localhost:8080/fhir |
+| **Keycloak** | http://localhost:8180 |
+| **Swagger** | http://localhost:8000/api/v1/docs/swagger/ |
 
 ---
 
-## 📊 Endpoints da API (120+)
+## Endpoints da API (140+)
 
 ### Recursos FHIR Principais
 
-| Endpoint                              | Descrição                               |
-| ------------------------------------- | --------------------------------------- |
-| `/api/v1/patients/`                   | Gestão de pacientes                     |
-| `/api/v1/practitioners/`              | Gestão de profissionais                 |
-| `/api/v1/organizations/`              | Gestão de organizações                  |
-| `/api/v1/appointments/`               | Agendamento de consultas                |
-| `/api/v1/encounters/`                 | Atendimentos clínicos                   |
-| `/api/v1/observations/`               | Sinais vitais e resultados de exames    |
-| `/api/v1/conditions/`                 | Diagnósticos e condições                |
-| `/api/v1/medications/`                | Prescrições de medicamentos             |
-| `/api/v1/medication-administrations/` | **NOVO** Registro de administração      |
-| `/api/v1/tasks/`                      | **NOVO** Workflow e tarefas             |
-| `/api/v1/goals/`                      | **NOVO** Objetivos terapêuticos         |
-| `/api/v1/media/`                      | **NOVO** Imagens e vídeos clínicos      |
-| `/api/v1/documents/`                  | Documentos clínicos (DocumentReference) |
-| `/api/v1/bundles/`                    | Transações em lote                      |
-| `/api/v1/careplans/`                  | Planos de cuidado                       |
-| `/api/ai/analyze-image/`              | Análise de imagem (LLM multimodal self-hosted) |
-| `/api/ai/transcribe/`                 | Transcrição de áudio (Whisper self-hosted) |
-| `/api/v1/ai/summary/{id}/`            | Resumo clínico (apoio à decisão)        |
-| `/api/v1/ai/assistant/`               | Assistente clínico com RAG dos manuais  |
+| Endpoint | Descricao |
+|----------|-----------|
+| `/api/v1/patients/` | Gestao de pacientes |
+| `/api/v1/practitioners/` | Gestao de profissionais |
+| `/api/v1/organizations/` | Gestao de organizacoes |
+| `/api/v1/appointments/` | Agendamento de consultas |
+| `/api/v1/encounters/` | Atendimentos clinicos |
+| `/api/v1/observations/` | Sinais vitais e exames |
+| `/api/v1/conditions/` | Diagnosticos |
+| `/api/v1/medications/` | Prescricoes |
+| `/api/v1/medication-administrations/` | Administracao de medicamentos |
+| `/api/v1/tasks/` | Workflow e tarefas |
+| `/api/v1/goals/` | Objetivos terapeuticos |
+| `/api/v1/media/` | Imagens e videos clinicos |
+| `/api/v1/documents/` | DocumentReference |
+| `/api/v1/bundles/` | Transacoes em lote |
+| `/api/v1/careplans/` | Planos de cuidado |
+| `/api/v1/audit-events-v2/` | **NOVO** Eventos de auditoria |
+| `/api/v1/provenances/` | **NOVO** Proveniencia de dados |
 
-### Integrações Brasil
+### Operacoes de Terminologia
 
-| Endpoint                | Descrição                 |
-| ----------------------- | ------------------------- |
-| `/api/v1/pix/`          | Geração de pagamentos PIX |
-| `/api/v1/whatsapp/`     | Notificações WhatsApp     |
-| `/api/v1/telemedicine/` | Consultas por vídeo       |
-| `/api/v1/tiss/`         | Integração ANS TISS       |
-| `/api/v1/rnds/`         | RNDS Ministério da Saúde  |
+| Endpoint | Descricao |
+|----------|-----------|
+| `/api/v1/terminology/ValueSet/$expand` | **NOVO** Expandir ValueSet |
+| `/api/v1/terminology/ValueSet/$validate-code` | **NOVO** Validar codigo |
+| `/api/v1/terminology/CodeSystem/$lookup` | **NOVO** Lookup de codigo |
+| `/api/v1/terminology/ConceptMap/$translate` | **NOVO** Traduzir codigo |
+| `/api/v1/terminology/rxnorm/search/` | Buscar medicamentos |
+| `/api/v1/terminology/icd10/search/` | Buscar CID-10 |
+| `/api/v1/terminology/tuss/search/` | Buscar procedimentos TUSS |
 
-### Operações FHIR
+### Validacao de Registros Profissionais
 
-| Endpoint | Descrição |
-| -------- | --------- |
+| Endpoint | Descricao |
+|----------|-----------|
+| `/api/v1/crm/info/` | **NOVO** Informacoes do servico de validacao |
+| `/api/v1/crm/validate/` | **NOVO** Validar CRM/COREN/CRO individual |
+| `/api/v1/crm/validate-batch/` | **NOVO** Validacao em lote |
+| `/api/v1/crm/conselhos/` | **NOVO** Listar conselhos suportados |
 
-| `/apPWA Offline-First
+### Integracoes Brasil
 
-HealthStack funciona mesmo sem conexão com a internet:
+| Endpoint | Descricao |
+|----------|-----------|
+| `/api/v1/pix/` | Pagamentos PIX |
+| `/api/v1/whatsapp/` | Notificacoes WhatsApp |
+| `/api/v1/telemedicine/` | Consultas por video |
+| `/api/v1/tiss/` | Integracao ANS TISS |
+| `/api/v1/rnds/` | RNDS Ministerio da Saude |
 
-- **Service Worker** armazena em cache recursos estáticos e respostas da API
-- **IndexedDB** armazena dados localmente para acesso offline
-- **Sincronização em Background** sincroniza mudanças automaticamente quando online
-- **Resolução de Conflitos** gerencia atualizações concorrentes
+### IA e Analytics
 
-````typescript
-// Usando o hook offline
-import { useOfflineSync } from "@/hooks/useOfflineSync";
-
-function PatientForm() {
-  const { isOnline, queueRequest, pendingCount } = useOfflineSync();
-
-  const savePatient = async (data) => {
-    await queueRequest("/api/v1/patients/", "POST", data);
-    // Funciona offline! Sincroniza automaticamente quandolineSync";
-
-function PatientForm() {
-  const { isOnline, queueRequest, pendingCount } = useOfflineSync();
-
-  const savePatient = async (data) => {
-    await queueRequest("/api/v1/patients/", "POST", data);
-    //Agente On-Premise
-
-Conecte equipamentos hospitalares legados ao HealthStack:
-
-```bash
-# Instalar agente
-cd agent
-pip install -r requirements.txt
-
-# Configurar
-cp config.example.yaml config.yaml
-# Edite config.yaml com URL do servidor e chave API
-
-# Executar
-python -m openehrcore_agent
-````
-
-### Protocolos Suportados
-
-| Protocolo       | Status      | Caso de Uso                      |
-| --------------- | ----------- | -------------------------------- |
-| HL7 v2.x (MLLP) | ✅ Pronto   | Analisadores de laboratório, ADT |
-| DICOM           | 🔜 Em breve | PACS, modalidades de imagem      |
-| ASTM            | 🔜 Em breve | Instrumentos laboratoriais       |
-
-### Supported Protocols
-
-| Protocol        | Status    | Use Case                   |
-| --------------- | --------- | -------------------------- |
-| HL7 v2.x (MLLP) | ✅ Ready  | Lab analyzers, ADT systems |
-| DICOM           | 🔜 Coming | PACS, imaging modalities   |
-| ASTM            | 🔜 Coming | Laboratory instruments     |
+| Endpoint | Descricao |
+|----------|-----------|
+| `/api/v1/ai/analyze-image/` | Analise de imagem (MedGemma) |
+| `/api/v1/ai/transcribe/` | Transcricao de audio (MedASR) |
+| `/api/v1/ai/summary/{id}/` | Resumo inteligente |
+| `/api/v1/analytics/population/` | Metricas populacionais |
+| `/api/v1/analytics/clinical/` | Metricas clinicas |
 
 ---
 
-## 🔒 Segurança e Conformidade
+## Estrutura do Projeto
 
-| Padrão            | Status                      |
-| ----------------- | --------------------------- |
-| LGPD (Brasil)     | ✅ Conforme                 |
-| HIPAA             | ✅ Pronto                   |
-| ISO 27001         | ✅ Controles implementados  |
-| HL7 FHIR Security | ✅ OAuth 2.0, SMART on FHIR |
-
-### Recursos de Segurança
-
-- **Keycloak SSO** - Autenticação centralizada
-- **RBAC** - Controle de acesso baseado em papéis
-- **Auditoria** - Todas as ações registradas (AuditEvent)
-- **Criptografia de Dados** - Em repouso e em trânsito
-- **Gestão de Consentimento** - Rastreamento de consentimento LGPD
-
----
-
-## 📁 Estrutura do Projeto
-
-````
+```
 HealthStack/
-├── frontend-pwa/          # React TypeScript PWA
-│   ├── src/
-│   │   ├── components/    # Componentes reutilizáveis
-│   │   │   ├── clinical/  # GoalTracker, MediaViewer
-│   │   │   └── base/      # Componentes base
-│   │   ├── pages/         # Páginas
-│   │   ├── hooks/         # Hooks customizados
-│   │   ├── services/      # Serviços da API
-│   │   └── types/         # Tipos TypeScript
-│   └── public/            # Recursos estáticos
-│
-├── backend-django/        # Django REST API
-│   ├── fhir_api/          # Endpoints FHIR
-│   │   ├── models_*.py    # Models (MedicationAdministration, Task, Goal, Media)
-│   │   ├── serializers_*.py # Serializers
-│   │   ├── views_*.py     # Views da API
-│   │   ├── permissions.py # Permissões RBAC
-│   │   └── tests/         # Testes unitários
-│   └── openehrcore/       # Configurações Django
-│
-├── agent/                 # Agente on-premise
-│   └── openehrcore_agent/ # Pacote do agente
-│
-├── sdk/                   # TypeScript SDK
-├── docker/                # Configurações Docker
-├── docs/                  # Documentação
-└── scriptes
++-- frontend-pwa/           # React TypeScript PWA
+|   +-- src/
+|   |   +-- components/     # Componentes reutilizaveis
+|   |   +-- pages/          # Paginas
+|   |   +-- hooks/          # Hooks customizados
+|   |   +-- services/       # Servicos da API
+|   |   +-- types/          # Tipos TypeScript
+|
++-- backend-django/         # Django REST API
+|   +-- fhir_api/
+|   |   +-- fhir_types.py   # NOVO: Tipos FHIR R4 nativos
+|   |   +-- models_audit.py # NOVO: AuditEvent e Provenance
+|   |   +-- profiles/       # StructureDefinitions BR
+|   |   +-- search/         # FHIR Search Parameters
+|   |   +-- operations/     # Operacoes de terminologia
+|   |   +-- validators/     # Validacao de terminologia
+|   |   +-- services/
+|   |   |   +-- crm_validation_service.py  # NOVO: Validacao CRM/COREN
+|   |   +-- views_crm_validation.py        # NOVO: API de validacao
+|   |   +-- views_*.py      # Views da API
+|   |   +-- models_*.py     # Models Django
+|
++-- agent/                  # Agente on-premise HL7/MLLP
++-- docker/                 # Configuracoes Docker
++-- docs/                   # Documentacao
++-- scripts/                # Scripts utilitarios
+```
 
-```bash
-# Testes backend
-cd backend-django
-pytest
+---
 
-# Testes frontend
-cd frontend-pwa
-npm test
+## Seguranca e Conformidade
 
-# Testes E2E
-# Frontend tests
-cd frontend-pwa
-npm test
+| Padrao | Status |
+|--------|--------|
+| LGPD (Brasil) | Conforme |
+| HIPAA | Pronto |
+| ISO 27001 | Controles implementados |
+| HL7 FHIR Security | OAuth 2.0, SMART on FHIR |
+| IHE ATNA | AuditEvent completo |
 
-# E2E tests
-npm ru# Histórico de Versões
+### Recursos de Seguranca
 
-### v2.2.0 - Multimodal Intelligence (MedGemma + MedASR) 👁️🗣️
+- **Keycloak SSO** - Autenticacao centralizada
+- **RBAC** - Controle de acesso baseado em papeis
+- **AuditEvent** - Todas as acoes registradas (ATNA compliant)
+- **Provenance** - Rastreabilidade de origem de dados
+- **Criptografia** - Em repouso e em transito
+- **Consentimento** - Rastreamento LGPD
 
-**🆕 IA Multimodal (Backend-Driven):**
+---
 
-- ✅ **MedicalVisionService** (Core App)
-  - Integração com **MedGemma 1.5** (Ollama)
-  - Análise de imagens médicas (Raio-X, Tomografias)
-  - Geração de laudos estruturados
+## Historico de Versoes
 
-- ✅ **MedicalVoiceService**
-  - Integração com **Google MedASR** (Hugging Face)
-  - Transcrição de áudio clínico de alta precisão
-  - Fallback automático para Whisper
+### v2.3.0 - Validacao de Registro Profissional (Sprint 39)
 
-- ✅ **Resumo Inteligente 2.0**
-  - Migrado do Frontend para Backend
-  - Elimina necessidade de Ollama no cliente
-  - Segurança e performance melhoradas
+**Novos Recursos:**
+- Validacao de CRM/COREN/CRO com integracao opcional a API do CFM
+- 10 conselhos profissionais suportados
+- Componente React `CRMValidation` com feedback visual
+- Geracao automatica de FHIR `Practitioner.identifier`
+- Cache de validacoes (TTL 24h)
+- Auditoria LGPD-compliant (apenas hashes, sem dados sensiveis)
+- Validacao em lote (ate 100 registros)
 
-**🔐 Infraestrutura & Segurança:**
+**Conformidade:**
+- LGPD Art. 6, 7 (minimizacao de dados, audit trail)
+- FHIR R4 Practitioner.identifier
+- GDPR Art. 5 (licitude, transparencia)
 
-- ✅ **Nginx + SSL**
-  - Configuração automática Certbot
-  - `api.grephub.com.br` seguro (HTTPS)
-  - Headers de segurança e CORS restrito
+### v2.2.0 - FHIR R4 100% Compliance (Sprint 36)
 
-### v2.1.0 - Recursos FHIR Completos + Mobile-First 📱💊
+**Novos Recursos:**
+- Tipos de dados FHIR R4 nativos (`fhir_types.py`)
+- Perfis brasileiros RNDS (Patient-BR, Practitioner-BR, Organization-BR)
+- Operacoes de terminologia ($expand, $validate-code, $lookup, $translate)
+- AuditEvent e Provenance para conformidade LGPD/HIPAA
+- FHIR Search Parameters (_include, _revinclude, modifiers)
+- Validacao de terminologia com BindingStrength
+- Validacao de identificadores brasileiros (CPF, CNS, CNES)
 
-**🆕 Novos Recursos FHIR (Sprints 34-35):**
+### v2.1.0 - Recursos FHIR Completos + Mobile-First
 
-- ✅ **MedicationAdministration** - Registro de administração de medicamentos
-  - 8 endpoints (complete, stop, statistics)
-  - Dosagem completa (dose, via, rate, método)
-  - Workflow (in-progress → completed/stopped)
-  - Integração com MedicationRequest
+- MedicationAdministration, Task, Goal, Media
+- Responsividade 100% em 15+ paginas
+- Conformidade WCAG 2.1 AA
 
-- ✅ **Task** - Workflow genérico de tarefas
-  - 12 endpoints (accept, start, complete, reject, cancel, assign)
-  - 12 estados de lifecycle
-  - Inputs/Outputs estruturados
-  - Restrições de período
+### v2.0.0 - IA Multimodal
 
-- ✅ **Goal** - Objetivos terapêuticos standalone
-  - 10 endpoints (activate, achieve, add-target)
-  - Lifecycle status (9 estados)
-  - Achievement status (improving, achieved, etc)
-  - Targets mensuráveis (GoalTarget)
-  - Component frontend GoalTracker.tsx
+- MedGemma para analise de imagens
+- MedASR para transcricao de audio
+- Resumo inteligente
 
-- ✅ **Media** - Imagens e vídeos clínicos
-  - 9 endpoints (upload, download, thumbnail, preview)
-  - Suporte a imagens (JPEG, PNG, WEBP)
-  - Suporte a vídeos (MP4, WEBM)
-  - Suporte a áudios (MP3, WAV, OGG)
-  - Geração automática de thumbnails
-  - Hash SHA-256 para integridade
-  - Component frontend MediaViewer.tsx
+---
 
-**📊 Status do Roadmap:** 9/9 recursos FHIR (100%) ✅
+## Documentacao
 
-**🎨 Melhorias UX/UI:**
+### Guias FHIR
+- [Guia de Implementacao FHIR](docs/FHIR_IMPLEMENTATION_GUIDE.md)
+- [Gestao de Documentos](docs/DOCUMENT_MANAGEMENT_GUIDE.md)
 
-- ✅ Responsividade 100% em 15+ páginas
-- ✅ Chat estilo WhatsApp com mensagens em bolhas
-- ✅ Conversão automática Table→Cards em mobile
-- ✅ Filtros interativos com feedback visual
-- ✅ Input font-size 16px (previne zoom iOS)
-- ✅ Design System consistente (cores, spacing)
-- ✅ Conformidade WCAG 2.1 AA
-- ✅ aria-labels em todos os componentes interativos
+### Configuracao
+- [Guia de Setup](docs/SETUP.md)
+- [Setup Keycloak](docs/KEYCLOAK_SETUP.md)
 
-**📱 Páginas Responsivas:**
+### Seguranca
+- [Auditoria de Seguranca](docs/seguranca/SECURITY_AUDIT_REPORT.md)
 
-- Dashboard, Lista de Pacientes, Workspace Clínico
-- Nota SOAP, Sinais Vitais, Formulários clínicos
-- Workspace do Profissional, Agendamento
-- Gestão de Leitos, Prescrição, Visitantes, Chat
+---
 
-**🔧 Hooks Customizados:**
+## Contribuindo
 
-- useIsMobile (<768px) FHIR
-
-- [📋 Guia de Implementação FHIR](docs/FHIR_IMPLEMENTATION_GUIDE.md) - Recursos FHIR R4 completos
-- [📄 Gestão de Documentos](docs/DOCUMENT_MANAGEMENT_GUIDE.md) - DocumentReference técnico
-- [🚀 Início Rápido Documentos](docs/DOCUMENT_QUICK_START.md) - Guia do usuário
-
-### Guias de Implementação UX/UI
-
-- [✅ Melhorias UX/UI e Responsividade](frontend-pwa/MELHORIAS_APLICADAS.md) - Relatório completo (Score: 9.5/10)
-- [📱 Responsividade Implementada](docs/implementacao/RESPONSIVIDADE_IMPLEMENTADA.md) - 15+ páginas mobile-first
-- [📋 Implementações Concluídas](docs/implementacao/IMPLEMENTACOES_CONCLUIDAS.md) - Checklist completo
-- [📊 Relatório Final](docs/implementacao/RELATORIO_FINAL_IMPLEMENTACAO.md) - Métricas e resultados
-
-### Guias de Configuração
-
-- [🚀 Guia de Setup](docs/SETUP.md) - Instalação e configuração
-- [🔑 Setup Keycloak](docs/KEYCLOAK_SETUP.md) - Autenticação SSO
-- [📚 Guia GitHub Projects](docs/GITHUB_PROJECTS_GUIDE.md) - Gerenciamento de projeto
-
-### Guias de Testes e Segurança
-
-- [🧪 Guia de Testes](docs/testes/TESTING_GUIDE.md) - Testes automatizados
-- [🎭 Testes Avançados](docs/testes/ADVANCED_TESTING_GUIDE.md) - Playwright e vitest
-- [🎪 Demo Playwright](docs/testes/PLAYWRIGHT_DEMO.md) - Exemplos práticos
-- [🔐 Auditoria de Segurança](docs/seguranca/SECURITY_AUDIT_REPORT.md) - Auditoria OWASP
-- [📋 Sumário DevSecOps](docs/seguranca/EXECUTIVE_SUMMARY_DEVSECOPS.md) - Práticas de segurança
-
-### Códigos e Padrões
-
-- **Design System:** `frontend-pwa/src/theme/colors.ts`
-- **Hooks Responsivos:** `frontend-pwa/src/hooks/useMediaQuery.ts`
-- **Componentes Base:** `frontend-pwa/src/components/base/`
-- **Componentes Clínicos:** `frontend-pwa/src/components/clinical/`
-  - GoalTracker.tsx - Rastreamento de objetivos
-  - MediaViewer.tsx - Visualizador de mídia
-**Melhorian-Premise para HL7/MLLP
-- 🆕 Integração FHIR $validate
-- 🆕 Integrações Brasil (PIX, WhatsApp, Telemedicina)
-- 🔄aça um Fork do projeto
-2. Crie uma branch para sua funcionalidade (`git checkout -b feature/NovaFuncionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/NovaFuncionalidade`)
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/NovaFuncionalidade`)
+3. Commit (`git commit -m 'Add nova funcionalidade'`)
+4. Push (`git push origin feature/NovaFuncionalidade`)
 5. Abra um Pull Request
 
-### Padrões de Código
-
-**Frontend:**
-- ✅ Use hooks customizados para responsividade (useIsMobile)
-- ✅ Sempre adicione aria-labels em componentes interativos
-- ✅ Input font-size 16px em mobile
-- ✅ Use variáveis do Design System (colors.*, spacing.*)
-- ✅ Teste em mobile, tablet e desktop
-- ✅ Siga WCAG 2.1 AA
+### Padroes de Codigo
 
 **Backend:**
-- ✅ Siga padrões FHIR R4
-- ✅ Adicione docstrings em todos os métodos
-- ✅ Crie testes unitários (pytest)
-- ✅ Use serializers para validação
-- ✅ Implemente permissões RBAC
-- ✅ Registre auditoria em ações críticas
+- Siga padroes FHIR R4
+- Use tipos de `fhir_types.py`
+- Registre auditoria em acoes criticas
+- Adicione testes unitarios
+
+**Frontend:**
+- Use hooks customizados (useIsMobile)
+- Adicione aria-labels
+- Siga WCAG 2.1 AA
 
 ---
 
-## 🤝 Contribuindo
+## Licenca
 
-Contribuições são bem-vindas! Leia o [Guia de Contribuição](CONTRIBUTING.md) para
-detalhes sobre fluxo de trabalho, padrões de código e testes.
-
-Resumo:
-
-1. Faça um fork do projeto.
-2. Crie uma branch (`git checkout -b feat/MinhaFuncionalidade`).
-3. Commit seguindo Conventional Commits (`git commit -m 'feat: nova funcionalidade'`).
-4. Push para a branch e abra um Pull Request.
-
----
-
-## 📄 Licença
-
-Licença MIT — veja [LICENSE](LICENSE) para detalhes.
+MIT License - Veja [LICENSE](LICENSE) para detalhes.
 
 ---
 
 <div align="center">
 
-**Desenvolvido com ❤️ para transformar a saúde digital no Brasil**
+**Desenvolvido com amor para transformar a saude digital no Brasil**
 
-[Documentação](./docs) • [Issues](https://github.com/ivonsmatos/OpenEHRCore/issues)
+[Website](https://healthstack.com.br) | [Documentacao](./docs) | [Issues](https://github.com/ivonsmatos/OpenEHRCore/issues)
 
 </div>
