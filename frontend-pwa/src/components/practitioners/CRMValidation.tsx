@@ -11,7 +11,7 @@
  * - Acessibilidade WCAG 2.1 AA
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Check, X, AlertCircle, Loader2, Shield, Info } from 'lucide-react';
 import { colors, spacing, borderRadius, shadows, transitions } from '../../theme/colors';
@@ -119,12 +119,14 @@ const CRMValidation: React.FC<CRMValidationProps> = ({
     // Debounce timer para auto-validacao
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
-    // Notificar mudancas
+    // Notificar mudancas. IMPORTANTE: usar ref para o callback. Incluir `onChange`
+    // nas deps causava loop infinito de re-render, porque o pai (PractitionerForm)
+    // passa um onChange recriado a cada render que chama setState.
+    const onChangeRef = useRef(onChange);
+    onChangeRef.current = onChange;
     useEffect(() => {
-        if (onChange) {
-            onChange({ conselho, numero, uf });
-        }
-    }, [conselho, numero, uf, onChange]);
+        onChangeRef.current?.({ conselho, numero, uf });
+    }, [conselho, numero, uf]);
 
     // Validacao de formato local
     const validateFormat = useCallback((num: string, cons: string): boolean => {

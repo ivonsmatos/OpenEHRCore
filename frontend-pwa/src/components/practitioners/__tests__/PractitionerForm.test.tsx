@@ -15,7 +15,7 @@ describe('PractitionerForm', () => {
 
         expect(screen.getByText('Nome *')).toBeInTheDocument();
         expect(screen.getByText('Sobrenome *')).toBeInTheDocument();
-        expect(screen.getByText('Conselho Profissional *')).toBeInTheDocument();
+        expect(screen.getByText(/Registro Profissional/)).toBeInTheDocument();
         expect(screen.getByText('Ocupação/Especialidade (CBO) *')).toBeInTheDocument();
         expect(screen.getByText('Salvar Profissional')).toBeInTheDocument();
         expect(screen.getByText('Cancelar')).toBeInTheDocument();
