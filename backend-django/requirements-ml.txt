@@ -1,0 +1,12 @@
+# =============================================================================
+# Dependências de IA LOCAL (opcionais, ~GBs).
+# Necessárias APENAS para o fallback de transcrição MedASR/Whisper local
+# (transcription/services.py). Em produção a transcrição usa a API Groq, que
+# não requer estes pacotes.
+#
+# Instale com:  pip install -r requirements.txt -r requirements-ml.txt
+# =============================================================================
+
+transformers>=4.40,<5.0
+torch>=2.0,<3.0
+librosa>=0.10,<0.12

@@ -240,6 +240,7 @@ urlpatterns = [
         "ai/summary/<str:patient_id>/", views_ai.get_patient_summary, name="ai_summary"
     ),
     path("ai/interactions/", views_ai.check_interactions, name="ai_interactions"),
+    path("ai/assistant/", views_ai.clinical_assistant, name="ai_assistant"),
     # Sprint 13: Analytics
     path("analytics/population/", views_analytics.get_population_metrics),
     path("analytics/clinical/", views_analytics.get_clinical_metrics),

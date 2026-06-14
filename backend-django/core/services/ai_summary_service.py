@@ -1,23 +1,19 @@
 import logging
 import requests
 from decouple import config
-from django.conf import settings
+from core.services import llm_client
 
 logger = logging.getLogger(__name__)
 
 
 class AISummaryService:
     """
-    AI Summary Service using Groq's Llama 3.3 70B.
-    Generates intelligent clinical summaries from FHIR patient data.
+    Serviço de resumo clínico (apoio à decisão) usando LLM open-source
+    self-hosted (vLLM em produção, Ollama em dev). Gera resumos a partir de
+    dados FHIR. PII é redigida antes do envio (LGPD).
     """
     _instance = None
-    
-    # Groq API configuration
-    GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-    GROQ_API_KEY = config('GROQ_API_KEY', default='')
-    MODEL = "llama-3.3-70b-versatile"  # Llama 3.3 70B - great quality/cost balance
-    
+
     # FHIR server
     FHIR_BASE_URL = config('FHIR_SERVER_URL', default='http://localhost:8080/fhir')
 
@@ -163,10 +159,10 @@ class AISummaryService:
             dict with: complexity_level, active_problems_count, medications_count,
                        recommendations, summary_text
         """
-        if not self.GROQ_API_KEY:
-            logger.error("GROQ_API_KEY not configured")
-            return self._empty_summary("API não configurada")
-        
+        if not llm_client.available():
+            logger.error("LLM não configurado (LLM_BASE_URL)")
+            return self._empty_summary("IA não configurada")
+
         # Fetch FHIR data
         fhir_data = self._fetch_fhir_data(patient_id)
         
@@ -203,53 +199,32 @@ Critérios de complexidade:
 Responda APENAS com o JSON estruturado, sem explicações adicionais."""
 
         try:
-            headers = {
-                "Authorization": f"Bearer {self.GROQ_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "model": self.MODEL,
-                "messages": [
+            # PII é redigida antes do envio (LGPD by design).
+            content = llm_client.chat(
+                [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": llm_client.redact_pii(user_prompt)},
                 ],
-                "temperature": 0.3,  # Lower for more consistent outputs
-                "max_tokens": 1000,
-                "response_format": {"type": "json_object"}
-            }
-            
-            response = requests.post(
-                self.GROQ_API_URL,
-                headers=headers,
-                json=payload,
-                timeout=30
+                max_tokens=1000,
+                temperature=0.3,
+                json_mode=True,
             )
-            
-            if response.status_code == 200:
-                result = response.json()
-                content = result['choices'][0]['message']['content']
-                
-                # Parse JSON response
-                import json
-                summary_data = json.loads(content)
-                
-                # Build final response
-                return {
-                    'complexity_level': summary_data.get('complexity_level', 'BAIXO'),
-                    'active_problems_count': len(fhir_data.get('conditions', [])),
-                    'medications_count': len(fhir_data.get('medications', [])),
-                    'active_problems_summary': summary_data.get('active_problems_summary', ''),
-                    'medication_alerts': summary_data.get('medication_alerts', 'Sem alertas'),
-                    'recommendations': summary_data.get('recommendations', []),
-                    'clinical_summary': summary_data.get('clinical_summary', ''),
-                    'allergies_count': len(fhir_data.get('allergies', [])),
-                    'source': 'AI (Llama 3.3 70B via Groq)'
-                }
-            else:
-                logger.error(f"Groq API error: {response.status_code} - {response.text}")
-                return self._empty_summary(f"Erro na API: {response.status_code}")
-                
+            if not content:
+                return self._empty_summary("IA indisponível")
+
+            import json
+            summary_data = json.loads(content)
+            return {
+                'complexity_level': summary_data.get('complexity_level', 'BAIXO'),
+                'active_problems_count': len(fhir_data.get('conditions', [])),
+                'medications_count': len(fhir_data.get('medications', [])),
+                'active_problems_summary': summary_data.get('active_problems_summary', ''),
+                'medication_alerts': summary_data.get('medication_alerts', 'Sem alertas'),
+                'recommendations': summary_data.get('recommendations', []),
+                'clinical_summary': summary_data.get('clinical_summary', ''),
+                'allergies_count': len(fhir_data.get('allergies', [])),
+                'source': f'IA self-hosted ({llm_client.LLM_MODEL})'
+            }
         except Exception as e:
             logger.error(f"Summary generation failed: {str(e)}")
             return self._empty_summary(str(e))

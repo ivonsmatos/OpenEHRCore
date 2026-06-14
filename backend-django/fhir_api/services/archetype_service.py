@@ -538,6 +538,8 @@ class ISO13606ArchetypeService:
         Returns:
             FHIR resource
         """
+        cls._init_archetypes()
+
         archetype = cls.ARCHETYPES.get(archetype_name)
         if not archetype:
             raise ValueError(f"Unknown archetype: {archetype_name}")

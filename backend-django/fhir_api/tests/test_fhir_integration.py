@@ -9,9 +9,18 @@ Tests full FHIR compliance for:
 - Operations
 """
 
+import os
 import pytest
 from django.test import TestCase, Client
 import json
+
+# Estes testes exercem a stack FHIR real (HAPI). No CI unitário (sem HAPI ativo)
+# eles são pulados. Para executá-los localmente com a stack viva:
+#   RUN_FHIR_INTEGRATION=1 pytest fhir_api/tests/test_fhir_integration.py
+pytestmark = pytest.mark.skipif(
+    os.environ.get("RUN_FHIR_INTEGRATION") != "1",
+    reason="Integração FHIR requer HAPI FHIR ativo (defina RUN_FHIR_INTEGRATION=1).",
+)
 
 
 class FHIRCapabilityTests(TestCase):

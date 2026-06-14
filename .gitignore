@@ -37,10 +37,32 @@ db.sqlite3
 db.sqlite3-journal
 /media
 /staticfiles
+backend-django/logs/
+
+# Test / coverage / scan artifacts
+.pytest_cache/
+htmlcov/
+coverage/
+coverage.xml
+.coverage
+*.sarif
+
+# Debug artifacts (scripts/ad-hoc outputs — não versionar)
+debug_output.txt
+check_report.pdf
+
+# Bulk export output (gerado em runtime/testes)
+backend-django/fhir_api/exports/
+
+# RAG: manuais reais e índice (grandes / direitos autorais) — não versionar
+backend-django/data/knowledge_index.json
+backend-django/data/clinical_docs/*
+!backend-django/data/clinical_docs/README.md
 
 # Node/Frontend
 node_modules/
 dist/
+.env
 .env.local
 .env.*.local
 *.pem

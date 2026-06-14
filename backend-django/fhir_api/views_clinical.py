@@ -148,7 +148,7 @@ def get_diagnostic_reports(request, patient_id):
                             'interpretation': obs.get('interpretation', [{}])[0].get('coding', [{}])[0].get('code', 'normal'),
                             'referenceRange': obs.get('referenceRange', [{}])[0].get('text', '')
                         })
-                    except:
+                    except (KeyError, IndexError, TypeError, AttributeError):
                         pass
             
             data.append({

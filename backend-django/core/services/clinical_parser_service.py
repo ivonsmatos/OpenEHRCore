@@ -3,22 +3,18 @@ import requests
 import json
 from decouple import config
 from datetime import datetime
+from core.services import llm_client
 
 logger = logging.getLogger(__name__)
 
 
 class ClinicalParserService:
     """
-    Clinical NLP Parser using Groq Llama 3.3 70B.
-    Extracts structured clinical data from free-text notes and creates FHIR resources.
+    Extração de dados clínicos estruturados de texto livre (apoio à decisão),
+    usando LLM open-source self-hosted (vLLM/Ollama) e criando recursos FHIR.
     """
     _instance = None
-    
-    # Groq API configuration
-    GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-    GROQ_API_KEY = config('GROQ_API_KEY', default='')
-    MODEL = "llama-3.3-70b-versatile"
-    
+
     # FHIR server
     FHIR_BASE_URL = config('FHIR_SERVER_URL', default='http://localhost:8080/fhir')
 
@@ -35,8 +31,8 @@ class ClinicalParserService:
         Returns:
             dict with extracted data and created resource IDs
         """
-        if not self.GROQ_API_KEY:
-            return {"error": "GROQ_API_KEY not configured", "resources_created": []}
+        if not llm_client.available():
+            return {"error": "LLM não configurado (LLM_BASE_URL)", "resources_created": []}
         
         if not text or len(text.strip()) < 10:
             return {"error": "Text too short", "resources_created": []}
@@ -132,37 +128,18 @@ Regras:
 Responda APENAS com o JSON estruturado."""
 
         try:
-            headers = {
-                "Authorization": f"Bearer {self.GROQ_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "model": self.MODEL,
-                "messages": [
+            content = llm_client.chat(
+                [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": llm_client.redact_pii(user_prompt)},
                 ],
-                "temperature": 0.1,
-                "max_tokens": 2000,
-                "response_format": {"type": "json_object"}
-            }
-            
-            response = requests.post(
-                self.GROQ_API_URL,
-                headers=headers,
-                json=payload,
-                timeout=30
+                max_tokens=2000,
+                temperature=0.1,
+                json_mode=True,
             )
-            
-            if response.status_code == 200:
-                result = response.json()
-                content = result['choices'][0]['message']['content']
-                return json.loads(content)
-            else:
-                logger.error(f"Groq API error: {response.status_code}")
-                return {"error": f"API error: {response.status_code}"}
-                
+            if not content:
+                return {"error": "IA indisponível"}
+            return json.loads(content)
         except Exception as e:
             logger.error(f"Entity extraction failed: {e}")
             return {"error": str(e)}

@@ -7,10 +7,10 @@ from .views import (
 )
 
 urlpatterns = [
-    # AI Vision - Image analysis with MedGemma
+    # AI Vision - Image analysis (self-hosted multimodal LLM)
     path('ai/analyze-image/', AnalyzeImageView.as_view(), name='analyze-image'),
-    
-    # AI Voice - Transcription with Groq Whisper
+
+    # AI Voice - Transcription (self-hosted Whisper, OpenAI-compatible)
     path('ai/transcribe/', TranscribeAudioView.as_view(), name='transcribe-audio'),
     
     # Clinical NLP - Parse note and create FHIR resources

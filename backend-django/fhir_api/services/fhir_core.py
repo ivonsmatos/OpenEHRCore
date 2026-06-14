@@ -1058,7 +1058,7 @@ class FHIRService:
                     error_json = response.json()
                     if 'issue' in error_json and len(error_json['issue']) > 0:
                         error_msg = error_json['issue'][0].get('diagnostics', error_msg)
-                except:
+                except (ValueError, KeyError, IndexError, TypeError):
                     pass
                 raise FHIRServiceException(f"Failed to create Condition: {error_msg}")
             
@@ -1155,7 +1155,7 @@ class FHIRService:
                     error_json = response.json()
                     if 'issue' in error_json and len(error_json['issue']) > 0:
                         error_msg = error_json['issue'][0].get('diagnostics', error_msg)
-                except:
+                except (ValueError, KeyError, IndexError, TypeError):
                     pass
                 raise FHIRServiceException(f"Failed to create Allergy: {error_msg}")
             
@@ -1355,7 +1355,7 @@ class FHIRService:
             if response.status_code not in [200, 201]:
                 try:
                     error_text = response.text
-                except:
+                except (UnicodeDecodeError, AttributeError):
                     error_text = response.content.decode('utf-8', errors='ignore')
                 logger.error(f"FHIR Server error creating ClinicalImpression: Status {response.status_code}, Body: {error_text}")
                 raise FHIRServiceException(f"Failed to create ClinicalImpression (HTTP {response.status_code})")

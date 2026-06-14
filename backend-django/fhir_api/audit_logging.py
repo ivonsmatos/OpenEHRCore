@@ -7,6 +7,38 @@ Funções auxiliares para registrar auditoria de acessos e operações
 import logging
 
 logger = logging.getLogger(__name__)
+# Logger dedicado de auditoria (roteado para audit.log em settings.LOGGING)
+audit_logger = logging.getLogger('fhir_api.audit')
+
+
+def _username(user):
+    """Extrai um identificador do usuário de forma segura (Django ou KeycloakUser)."""
+    return (
+        getattr(user, 'preferred_username', None)
+        or getattr(user, 'username', None)
+        or getattr(user, 'sub', None)
+        or str(user)
+    )
+
+
+def log_ai_inference(user, action, patient_id=None, model=None, grounded=None):
+    """
+    Registra uso de IA (apoio à decisão) para fins de auditoria/LGPD.
+
+    Registra apenas METADADOS (quem, quando, qual ação/paciente) — NUNCA o
+    conteúdo clínico enviado ou gerado.
+
+    Args:
+        user: usuário autenticado
+        action: ação de IA (ex.: 'patient_summary', 'clinical_assistant')
+        patient_id: id do paciente, quando aplicável
+        model: modelo/endpoint usado
+        grounded: se a resposta foi fundamentada em fontes (RAG)
+    """
+    audit_logger.info(
+        "AI inference: user=%s action=%s patient=%s model=%s grounded=%s",
+        _username(user), action, patient_id or '-', model or '-', grounded,
+    )
 
 
 def log_document_access(user, document_id, action='view'):

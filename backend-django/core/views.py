@@ -36,7 +36,7 @@ class AnalyzeImageView(APIView):
 
 class TranscribeAudioView(APIView):
     """
-    Transcribes clinical audio using Groq Whisper API.
+    Transcribes clinical audio using a self-hosted Whisper (OpenAI-compatible).
     Ultra-fast transcription with whisper-large-v3-turbo.
     """
     permission_classes = [IsAuthenticated]
@@ -55,7 +55,7 @@ class TranscribeAudioView(APIView):
             )
 
         try:
-            # Transcribe using Groq Whisper API
+            # Transcribe using self-hosted Whisper (core/services/llm_client)
             voice_service = MedicalVoiceService()
             transcribed_text = voice_service.transcribe_clinical_audio(audio_file)
             
@@ -83,7 +83,7 @@ class ParseClinicalNoteView(APIView):
     """
     Parses clinical note text and extracts structured data.
     Creates FHIR resources for: medications, diagnoses, exams, vitals.
-    Uses Groq Llama 3.3 70B for NLP extraction.
+    Uses a self-hosted open LLM (vLLM/Ollama) for NLP extraction.
     """
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
@@ -130,7 +130,7 @@ class ParseClinicalNoteView(APIView):
 
 class GetPatientSummaryView(APIView):
     """
-    Generates AI-powered patient summary using Groq Llama 3.3 70B.
+    Generates AI-powered patient summary using a self-hosted open LLM.
     Analyzes FHIR data and returns: complexity, recommendations, alerts.
     """
     permission_classes = [IsAuthenticated]

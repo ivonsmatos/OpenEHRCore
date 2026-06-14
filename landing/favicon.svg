@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sintonia">
+  <rect width="64" height="64" rx="16" fill="#89C2D9"/>
+  <path d="M10 38 H22 L27 24 L34 46 L40 32 L44 38 H54" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="49" cy="20" r="6" fill="#EA4D50"/>
+</svg>

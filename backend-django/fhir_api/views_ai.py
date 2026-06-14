@@ -6,12 +6,12 @@ from .services.fhir_core import FHIRService, FHIRServiceException
 from .services.ai_service import AIService
 from .utils.validators import validate_patient_id, calculate_age
 from .utils.logging_utils import sanitize_for_log
+from .audit_logging import log_ai_inference
 import logging
 from datetime import datetime
 import requests
 
 logger = logging.getLogger(__name__)
-
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -62,7 +62,8 @@ def get_patient_summary(request, patient_id):
     def fetch_safe(resource_type: str, params: dict) -> list:
         try:
             return fhir_service.search_resources(resource_type, params)
-        except:
+        except Exception as e:
+            logger.warning(f"Falha ao buscar {resource_type} para {patient_id}: {e}")
             return []
 
     conditions = fetch_safe("Condition", {"patient": patient_id})
@@ -115,6 +116,9 @@ def get_patient_summary(request, patient_id):
         using_ai = result["using_ai"]
 
         logger.info(f"✅ Resumo gerado: {len(summary)} chars | AI={using_ai}")
+        log_ai_inference(
+            request.user, 'patient_summary', patient_id=patient_id, grounded=using_ai
+        )
 
         return Response(
             {
@@ -163,16 +167,44 @@ def check_interactions(request):
                 current_medications = fhir_service.search_resources(
                     "MedicationRequest", {"patient": patient_id, "status": "active"}
                 )
-            except:
+            except Exception as e:
+                logger.warning(f"Falha ao buscar medicações de {patient_id}: {e}")
                 current_medications = []
 
         ai_service = AIService(request.user)
         alerts = ai_service.check_drug_interactions(new_medication, current_medications)
 
+        log_ai_inference(request.user, 'drug_interactions', patient_id=patient_id)
         return Response({"alerts": alerts}, status=status.HTTP_200_OK)
 
     except Exception as e:
         logger.error(f"Erro ao checar interações: {e}")
+        return Response(
+            {"error": "Internal server error"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def clinical_assistant(request):
+    """
+    Assistente clínico (RAG sobre os manuais). APOIO À DECISÃO — o médico decide.
+
+    POST /api/v1/ai/assistant/  { "question": "..." }
+    Retorna: { "answer": str, "sources": [...], "grounded": bool }
+    """
+    question = (request.data.get('question') or '').strip()
+    if not question:
+        return Response({"error": "question is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    from .services import rag_service
+    try:
+        result = rag_service.answer(question)
+        log_ai_inference(request.user, 'clinical_assistant', grounded=result.get('grounded'))
+        return Response(result, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Erro no assistente clínico: {e}")
         return Response(
             {"error": "Internal server error"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,

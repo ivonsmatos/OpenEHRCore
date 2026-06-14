@@ -210,28 +210,41 @@ def export_system(request):
         return Response({"error": "Erro ao iniciar exportação"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'DELETE'])
 @authentication_classes([KeycloakAuthentication])
 @permission_classes([IsAuthenticated])
 def export_status(request, job_id):
     """
-    Get the status of an export job.
-    
-    GET /api/v1/export/status/{job_id}/
-    
+    Get the status of an export job, or cancel it.
+
+    GET /api/v1/export/status/{job_id}/     -> status
+    DELETE /api/v1/export/status/{job_id}/  -> cancela (FHIR Bulk Data)
+
     Returns:
         - 202 Accepted: Job still in progress
-        - 200 OK: Job completed with output files
+        - 200 OK: Job completed with output files (ou cancelado, no DELETE)
         - 500: Job failed
     """
     try:
         job = BulkExportService.get_job(job_id)
-        
+
         if not job:
             return Response({
                 "error": f"Export job {job_id} not found"
             }, status=status.HTTP_404_NOT_FOUND)
-        
+
+        # DELETE na URL de status cancela o job (conforme FHIR Bulk Data spec).
+        if request.method == 'DELETE':
+            if BulkExportService.cancel_job(job_id):
+                return Response(
+                    {"message": f"Export job {job_id} cancelled"},
+                    status=status.HTTP_200_OK
+                )
+            return Response(
+                {"error": "Job cannot be cancelled (already completed or failed)"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         response_data = job.to_dict()
         
         # Add download URLs for completed exports

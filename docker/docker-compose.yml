@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: hapi_fhir
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_MULTIPLE_DATABASES: keycloak,mattermost
+      POSTGRES_MULTIPLE_DATABASES: keycloak,mattermost,openehr
     ports:
       - "5433:5432"
     volumes:
@@ -98,14 +98,25 @@ services:
     environment:
       DEBUG: ${DEBUG:-False}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-dev-only-change-in-production}
+      ALLOWED_HOSTS: localhost,127.0.0.1,django
+      # TLS é terminado pelo nginx na borda; não force redirect dentro da rede docker.
+      SECURE_SSL_REDIRECT: "False"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/openehr
       FHIR_SERVER_URL: http://hapi-fhir:8080/fhir
       KEYCLOAK_URL: http://keycloak:8080
     ports:
       - "8000:8000"
     depends_on:
-      - hapi-fhir
-      - keycloak
-    command: python manage.py runserver 0.0.0.0:8000
+      postgres:
+        condition: service_healthy
+      hapi-fhir:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    # Servidor de produção (gunicorn), com migração antes de subir.
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn openehrcore.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
     networks:
       - openehr_network
 
