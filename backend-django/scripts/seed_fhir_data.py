@@ -6,13 +6,15 @@ All resources are 100% FHIR R4 compliant with all fields populated.
 Run with: python scripts/seed_fhir_data.py
 """
 
+import os
 import requests
 import json
 import sys
 from datetime import datetime, timedelta
 import random
 
-FHIR_URL = "http://localhost:8080/fhir"
+# Configurável por env (ex.: http://hapi-fhir:8080/fhir dentro do docker-compose).
+FHIR_URL = os.environ.get("FHIR_SERVER_URL", "http://localhost:8080/fhir")
 HEADERS = {"Content-Type": "application/fhir+json", "Accept": "application/fhir+json"}
 
 # Track created IDs for references

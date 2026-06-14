@@ -40,7 +40,7 @@ const UFS = [
 ];
 
 // Status de validacao
-type ValidationStatus = 'idle' | 'validating' | 'valid' | 'invalid_format' | 'not_found' | 'suspended' | 'cancelled' | 'expired' | 'error';
+type ValidationStatus = 'idle' | 'validating' | 'valid' | 'pending' | 'invalid_format' | 'not_found' | 'suspended' | 'cancelled' | 'expired' | 'error';
 
 interface ValidationResult {
     status: ValidationStatus;
@@ -266,6 +266,7 @@ const CRMValidation: React.FC<CRMValidationProps> = ({
             case 'not_found':
             case 'error':
                 return { ...baseStyle, backgroundColor: '#fee2e2', color: '#991b1b' };
+            case 'pending':
             case 'suspended':
             case 'cancelled':
             case 'expired':
@@ -282,6 +283,8 @@ const CRMValidation: React.FC<CRMValidationProps> = ({
         switch (validationStatus) {
             case 'valid':
                 return 'Valido';
+            case 'pending':
+                return 'Formato OK — verificar no conselho';
             case 'invalid_format':
                 return 'Formato invalido';
             case 'not_found':
@@ -310,6 +313,7 @@ const CRMValidation: React.FC<CRMValidationProps> = ({
             case 'not_found':
             case 'error':
                 return <X size={14} />;
+            case 'pending':
             case 'suspended':
             case 'cancelled':
             case 'expired':
@@ -442,6 +446,31 @@ const CRMValidation: React.FC<CRMValidationProps> = ({
                         {getStatusIcon()}
                         {getStatusText()}
                     </span>
+                </div>
+            )}
+
+            {/* Verificação no conselho: quando o formato está OK mas NÃO houve
+                verificação automática, oferecer link para o portal oficial. */}
+            {validationStatus === 'pending' && (
+                <div style={{ marginTop: spacing.xs }}>
+                    <a
+                        href={conselho === 'CRM'
+                            ? 'https://portal.cfm.org.br/busca-medicos/'
+                            : `https://www.google.com/search?q=${encodeURIComponent(`consulta ${conselho} ${uf} registro ativo`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.8rem',
+                            color: colors.primary.medium,
+                            fontWeight: 500,
+                            textDecoration: 'none',
+                        }}
+                    >
+                        <Shield size={14} /> Verificar no {conselho === 'CRM' ? 'CFM' : 'conselho oficial'} →
+                    </a>
                 </div>
             )}
 
