@@ -1,4 +1,4 @@
-# Sintonia Saúde
+# Interop Health Saúde
 
 > Plataforma de interoperabilidade em saúde FHIR R4 nativa para clínicas, hospitais e operadoras no Brasil. Unifica prontuários, exames e fluxos clínicos, com IA de apoio à decisão, telemedicina e conformidade LGPD/RNDS.
 
@@ -8,7 +8,7 @@
 - [Sobre](https://www.sintoniasaude.com.br/sobre.html): Missão, valores e diferenciais.
 
 ## Fatos da marca
-- Nome: Sintonia Saúde
+- Nome: Interop Health Saúde
 - Categoria: Health tech / interoperabilidade em saúde (HealthIT)
 - Padrão técnico: HL7 FHIR R4
 - Conformidade: LGPD; preparada para RNDS e TISS

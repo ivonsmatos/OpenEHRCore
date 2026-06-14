@@ -1,6 +1,6 @@
 {
-    "name": "HealthStack",
-    "short_name": "HealthStack",
+    "name": "Interop Health",
+    "short_name": "Interop Health",
     "description": "Healthcare Interoperability Platform - FHIR R4 Native",
     "start_url": "/",
     "display": "standalone",

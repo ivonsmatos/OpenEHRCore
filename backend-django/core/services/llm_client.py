@@ -47,6 +47,11 @@ EMBEDDINGS_MODEL = config("EMBEDDINGS_MODEL", default="bge-m3")
 EMBEDDINGS_BASE_URL = config("EMBEDDINGS_BASE_URL", default=LLM_BASE_URL).rstrip("/")
 EMBEDDINGS_API_KEY = config("EMBEDDINGS_API_KEY", default=LLM_API_KEY)
 
+# LGPD: redigir PII (CPF, CNS, telefone, e-mail, CEP...) ANTES de enviar qualquer
+# texto ao provedor de IA (Gemini/nuvem). Defesa em profundidade — minimiza
+# transferência de dado pessoal. Desligue só com endpoint 100% on-premise/Brasil.
+REDACT_PII_TO_LLM = config("REDACT_PII_TO_LLM", default=True, cast=bool)
+
 # Prompt de sistema padrão: a IA é APOIO À DECISÃO (exigência do CFM).
 DEFAULT_CLINICAL_SYSTEM = (
     "Você é um assistente de APOIO À DECISÃO clínica. Você NÃO realiza "
@@ -96,6 +101,13 @@ def chat(messages, model=None, max_tokens=1000, temperature=0.3, json_mode=False
     Retorna o conteúdo de texto ou None em caso de falha.
     """
     try:
+        if REDACT_PII_TO_LLM:
+            messages = [
+                {**m, "content": redact_pii(m["content"])}
+                if isinstance(m.get("content"), str)
+                else m
+                for m in messages
+            ]
         payload = {
             "model": model or LLM_MODEL,
             "messages": messages,
@@ -127,6 +139,8 @@ def embed(texts, model=None, timeout=None):
     """
     single = isinstance(texts, str)
     inputs = [texts] if single else list(texts)
+    if REDACT_PII_TO_LLM:
+        inputs = [redact_pii(t) if isinstance(t, str) else t for t in inputs]
     try:
         resp = requests.post(
             f"{EMBEDDINGS_BASE_URL}/embeddings",

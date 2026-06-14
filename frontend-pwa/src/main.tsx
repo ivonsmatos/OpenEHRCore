@@ -10,7 +10,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('[HealthStack] Service Worker registered:', registration.scope);
+        console.log('[Interop Health] Service Worker registered:', registration.scope);
 
         // Check for updates
         registration.addEventListener('updatefound', () => {
@@ -19,14 +19,14 @@ if ('serviceWorker' in navigator) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 // New content available, notify user
-                console.log('[HealthStack] New version available!');
+                console.log('[Interop Health] New version available!');
               }
             });
           }
         });
       })
       .catch((error) => {
-        console.warn('[HealthStack] Service Worker registration failed:', error);
+        console.warn('[Interop Health] Service Worker registration failed:', error);
       });
   });
 }

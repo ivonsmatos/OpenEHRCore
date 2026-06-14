@@ -327,4 +327,4 @@ self.addEventListener('message', (event) => {
     }
 });
 
-console.log('[SW] HealthStack Service Worker loaded');
+console.log('[SW] Interop Health Service Worker loaded');

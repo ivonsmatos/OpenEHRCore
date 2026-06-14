@@ -1,6 +1,6 @@
 {
-  "name": "Sintonia Saúde",
-  "short_name": "Sintonia",
+  "name": "Interop Health Saúde",
+  "short_name": "Interop Health",
   "description": "Plataforma de interoperabilidade em saúde FHIR R4 nativa.",
   "lang": "pt-BR",
   "start_url": "/",

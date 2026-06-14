@@ -211,7 +211,7 @@ export const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ compac
 
                     {/* Footer com versão */}
                     <div className="dropdown-footer">
-                        <span>OpenEHRCore v1.0 • FHIR R4</span>
+                        <span>Interop Health v1.0 • FHIR R4</span>
                     </div>
                 </div>
             )}

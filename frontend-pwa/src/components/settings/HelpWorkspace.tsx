@@ -79,7 +79,7 @@ export const HelpWorkspace: React.FC = () => {
             icon: <Book size={18} />
         },
         {
-            title: 'Guia do Usuário OpenEHRCore',
+            title: 'Guia do Usuário Interop Health',
             description: 'Manual completo do sistema',
             url: '#',
             icon: <FileText size={18} />
@@ -195,9 +195,9 @@ export const HelpWorkspace: React.FC = () => {
                 {/* Footer */}
                 <Card className="version-info">
                     <div className="version-details">
-                        <p><strong>OpenEHRCore</strong> v1.0</p>
+                        <p><strong>Interop Health</strong> v1.0</p>
                         <p>FHIR R4 • RNDS compliant</p>
-                        <p>© 2025 OpenEHRCore. Todos os direitos reservados.</p>
+                        <p>© 2025 Interop Health. Todos os direitos reservados.</p>
                     </div>
                 </Card>
             </div>

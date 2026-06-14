@@ -43,7 +43,7 @@ export const Login: React.FC = () => {
         {/* Header */}
         <div className="login-header">
           <div className="login-logo">🏥</div>
-          <h1 className="login-title">OpenEHRCore</h1>
+          <h1 className="login-title">Interop Health</h1>
           <p className="login-subtitle">Sistema de Prontuários Eletrônicos</p>
         </div>
 

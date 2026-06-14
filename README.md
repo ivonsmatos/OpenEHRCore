@@ -1,4 +1,4 @@
-# HealthStack
+# Interop Health
 
 <div align="center">
 
@@ -17,7 +17,7 @@
 
 ## Visao Geral
 
-**HealthStack** e uma plataforma completa de interoperabilidade em saude construida sobre o padrao FHIR R4 com **conformidade 100%**. Fornece solucao completa para gestao de dados clinicos, incluindo funcionalidades de prontuario eletronico, fluxos clinicos e integracao com sistemas de saude brasileiros (RNDS, TISS).
+**Interop Health** e uma plataforma completa de interoperabilidade em saude construida sobre o padrao FHIR R4 com **conformidade 100%**. Fornece solucao completa para gestao de dados clinicos, incluindo funcionalidades de prontuario eletronico, fluxos clinicos e integracao com sistemas de saude brasileiros (RNDS, TISS).
 
 ### Caracteristicas Principais
 
@@ -278,7 +278,7 @@ is_valid = validator.validate_brazilian_cns("123456789012345")
 
 ```
 +---------------------------------------------------------------------+
-|                         HealthStack v2.3.0                          |
+|                         Interop Health v2.3.0                          |
 +---------------------------------------------------------------------+
 |                                                                      |
 |  +-------------+  +-------------+  +-------------+                  |
@@ -306,7 +306,7 @@ is_valid = validator.validate_brazilian_cns("123456789012345")
 |       +------------+-----------+                                    |
 |                    |                                                 |
 |            +-------+-------+                                        |
-|            | HealthStack   |--------HTTPS--------> Servidor Cloud   |
+|            | Interop Health   |--------HTTPS--------> Servidor Cloud   |
 |            |    Agent      |                                        |
 |            +---------------+                                        |
 +---------------------------------------------------------------------+
@@ -424,7 +424,7 @@ cd frontend-pwa && npm install && npm run dev
 ## Estrutura do Projeto
 
 ```
-HealthStack/
+Interop Health/
 +-- frontend-pwa/           # React TypeScript PWA
 |   +-- src/
 |   |   +-- components/     # Componentes reutilizaveis
