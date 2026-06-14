@@ -240,6 +240,10 @@ def calculate_age(birth_date: str) -> Union[int, None]:
     """
     from datetime import datetime
     
+    # birthDate pode estar ausente/None no FHIR — não quebrar (retorna None).
+    if not birth_date or not isinstance(birth_date, str):
+        return None
+
     try:
         birth = datetime.strptime(birth_date, '%Y-%m-%d')
         today = datetime.now()
