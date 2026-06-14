@@ -1,0 +1,16 @@
+# Não assar segredos nem artefatos na imagem.
+.env
+.env.*
+.venv
+venv
+data/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache
+.coverage
+htmlcov
+staticfiles
+mediafiles
+*.sqlite3
+.git
