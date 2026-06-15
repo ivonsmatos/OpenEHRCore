@@ -8,9 +8,12 @@ import {
     ChevronDown,
     User
 } from 'lucide-react';
+import axios from 'axios';
 import Card from '../base/Card';
 import Button from '../base/Button';
 import './AvailabilityManager.css';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 interface TimeSlot {
     id: string;
@@ -50,10 +53,8 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
     const [slots, setSlots] = useState<TimeSlot[]>([]);
     const [saving, setSaving] = useState(false);
 
-    // Carregar configuração existente
+    // Carregar configuração existente do backend (quando há practitionerId).
     useEffect(() => {
-        // TODO: Carregar do backend quando disponível
-        // Por agora, criar configuração padrão
         const defaultSlots: TimeSlot[] = [
             { id: '1', dayOfWeek: 1, startTime: '08:00', endTime: '12:00', slotDuration: 30 },
             { id: '2', dayOfWeek: 1, startTime: '14:00', endTime: '18:00', slotDuration: 30 },
@@ -63,7 +64,16 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
             { id: '6', dayOfWeek: 4, startTime: '08:00', endTime: '12:00', slotDuration: 30 },
             { id: '7', dayOfWeek: 5, startTime: '08:00', endTime: '12:00', slotDuration: 30 },
         ];
-        setSlots(defaultSlots);
+        if (!practitionerId) { setSlots(defaultSlots); return; }
+        let active = true;
+        axios.get(`${API_URL}/practitioners/${practitionerId}/availability/`)
+            .then(res => {
+                if (!active) return;
+                const loaded = res.data?.slots;
+                setSlots(Array.isArray(loaded) && loaded.length ? loaded : defaultSlots);
+            })
+            .catch(() => { if (active) setSlots(defaultSlots); });
+        return () => { active = false; };
     }, [practitionerId]);
 
     const addSlot = (dayOfWeek: number) => {
@@ -90,12 +100,15 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
     const handleSave = async () => {
         setSaving(true);
         try {
-            // TODO: Salvar no backend
+            if (practitionerId) {
+                await axios.put(`${API_URL}/practitioners/${practitionerId}/availability/`, { slots });
+            }
             if (onSave) {
                 onSave(slots);
             }
             alert('Disponibilidade salva com sucesso!');
         } catch (err) {
+            console.error('Erro ao salvar disponibilidade:', err);
             alert('Erro ao salvar disponibilidade');
         } finally {
             setSaving(false);

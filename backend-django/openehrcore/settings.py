@@ -62,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "fhir_api.middleware.rate_limit.RateLimitMiddleware",  # Sprint 22: Rate Limiting
+    "fhir_api.middleware.role_access.RoleAccessMiddleware",  # RBAC por papel (QA)
 ]
 
 ROOT_URLCONF = "openehrcore.urls"
@@ -145,6 +146,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # REST Framework
 # SECURITY FIX: Autenticação reativada
 REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "fhir_api.exception_handler.api_exception_handler",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_AUTHENTICATION_CLASSES": [
