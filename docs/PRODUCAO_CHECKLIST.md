@@ -1,8 +1,17 @@
-# Checklist de Produção — OpenEHRCore / HealthStack
+# Checklist de Produção — Interop Health
 
 > **Prioridades:** P0 = bloqueia produção · P1 = antes de cliente real · P2 = melhoria.
 > Ambiente atual (`*.actahub.com.br`) é **DEMO com dados sintéticos** numa VPS
 > compartilhada. **Não usar com dado real de paciente** até concluir os P0 de infra/LGPD.
+>
+> **🚚 Plano combinado:** evoluir tudo na **infra atual (demo)** e depois **migrar para infra dedicada no Brasil** (seção abaixo) antes de qualquer dado real.
+
+## 🚚 Migração para infra dedicada no Brasil (P0 — antes de paciente real)
+- [ ] **P0** Provisionar infra **em região Brasil** (AWS sa-east-1 / Azure Brazil South / GCP SP / cloud nacional), **isolada** dos outros tenants.
+- [ ] **P0** Migrar o stack (Postgres + HAPI + Keycloak + Django + frontend) **+ dados** com backup/restore testado.
+- [ ] **P0** Keycloak em modo produção (hostname/TLS), segredos em secrets manager, **isolamento multi-tenant** por clínica.
+- [ ] **P0** DPA (Google/Vertex SP), RIPD, residência de dado no Brasil.
+- [ ] Apontar DNS/`.env` para a infra nova (código já preparado — só reconfigurar).
 
 ## A. Funcional (E2E)
 - [ ] **P0** Login/logout por papel (médico, enfermeiro, admin); token expirado → re-login

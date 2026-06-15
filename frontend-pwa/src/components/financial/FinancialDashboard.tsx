@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
     TrendingUp, TrendingDown, DollarSign, CreditCard, FileText,
     Calendar, Users, PieChart, BarChart3, ArrowUpRight, ArrowDownRight,
     AlertCircle, CheckCircle, Clock, Building2
 } from 'lucide-react';
 import './FinancialDashboard.css';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 interface FinancialMetrics {
     revenue: {
@@ -106,67 +109,46 @@ const formatDate = (dateStr: string): string => {
 
 export const FinancialDashboard: React.FC = () => {
     const [metrics, setMetrics] = useState<FinancialMetrics>(mockData);
+    const [baseData, setBaseData] = useState<FinancialMetrics>(mockData);
     const [period, setPeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
     const [loading, setLoading] = useState(false);
 
-    // Filtrar dados baseado no período selecionado
+    // Carrega métricas reais do backend (FHIR Invoice/Coverage). Em caso de
+    // falha/permissão, mantém o estado atual (fallback).
     useEffect(() => {
-        const filterDataByPeriod = () => {
-            let filteredData = { ...mockData };
-            
-            switch (period) {
-                case 'week':
-                    // Última semana - mostrar apenas último item
-                    filteredData.monthlyRevenue = mockData.monthlyRevenue.slice(-1);
-                    filteredData.revenue.current = mockData.monthlyRevenue[mockData.monthlyRevenue.length - 1].revenue / 4;
-                    filteredData.revenue.previous = mockData.monthlyRevenue[mockData.monthlyRevenue.length - 2]?.revenue / 4 || 0;
-                    break;
-                    
-                case 'month':
-                    // Mês atual - últimos 6 meses
-                    filteredData.monthlyRevenue = mockData.monthlyRevenue.slice(-6);
-                    break;
-                    
-                case 'quarter':
-                    // Trimestre - últimos 3 meses
-                    filteredData.monthlyRevenue = mockData.monthlyRevenue.slice(-3);
-                    const quarterRevenue = filteredData.monthlyRevenue.reduce((sum, m) => sum + m.revenue, 0);
-                    filteredData.revenue.current = quarterRevenue;
-                    break;
-                    
-                case 'year':
-                    // Ano completo - todos os meses
-                    const yearlyData = [
-                        { month: 'Jan', revenue: 82000, expenses: 65000 },
-                        { month: 'Fev', revenue: 88000, expenses: 68000 },
-                        { month: 'Mar', revenue: 91000, expenses: 70000 },
-                        { month: 'Abr', revenue: 87000, expenses: 69000 },
-                        { month: 'Mai', revenue: 93000, expenses: 71000 },
-                        { month: 'Jun', revenue: 89000, expenses: 70000 },
-                        ...mockData.monthlyRevenue
-                    ];
-                    filteredData.monthlyRevenue = yearlyData;
-                    const yearRevenue = yearlyData.reduce((sum, m) => sum + m.revenue, 0);
-                    filteredData.revenue.current = yearRevenue;
-                    break;
-            }
-            
-            // Recalcular trend baseado nos dados filtrados
-            if (filteredData.monthlyRevenue.length >= 2) {
-                const lastMonth = filteredData.monthlyRevenue[filteredData.monthlyRevenue.length - 1];
-                const previousMonth = filteredData.monthlyRevenue[filteredData.monthlyRevenue.length - 2];
-                filteredData.revenue.previous = previousMonth.revenue;
-                filteredData.revenue.percentChange = Number(
-                    (((lastMonth.revenue - previousMonth.revenue) / previousMonth.revenue) * 100).toFixed(1)
-                );
-                filteredData.revenue.trend = lastMonth.revenue >= previousMonth.revenue ? 'up' : 'down';
-            }
-            
-            setMetrics(filteredData);
-        };
-        
-        filterDataByPeriod();
-    }, [period]);
+        let active = true;
+        setLoading(true);
+        axios.get(`${API_URL}/financial/metrics/`)
+            .then(res => { if (active && res.data) setBaseData(res.data); })
+            .catch(() => { /* mantém base atual */ })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, []);
+
+    // Aplica o filtro de período sobre os dados-base (reais).
+    useEffect(() => {
+        const base = baseData;
+        const filtered: FinancialMetrics = JSON.parse(JSON.stringify(base));
+        if (period === 'week') filtered.monthlyRevenue = base.monthlyRevenue.slice(-1);
+        else if (period === 'quarter') filtered.monthlyRevenue = base.monthlyRevenue.slice(-3);
+        else if (period === 'month') filtered.monthlyRevenue = base.monthlyRevenue.slice(-6);
+        // 'year' usa todos os meses disponíveis.
+
+        const mr = filtered.monthlyRevenue;
+        if (mr.length >= 2) {
+            const last = mr[mr.length - 1];
+            const prev = mr[mr.length - 2];
+            filtered.revenue = {
+                current: last.revenue,
+                previous: prev.revenue,
+                trend: last.revenue >= prev.revenue ? 'up' : 'down',
+                percentChange: prev.revenue ? Number((((last.revenue - prev.revenue) / prev.revenue) * 100).toFixed(1)) : 0,
+            };
+        } else if (mr.length === 1) {
+            filtered.revenue = { ...base.revenue, current: mr[0].revenue };
+        }
+        setMetrics(filtered);
+    }, [period, baseData]);
 
     // Calculate max for chart scaling
     const maxRevenue = Math.max(...metrics.monthlyRevenue.map(m => m.revenue));

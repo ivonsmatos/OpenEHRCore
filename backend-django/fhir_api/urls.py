@@ -20,6 +20,7 @@ from . import (
     views_ai,
     views_me,
     views_availability,
+    views_financial_metrics,
     views_visitors,
     views_chat,
     views_ipd,
@@ -102,6 +103,7 @@ urlpatterns = [
     # Autenticação
     path("auth/login/", views_auth.login, name="login"),
     path("me/profile/", views_me.me_profile, name="me_profile"),
+    path("financial/metrics/", views_financial_metrics.financial_metrics, name="financial_metrics"),
     path("practitioners/<str:practitioner_id>/availability/", views_availability.practitioner_availability, name="practitioner_availability"),
     # Patient endpoints
     path("patients/", views_auth.manage_patients, name="manage_patients"),
