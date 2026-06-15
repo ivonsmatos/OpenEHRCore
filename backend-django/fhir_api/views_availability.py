@@ -27,9 +27,15 @@ SLOTS_EXT = "http://interophealth.com.br/fhir/StructureDefinition/availability-s
 
 
 def _find(svc, pid):
+    # FHIR Basic NÃO tem search param 'identifier' (só 'subject'/'code'). Buscamos
+    # por subject=Practitioner/<id> e filtramos pelo nosso code.
     try:
-        r = svc.search_resources("Basic", {"identifier": f"{AVAIL_SYSTEM}|{pid}"})
-        return r[0] if r else None
+        results = svc.search_resources("Basic", {"subject": f"Practitioner/{pid}"})
+        for res in results:
+            for c in (res.get("code") or {}).get("coding", []):
+                if c.get("code") == "availability-config":
+                    return res
+        return None
     except Exception as e:  # noqa: BLE001
         logger.warning("Falha ao buscar disponibilidade: %s", e)
         return None
